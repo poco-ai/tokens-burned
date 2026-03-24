@@ -1,11 +1,13 @@
-import { createCli } from "./cli";
+#!/usr/bin/env node
+// Import parsers to register them before CLI setup
+import "./parsers/claude-code.js";
+import "./parsers/codex.js";
+import "./parsers/gemini-cli.js";
+import "./parsers/copilot-cli.js";
+import "./parsers/opencode.js";
+import "./parsers/openclaw.js";
 
-async function main() {
-  await createCli().parseAsync(process.argv);
-}
+import { createCli } from "./cli.js";
 
-main().catch((error) => {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(`\n✖ ${message}`);
-  process.exitCode = 1;
-});
+const program = createCli();
+program.parse();

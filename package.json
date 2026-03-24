@@ -12,6 +12,10 @@
     "build:cli": "pnpm --filter tokens-burned build",
     "build:web": "pnpm --filter @tokens-burned/web build",
     "build": "pnpm run build:cli && pnpm run build:web",
-    "lint": "pnpm --filter @tokens-burned/web lint"
+    "lint": "pnpm --filter @tokens-burned/web lint",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }

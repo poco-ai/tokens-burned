@@ -1,0 +1,91 @@
+import { createHash } from "node:crypto";
+import { hostname } from "node:os";
+import type { SessionEvent, SessionMetadata } from "./types";
+
+/**
+ * Extract session metadata from timing events.
+ *
+ * Turn = first AI response → last AI response before next user prompt.
+ * activeSeconds = sum(generation durations), excluding queue/TTFT wait.
+ * durationSeconds = wall clock from first to last message.
+ */
+export function extractSessions(events: SessionEvent[]): SessionMetadata[] {
+  const groups = new Map<string, SessionEvent[]>();
+  for (const e of events) {
+    if (!groups.has(e.sessionId)) groups.set(e.sessionId, []);
+    groups.get(e.sessionId)!.push(e);
+  }
+
+  const sessions: SessionMetadata[] = [];
+  const host = hostname().replace(/\.local$/, "");
+
+  for (const [sessionId, sessionEvents] of groups) {
+    sessionEvents.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+    const first = sessionEvents[0];
+    const last = sessionEvents[sessionEvents.length - 1];
+    const durationSeconds = Math.round((last.timestamp.getTime() - first.timestamp.getTime()) / 1000);
+
+    let activeSeconds = 0;
+    let turnStart: Date | null = null;
+    let turnEnd: Date | null = null;
+    let waitingForFirstResponse = false;
+
+    for (const event of sessionEvents) {
+      if (event.role === "user") {
+        if (turnStart !== null && turnEnd !== null && turnEnd > turnStart) {
+          activeSeconds += Math.round((turnEnd.getTime() - turnStart.getTime()) / 1000);
+        }
+        turnStart = null;
+        turnEnd = null;
+        waitingForFirstResponse = true;
+      } else if (waitingForFirstResponse) {
+        turnStart = event.timestamp;
+        turnEnd = event.timestamp;
+        waitingForFirstResponse = false;
+      } else if (turnStart !== null) {
+        turnEnd = event.timestamp;
+      }
+    }
+    if (turnStart !== null && turnEnd !== null && turnEnd > turnStart) {
+      activeSeconds += Math.round((turnEnd.getTime() - turnStart.getTime()) / 1000);
+    }
+
+    const userPromptHours = new Array(24).fill(0);
+    let userMessageCount = 0;
+    for (const event of sessionEvents) {
+      if (event.role === "user") {
+        userMessageCount++;
+        userPromptHours[event.timestamp.getUTCHours()]++;
+      }
+    }
+
+    const sessionHash = createHash("sha256").update(sessionId).digest("hex").slice(0, 16);
+
+    sessions.push({
+      source: first.source,
+      project: first.project || "unknown",
+      sessionHash,
+      hostname: host,
+      firstMessageAt: first.timestamp.toISOString(),
+      lastMessageAt: last.timestamp.toISOString(),
+      durationSeconds,
+      activeSeconds,
+      messageCount: sessionEvents.length,
+      userMessageCount,
+      userPromptHours,
+    });
+  }
+
+  return sessions;
+}
+
+/**
+ * Add hostname to sessions after privacy filtering
+ */
+export function addHostnameToSessions(sessions: SessionMetadata[]): void {
+  const host = hostname().replace(/\.local$/, "");
+  for (const s of sessions) {
+    s.hostname = host;
+  }
+}
