@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-`tokens-burned` is a pnpm monorepo with two active workspaces. `cli/` contains the TypeScript Commander CLI: keep command entry points in `cli/src/commands`, sync and aggregation logic in `cli/src/services` and `cli/src/domain`, tool-specific ingestion in `cli/src/parsers`, and config/API/filesystem code in `cli/src/infrastructure`. Built files land in `cli/dist/`. `web/` is a Next.js App Router app: routes live in `web/app`, shared UI in `web/components/ui`, hooks in `web/hooks`, helpers in `web/lib`, and static assets in `web/public`. Do not edit generated output such as `.next/` or `dist/`.
+`tokens-burned` is a pnpm monorepo with two workspaces. `cli/` contains the TypeScript Commander CLI: keep command entry points in `cli/src/commands`, sync and aggregation logic in `cli/src/services` and `cli/src/domain`, tool-specific ingestion in `cli/src/parsers`, and config/API/filesystem code in `cli/src/infrastructure`. Built files land in `cli/dist/`. `web/` is a Next.js App Router app: routes live in `web/app`, shared UI in `web/components/ui`, hooks in `web/hooks`, helpers in `web/lib`, and static assets in `web/public`. Do not edit generated output such as `.next/` or `dist/`.
 
 ## Build, Test, and Development Commands
 
@@ -16,7 +16,7 @@
 
 ## Coding Style & Naming Conventions
 
-Use TypeScript + ESM throughout. Biome enforces 2-space indentation, double quotes, semicolons, and import organization. Keep CLI filenames kebab-case (`session-extractor.ts`, `claude-code.ts`); export React components in PascalCase. In `web/`, prefer the `@/` path alias for local imports. Keep parsing and business logic in `domain/`, `services/`, or `parsers/`; keep terminal/UI rendering in command handlers or React components.
+Use TypeScript + ESM throughout. Biome enforces 2-space indentation, double quotes, semicolons, and import organization. Keep CLI filenames kebab-case (`session-extractor.ts`, `claude-code.ts`); export React components in PascalCase. In `web/`, prefer the `@/` path alias for local imports. All web components should use shadcn/ui patterns. Add new UI components with `pnpm dlx shadcn@latest add [component]` from the repo root instead of hand-rolling base primitives in `web/components/ui`. Keep parsing and business logic in `domain/`, `services/`, or `parsers/`; keep terminal/UI rendering in command handlers or React components.
 
 ## Testing Guidelines
 
@@ -28,4 +28,4 @@ Follow the Conventional Commit style used in history: `feat: ...`, `feat(cli): .
 
 ## Security & Configuration Tips
 
-Never commit API keys, `.env*`, or user config. The CLI stores local config in `~/.tokens-burned/`; set `TOKENS_BURNED_DEV=1` when you need a separate dev config file. Read `web/AGENTS.md` before making significant Next.js changes.
+Never commit API keys, `.env*`, or user config. The CLI stores local config in `~/.tokens-burned/`; set `TOKENS_BURNED_DEV=1` for a separate dev config. Read `web/AGENTS.md` before making significant Next.js changes.
