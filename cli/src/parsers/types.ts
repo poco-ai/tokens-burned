@@ -1,7 +1,7 @@
 import type {
-  TokenUsageEntry,
-  SessionEvent,
   ParseResult,
+  SessionEvent,
+  TokenUsageEntry,
 } from "../domain/types";
 
 /**

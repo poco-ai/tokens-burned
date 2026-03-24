@@ -1,15 +1,15 @@
-import { join } from "node:path";
 import { homedir } from "node:os";
-import type { IParser, ToolDefinition } from "./types";
-import type {
-  TokenUsageEntry,
-  SessionEvent,
-  ParseResult,
-} from "../domain/types";
+import { join } from "node:path";
 import { aggregateToBuckets } from "../domain/aggregator";
 import { extractSessions } from "../domain/session-extractor";
+import type {
+  ParseResult,
+  SessionEvent,
+  TokenUsageEntry,
+} from "../domain/types";
 import { findJsonlFiles, readFileSafe } from "../infrastructure/fs/utils";
 import { registerParser } from "./registry";
+import type { IParser, ToolDefinition } from "./types";
 
 const TOOL: ToolDefinition = {
   id: "codex",
@@ -63,7 +63,7 @@ class CodexParser implements IParser {
 
       // Extract project name and model from session_meta line
       let sessionProject = "unknown";
-      let sessionModel = "unknown";
+      const sessionModel = "unknown";
       for (const line of content.split("\n")) {
         if (!line.trim()) continue;
         try {
@@ -102,7 +102,7 @@ class CodexParser implements IParser {
 
           if (obj.timestamp) {
             const evTs = new Date(obj.timestamp);
-            if (!isNaN(evTs.getTime())) {
+            if (!Number.isNaN(evTs.getTime())) {
               const isUserTurn =
                 obj.type === "turn_context" || obj.type === "session_meta";
               sessionEvents.push({
@@ -131,7 +131,7 @@ class CodexParser implements IParser {
           if (!info) continue;
 
           const timestamp = obj.timestamp ? new Date(obj.timestamp) : null;
-          if (!timestamp || isNaN(timestamp.getTime())) continue;
+          if (!timestamp || Number.isNaN(timestamp.getTime())) continue;
 
           // Prefer incremental per-request usage; compute delta from cumulative total as fallback
           let usage = info.last_token_usage;
@@ -177,9 +177,7 @@ class CodexParser implements IParser {
             cachedInputTokens: cachedInput,
             reasoningOutputTokens: reasoningOutput,
           });
-        } catch {
-          continue;
-        }
+        } catch {}
       }
     }
 

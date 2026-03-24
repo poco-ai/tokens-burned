@@ -1,8 +1,9 @@
 import { hostname } from "node:os";
-import type { Config } from "../infrastructure/config/manager";
+import type { ApiSettings } from "../domain/types";
 import { ApiClient } from "../infrastructure/api/client";
-import { runAllParsers } from "./parser-service";
+import type { Config } from "../infrastructure/config/manager";
 import { logger } from "../utils/logger";
+import { runAllParsers } from "./parser-service";
 
 const BATCH_SIZE = 100;
 const SESSION_BATCH_SIZE = 500;
@@ -65,7 +66,7 @@ export async function runSync(
   const apiUrl = config.apiUrl || "https://vibecafe.ai";
   const apiClient = new ApiClient(apiUrl, config.apiKey);
 
-  let settings;
+  let settings: ApiSettings | null;
   try {
     settings = await apiClient.fetchSettings();
   } catch {

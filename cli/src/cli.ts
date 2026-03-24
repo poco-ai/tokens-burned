@@ -1,9 +1,9 @@
 import { Command } from "commander";
-import { runInit } from "./commands/init";
-import { runSyncCommand } from "./commands/sync";
-import { runDaemon } from "./commands/daemon";
-import { runStatus } from "./commands/status";
 import { handleConfig } from "./commands/config";
+import { runDaemon } from "./commands/daemon";
+import { runInit } from "./commands/init";
+import { runStatus } from "./commands/status";
+import { runSyncCommand } from "./commands/sync";
 import { loadConfig } from "./infrastructure/config/manager";
 import { runSync } from "./services/sync-service";
 
@@ -71,7 +71,7 @@ export function createCli(): Command {
     .argument("[key]", "Config key")
     .argument("[value]", "Config value")
     .allowUnknownOption(true)
-    .action((subcommand, key, value, cmd) => {
+    .action((_subcommand, _key, _value, cmd) => {
       // Get all args after "config"
       const args = cmd.args.slice(1);
       handleConfig(args);

@@ -1,8 +1,4 @@
-import {
-  loadConfig,
-  saveConfig,
-  isValidConfigKey,
-} from "../infrastructure/config/manager";
+import { loadConfig, saveConfig } from "../infrastructure/config/manager";
 import { logger } from "../utils/logger";
 
 const VALID_KEYS = ["apiKey", "apiUrl", "syncInterval", "logLevel"];
@@ -46,7 +42,7 @@ export function handleConfig(args: string[]): void {
       // Type conversion for numeric values
       if (key === "syncInterval") {
         value = parseInt(value, 10);
-        if (isNaN(value)) {
+        if (Number.isNaN(value)) {
           logger.error("syncInterval must be a number (milliseconds)");
           process.exit(1);
         }

@@ -1,15 +1,15 @@
-import { join } from "node:path";
-import { homedir } from "node:os";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import type { IParser, ToolDefinition } from "./types";
-import type {
-  TokenUsageEntry,
-  SessionEvent,
-  ParseResult,
-} from "../domain/types";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { aggregateToBuckets } from "../domain/aggregator";
 import { extractSessions } from "../domain/session-extractor";
+import type {
+  ParseResult,
+  SessionEvent,
+  TokenUsageEntry,
+} from "../domain/types";
 import { registerParser } from "./registry";
+import type { IParser, ToolDefinition } from "./types";
 
 const TOOL: ToolDefinition = {
   id: "gemini-cli",
@@ -32,9 +32,7 @@ function findSessionFiles(baseDir: string): string[] {
             results.push(join(chatsDir, f));
           }
         }
-      } catch {
-        continue;
-      }
+      } catch {}
     }
   } catch {
     return results;
@@ -97,7 +95,7 @@ class GeminiCliParser implements IParser {
         const timestamp = msg.timestamp || msg.createTime || data.createTime;
         if (!timestamp) continue;
         const ts = new Date(timestamp);
-        if (isNaN(ts.getTime())) continue;
+        if (Number.isNaN(ts.getTime())) continue;
 
         const role = msg.role === "user" ? "user" : "assistant";
         sessionEvents.push({

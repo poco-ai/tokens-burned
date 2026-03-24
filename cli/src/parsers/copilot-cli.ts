@@ -1,15 +1,15 @@
-import { join, basename } from "node:path";
-import { homedir } from "node:os";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import type { IParser, ToolDefinition } from "./types";
-import type {
-  TokenUsageEntry,
-  SessionEvent,
-  ParseResult,
-} from "../domain/types";
+import { homedir } from "node:os";
+import { basename, join } from "node:path";
 import { aggregateToBuckets } from "../domain/aggregator";
 import { extractSessions } from "../domain/session-extractor";
+import type {
+  ParseResult,
+  SessionEvent,
+  TokenUsageEntry,
+} from "../domain/types";
 import { registerParser } from "./registry";
+import type { IParser, ToolDefinition } from "./types";
 
 const TOOL: ToolDefinition = {
   id: "copilot-cli",
@@ -97,33 +97,34 @@ class CopilotCliParser implements IParser {
         try {
           const obj = JSON.parse(line) as CopilotEvent;
           const timestamp = obj.timestamp ? new Date(obj.timestamp) : null;
-          const hasTimestamp = timestamp && !isNaN(timestamp.getTime());
+          const hasTimestamp = timestamp && !Number.isNaN(timestamp.getTime());
 
           if (obj.type === "session.start" || obj.type === "session.resume") {
             currentProject = getProjectFromContext(obj.data?.context);
           }
 
-          if (hasTimestamp && obj.type === "user.message") {
+          if (hasTimestamp && timestamp && obj.type === "user.message") {
             sessionEvents.push({
               sessionId,
               source: "copilot-cli",
               project: currentProject,
-              timestamp: timestamp!,
+              timestamp,
               role: "user",
             });
           }
 
-          if (hasTimestamp && obj.type === "assistant.message") {
+          if (hasTimestamp && timestamp && obj.type === "assistant.message") {
             sessionEvents.push({
               sessionId,
               source: "copilot-cli",
               project: currentProject,
-              timestamp: timestamp!,
+              timestamp,
               role: "assistant",
             });
           }
 
-          if (obj.type !== "session.shutdown" || !hasTimestamp) continue;
+          if (obj.type !== "session.shutdown" || !hasTimestamp || !timestamp)
+            continue;
 
           const modelMetrics = obj.data?.modelMetrics || {};
           for (const [model, metrics] of Object.entries(modelMetrics)) {
@@ -142,16 +143,14 @@ class CopilotCliParser implements IParser {
               source: "copilot-cli",
               model,
               project: currentProject,
-              timestamp: timestamp!,
+              timestamp,
               inputTokens: Math.max(0, totalInput - cachedRead),
               outputTokens: output,
               cachedInputTokens: cachedRead,
               reasoningOutputTokens: 0,
             });
           }
-        } catch {
-          continue;
-        }
+        } catch {}
       }
     }
 

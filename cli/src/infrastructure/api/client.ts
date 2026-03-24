@@ -2,10 +2,10 @@ import http from "node:http";
 import https from "node:https";
 import { URL } from "node:url";
 import type {
-  TokenBucket,
-  SessionMetadata,
   ApiSettings,
   IngestResponse,
+  SessionMetadata,
+  TokenBucket,
 } from "../../domain/types";
 
 const MAX_RETRIES = 3;

@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, basename, sep } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { basename, join, sep } from "node:path";
 
 /**
  * Recursively find all .jsonl files under a directory

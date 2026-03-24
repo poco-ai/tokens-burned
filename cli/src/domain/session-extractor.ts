@@ -13,7 +13,7 @@ export function extractSessions(events: SessionEvent[]): SessionMetadata[] {
   const groups = new Map<string, SessionEvent[]>();
   for (const e of events) {
     if (!groups.has(e.sessionId)) groups.set(e.sessionId, []);
-    groups.get(e.sessionId)!.push(e);
+    groups.get(e.sessionId)?.push(e);
   }
 
   const sessions: SessionMetadata[] = [];

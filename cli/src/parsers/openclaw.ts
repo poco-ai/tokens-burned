@@ -1,15 +1,15 @@
-import { join } from "node:path";
+import { type Dirent, existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import type { IParser, ToolDefinition } from "./types";
-import type {
-  TokenUsageEntry,
-  SessionEvent,
-  ParseResult,
-} from "../domain/types";
+import { join } from "node:path";
 import { aggregateToBuckets } from "../domain/aggregator";
 import { extractSessions } from "../domain/session-extractor";
+import type {
+  ParseResult,
+  SessionEvent,
+  TokenUsageEntry,
+} from "../domain/types";
 import { registerParser } from "./registry";
+import type { IParser, ToolDefinition } from "./types";
 
 const POSSIBLE_ROOTS = [
   join(homedir(), ".openclaw"),
@@ -73,7 +73,7 @@ class OpenClawParser implements IParser {
       const agentsDir = join(root, "agents");
       if (!existsSync(agentsDir)) continue;
 
-      let agentDirs;
+      let agentDirs: Dirent[];
       try {
         agentDirs = readdirSync(agentsDir, { withFileTypes: true }).filter(
           (d) => d.isDirectory(),
@@ -118,7 +118,7 @@ class OpenClawParser implements IParser {
               const ts = new Date(
                 typeof timestamp === "number" ? timestamp : timestamp,
               );
-              if (isNaN(ts.getTime())) continue;
+              if (Number.isNaN(ts.getTime())) continue;
 
               sessionEvents.push({
                 sessionId: filePath,
@@ -161,9 +161,7 @@ class OpenClawParser implements IParser {
                 ),
                 reasoningOutputTokens: 0,
               });
-            } catch {
-              continue;
-            }
+            } catch {}
           }
         }
       }

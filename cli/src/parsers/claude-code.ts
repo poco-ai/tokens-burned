@@ -1,19 +1,19 @@
-import { join, sep } from "node:path";
 import { homedir } from "node:os";
-import type { IParser, ToolDefinition } from "./types";
-import type {
-  TokenUsageEntry,
-  SessionEvent,
-  ParseResult,
-} from "../domain/types";
-import { aggregateToBuckets, roundToHalfHour } from "../domain/aggregator";
+import { join, sep } from "node:path";
+import { aggregateToBuckets } from "../domain/aggregator";
 import { extractSessions } from "../domain/session-extractor";
+import type {
+  ParseResult,
+  SessionEvent,
+  TokenUsageEntry,
+} from "../domain/types";
 import {
+  extractSessionId,
   findJsonlFiles,
   readFileSafe,
-  extractSessionId,
 } from "../infrastructure/fs/utils";
 import { registerParser } from "./registry";
+import type { IParser, ToolDefinition } from "./types";
 
 const TOOL: ToolDefinition = {
   id: "claude-code",
@@ -64,7 +64,7 @@ class ClaudeCodeParser implements IParser {
           const timestamp = obj.timestamp;
           if (!timestamp) continue;
           const ts = new Date(timestamp);
-          if (isNaN(ts.getTime())) continue;
+          if (Number.isNaN(ts.getTime())) continue;
 
           if (
             obj.type === "user" ||
@@ -105,9 +105,7 @@ class ClaudeCodeParser implements IParser {
             cachedInputTokens: usage.cache_read_input_tokens || 0,
             reasoningOutputTokens: 0,
           });
-        } catch {
-          continue;
-        }
+        } catch {}
       }
     }
 
@@ -129,7 +127,7 @@ class ClaudeCodeParser implements IParser {
           const timestamp = obj.timestamp;
           if (!timestamp) continue;
           const ts = new Date(timestamp);
-          if (isNaN(ts.getTime())) continue;
+          if (Number.isNaN(ts.getTime())) continue;
 
           if (
             obj.type === "user" ||
@@ -145,9 +143,7 @@ class ClaudeCodeParser implements IParser {
               role: obj.type === "user" ? "user" : "assistant",
             });
           }
-        } catch {
-          continue;
-        }
+        } catch {}
       }
     }
 

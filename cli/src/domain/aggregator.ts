@@ -1,5 +1,5 @@
 import { hostname } from "node:os";
-import type { TokenUsageEntry, TokenBucket } from "./types";
+import type { TokenBucket, TokenUsageEntry } from "./types";
 
 /**
  * Round a date down to the nearest 30-minute bucket
@@ -36,7 +36,8 @@ export function aggregateToBuckets(entries: TokenUsageEntry[]): TokenBucket[] {
       });
     }
 
-    const b = map.get(key)!;
+    const b = map.get(key);
+    if (!b) continue;
     b.inputTokens += e.inputTokens || 0;
     b.outputTokens += e.outputTokens || 0;
     b.cachedInputTokens += e.cachedInputTokens || 0;

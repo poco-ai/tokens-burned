@@ -7,16 +7,19 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "dev:cli": "pnpm --filter tokens-burned dev",
-    "dev:web": "pnpm --filter @tokens-burned/web dev",
-    "build:cli": "pnpm --filter tokens-burned build",
-    "build:web": "pnpm --filter @tokens-burned/web build",
+    "dev:cli": "pnpm --filter ./cli dev",
+    "dev:web": "pnpm --filter ./web dev",
+    "build:cli": "pnpm --filter ./cli build",
+    "build:web": "pnpm --filter ./web build",
     "build": "pnpm run build:cli && pnpm run build:web",
-    "lint": "pnpm --filter @tokens-burned/web lint",
+    "lint:cli": "pnpm --filter ./cli lint",
+    "lint:web": "pnpm --filter ./web lint",
+    "format:cli": "pnpm --filter ./cli format",
+    "format:web": "pnpm --filter ./web format",
+    "check": "pnpm run lint:cli && pnpm run lint:web && pnpm run format:cli && pnpm run format:web",
     "prepare": "husky"
   },
   "devDependencies": {
-    "husky": "^9.1.7",
-    "prettier": "3.8.1"
+    "husky": "^9.1.7"
   }
 }

@@ -1,15 +1,15 @@
-import { createInterface } from "node:readline";
 import { execFile } from "node:child_process";
 import { platform } from "node:os";
+import { createInterface } from "node:readline";
+import { ApiClient } from "../infrastructure/api/client";
 import {
+  getDefaultApiUrl,
   loadConfig,
   saveConfig,
   validateApiKey,
-  getDefaultApiUrl,
 } from "../infrastructure/config/manager";
-import { ApiClient } from "../infrastructure/api/client";
-import { runSync } from "../services/sync-service";
 import { getDetectedTools } from "../services/parser-service";
+import { runSync } from "../services/sync-service";
 import { logger } from "../utils/logger";
 
 function prompt(question: string): Promise<string> {

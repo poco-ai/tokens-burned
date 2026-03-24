@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { loadConfig, getConfigPath } from "../infrastructure/config/manager";
+import { getConfigPath, loadConfig } from "../infrastructure/config/manager";
 import { detectInstalledTools, getAllTools } from "../parsers/registry";
 import { logger } from "../utils/logger";
 

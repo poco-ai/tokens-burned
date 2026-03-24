@@ -1,16 +1,16 @@
-import { join, basename } from "node:path";
-import { homedir } from "node:os";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-import type { IParser, ToolDefinition } from "./types";
-import type {
-  TokenUsageEntry,
-  SessionEvent,
-  ParseResult,
-} from "../domain/types";
+import { type Dirent, existsSync, readdirSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { basename, join } from "node:path";
 import { aggregateToBuckets } from "../domain/aggregator";
 import { extractSessions } from "../domain/session-extractor";
+import type {
+  ParseResult,
+  SessionEvent,
+  TokenUsageEntry,
+} from "../domain/types";
 import { registerParser } from "./registry";
+import type { IParser, ToolDefinition } from "./types";
 
 const TOOL: ToolDefinition = {
   id: "opencode",
@@ -111,7 +111,7 @@ class OpenCodeParser implements IParser {
 
     for (const row of rows) {
       const timestamp = new Date(row.created);
-      if (isNaN(timestamp.getTime())) continue;
+      if (Number.isNaN(timestamp.getTime())) continue;
 
       const project = row.rootPath ? basename(row.rootPath) : "unknown";
       const sessionId = row.sessionID || "unknown";
@@ -159,7 +159,7 @@ class OpenCodeParser implements IParser {
     const entries: TokenUsageEntry[] = [];
     const sessionEvents: SessionEvent[] = [];
 
-    let sessionDirs;
+    let sessionDirs: Dirent[];
     try {
       sessionDirs = readdirSync(MESSAGES_DIR, { withFileTypes: true }).filter(
         (d) => d.isDirectory() && d.name.startsWith("ses_"),
@@ -188,7 +188,7 @@ class OpenCodeParser implements IParser {
         }
 
         const timestamp = new Date(data.time?.created || data.created);
-        if (isNaN(timestamp.getTime())) continue;
+        if (Number.isNaN(timestamp.getTime())) continue;
 
         const rootPath = data.path?.root;
         const project = rootPath ? basename(rootPath) : "unknown";
