@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "prisma generate",
     "dev": "next dev",
+    "prebuild": "prisma generate",
     "build": "next build",
     "start": "next start",
+    "pretest": "prisma generate",
     "test": "vitest run",
     "lint": "biome check",
     "format": "biome format --write"
