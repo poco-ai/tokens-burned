@@ -12,16 +12,32 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UsageApiKeyStatus {
+  active
+  disabled
+}
+
+enum ProjectMode {
+  hashed
+  raw
+  disabled
+}
+
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  id              String            @id
+  name            String
+  email           String
+  emailVerified   Boolean           @default(false)
+  image           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+  usagePreference UsagePreference?
+  usageApiKeys    UsageApiKey[]
+  devices         Device[]
+  usageBuckets    UsageBucket[]
+  usageSessions   UsageSession[]
 
   @@unique([email])
   @@map("user")
@@ -73,4 +89,90 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model UsagePreference {
+  id              String      @id @default(cuid())
+  userId          String      @unique
+  timezone        String      @default("UTC")
+  projectMode     ProjectMode @default(hashed)
+  projectHashSalt String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UsageApiKey {
+  id         String            @id @default(cuid())
+  userId     String
+  name       String
+  prefix     String
+  keyHash    String            @unique
+  status     UsageApiKeyStatus @default(active)
+  lastUsedAt DateTime?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+}
+
+model Device {
+  id           String   @id @default(cuid())
+  userId       String
+  deviceId     String
+  hostname     String
+  firstSeenAt  DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+  lastApiKeyId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+}
+
+model UsageBucket {
+  id           String   @id @default(cuid())
+  userId       String
+  apiKeyId     String?
+  deviceId     String
+  source       String
+  model        String
+  projectKey   String
+  projectLabel String
+  bucketStart  DateTime
+  inputTokens  Int
+  outputTokens Int
+  cachedTokens Int
+  totalTokens  Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId, source, model, projectKey, bucketStart])
+  @@index([userId, bucketStart])
+}
+
+model UsageSession {
+  id               String   @id @default(cuid())
+  userId           String
+  apiKeyId         String?
+  deviceId         String
+  source           String
+  projectKey       String
+  projectLabel     String
+  sessionHash      String
+  firstMessageAt   DateTime
+  lastMessageAt    DateTime
+  durationSeconds  Int
+  activeSeconds    Int
+  messageCount     Int
+  userMessageCount Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId, source, sessionHash])
+  @@index([userId, firstMessageAt])
 }
