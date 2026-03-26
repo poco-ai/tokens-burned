@@ -15,7 +15,7 @@ const CONFIG_DIR = join(homedir(), ".tokens-burned");
 const isDev = process.env.TOKENS_BURNED_DEV === "1";
 const CONFIG_FILE = join(CONFIG_DIR, isDev ? "config.dev.json" : "config.json");
 
-const DEFAULT_API_URL = "https://vibecafe.ai";
+const DEFAULT_API_URL = "http://localhost:3000";
 const VALID_CONFIG_KEYS = [
   "apiKey",
   "apiUrl",

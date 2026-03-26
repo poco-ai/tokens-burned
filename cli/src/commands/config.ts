@@ -36,7 +36,7 @@ export function handleConfig(args: string[]): void {
       }
       const config = loadConfig() || {
         apiKey: "",
-        apiUrl: "https://vibecafe.ai",
+        apiUrl: "http://localhost:3000",
       };
 
       // Type conversion for numeric values
