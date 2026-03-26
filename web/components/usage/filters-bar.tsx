@@ -57,36 +57,32 @@ type FiltersBarProps = {
 const ALL_VALUE = "__all__";
 const presets: DashboardPreset[] = ["1d", "7d", "30d", "custom"];
 
+const iconMap = {
+  key: KeyRound,
+  device: Monitor,
+  tool: Wrench,
+  model: Brain,
+  project: Folder,
+} as const;
+
 function FilterIcon({
   type,
   className = "size-3.5",
 }: {
-  type: ReturnType<typeof getFilterMeta>["icon"];
+  type: keyof typeof iconMap;
   className?: string;
 }) {
-  switch (type) {
-    case "key":
-      return <KeyRound className={className} />;
-    case "device":
-      return <Monitor className={className} />;
-    case "tool":
-      return <Wrench className={className} />;
-    case "model":
-      return <Brain className={className} />;
-    case "project":
-      return <Folder className={className} />;
-    default:
-      return <SlidersHorizontal className={className} />;
-  }
+  const Icon = iconMap[type] ?? SlidersHorizontal;
+  return <Icon className={className} />;
 }
 
 type FilterSelectFieldProps = {
   label: string;
-  icon: ReturnType<typeof getFilterMeta>["icon"];
+  icon: keyof typeof iconMap;
   value: string;
   placeholder: string;
+  options: Array<{ value: string; label: string }>;
   onValueChange: (value: string) => void;
-  children: React.ReactNode;
 };
 
 function FilterSelectField({
@@ -94,8 +90,8 @@ function FilterSelectField({
   icon,
   value,
   placeholder,
+  options,
   onValueChange,
-  children,
 }: FilterSelectFieldProps) {
   return (
     <div className="grid gap-1.5 py-2 sm:grid-cols-[104px_minmax(0,1fr)] sm:items-center sm:gap-3">
@@ -107,7 +103,14 @@ function FilterSelectField({
         <SelectTrigger className="w-full bg-background">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        {children}
+        <SelectContent>
+          <SelectItem value={ALL_VALUE}>{placeholder}</SelectItem>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
       </Select>
     </div>
   );
@@ -189,6 +192,53 @@ export function FiltersBar({
       [key]: value === ALL_VALUE ? null : value,
     });
   };
+
+  const filterFields: Array<{
+    key: keyof UsageFilters;
+    label: string;
+    icon: keyof typeof iconMap;
+    placeholder: string;
+    options: Array<{ value: string; label: string }>;
+  }> = [
+    {
+      key: "apiKeyId",
+      label: "Keys",
+      icon: "key",
+      placeholder: "All keys",
+      options: options.apiKeys.map((opt) => ({
+        value: opt.id,
+        label: opt.name,
+      })),
+    },
+    {
+      key: "deviceId",
+      label: "Devices",
+      icon: "device",
+      placeholder: "All devices",
+      options: options.devices,
+    },
+    {
+      key: "source",
+      label: "Tools",
+      icon: "tool",
+      placeholder: "All tools",
+      options: options.sources,
+    },
+    {
+      key: "model",
+      label: "Models",
+      icon: "model",
+      placeholder: "All models",
+      options: options.models,
+    },
+    {
+      key: "projectKey",
+      label: "Projects",
+      icon: "project",
+      placeholder: "All projects",
+      options: options.projects,
+    },
+  ];
 
   return (
     <div className="rounded-2xl bg-background px-4 py-4 ring-1 ring-foreground/10 sm:px-6">
@@ -301,86 +351,17 @@ export function FiltersBar({
                 <div className="font-medium">Filters</div>
 
                 <div className="space-y-0.5">
-                  <FilterSelectField
-                    label="Keys"
-                    icon="key"
-                    value={filters.apiKeyId ?? ALL_VALUE}
-                    placeholder="All keys"
-                    onValueChange={(value) => updateFilter("apiKeyId", value)}
-                  >
-                    <SelectContent>
-                      <SelectItem value={ALL_VALUE}>All keys</SelectItem>
-                      {options.apiKeys.map((option) => (
-                        <SelectItem key={option.id} value={option.id}>
-                          {option.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </FilterSelectField>
-                  <FilterSelectField
-                    label="Devices"
-                    icon="device"
-                    value={filters.deviceId ?? ALL_VALUE}
-                    placeholder="All devices"
-                    onValueChange={(value) => updateFilter("deviceId", value)}
-                  >
-                    <SelectContent>
-                      <SelectItem value={ALL_VALUE}>All devices</SelectItem>
-                      {options.devices.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </FilterSelectField>
-                  <FilterSelectField
-                    label="Tools"
-                    icon="tool"
-                    value={filters.source ?? ALL_VALUE}
-                    placeholder="All tools"
-                    onValueChange={(value) => updateFilter("source", value)}
-                  >
-                    <SelectContent>
-                      <SelectItem value={ALL_VALUE}>All tools</SelectItem>
-                      {options.sources.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </FilterSelectField>
-                  <FilterSelectField
-                    label="Models"
-                    icon="model"
-                    value={filters.model ?? ALL_VALUE}
-                    placeholder="All models"
-                    onValueChange={(value) => updateFilter("model", value)}
-                  >
-                    <SelectContent>
-                      <SelectItem value={ALL_VALUE}>All models</SelectItem>
-                      {options.models.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </FilterSelectField>
-                  <FilterSelectField
-                    label="Projects"
-                    icon="project"
-                    value={filters.projectKey ?? ALL_VALUE}
-                    placeholder="All projects"
-                    onValueChange={(value) => updateFilter("projectKey", value)}
-                  >
-                    <SelectContent>
-                      <SelectItem value={ALL_VALUE}>All projects</SelectItem>
-                      {options.projects.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </FilterSelectField>
+                  {filterFields.map((field) => (
+                    <FilterSelectField
+                      key={field.key}
+                      label={field.label}
+                      icon={field.icon}
+                      value={filters[field.key] ?? ALL_VALUE}
+                      placeholder={field.placeholder}
+                      options={field.options}
+                      onValueChange={(value) => updateFilter(field.key, value)}
+                    />
+                  ))}
                 </div>
               </div>
             </PopoverContent>

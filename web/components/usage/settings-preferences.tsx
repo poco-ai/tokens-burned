@@ -1,16 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,6 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  getPreferenceStatusText,
+  hasPreferenceChanges,
+  type PreferenceSaveState,
+  projectModeOptions,
+} from "@/lib/usage/settings-view";
 import type { ProjectMode } from "@/lib/usage/types";
 
 const timezoneOptions = [
@@ -46,28 +45,6 @@ const timezoneOptions = [
   { value: "Pacific/Auckland", label: "Pacific/Auckland (UTC+12/+13)" },
 ];
 
-const projectModeOptions: Array<{
-  value: ProjectMode;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: "hashed",
-    label: "Hashed",
-    description: "Stable project hashes without revealing raw names.",
-  },
-  {
-    value: "raw",
-    label: "Raw",
-    description: "Upload the original project name for direct display.",
-  },
-  {
-    value: "disabled",
-    label: "Disabled",
-    description: "Turn off project attribution entirely.",
-  },
-];
-
 type SettingsPreferencesProps = {
   initialTimezone: string;
   initialProjectMode: ProjectMode;
@@ -80,66 +57,129 @@ export function SettingsPreferences({
   const [timezone, setTimezone] = useState(initialTimezone);
   const [projectMode, setProjectMode] =
     useState<ProjectMode>(initialProjectMode);
-  const [status, setStatus] = useState<string | null>(null);
+  const [savedTimezone, setSavedTimezone] = useState(initialTimezone);
+  const [savedProjectMode, setSavedProjectMode] =
+    useState<ProjectMode>(initialProjectMode);
+  const [saveState, setSaveState] = useState<PreferenceSaveState>("idle");
   const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const hasChanges = hasPreferenceChanges(
+    { timezone: savedTimezone, projectMode: savedProjectMode },
+    { timezone, projectMode },
+  );
+  const statusText = getPreferenceStatusText(saveState);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedIndicatorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
-  const savePreferences = async () => {
-    setIsSaving(true);
-    setError(null);
-    setStatus(null);
+  const savePreferences = useCallback(
+    async (nextTimezone: string, nextProjectMode: ProjectMode) => {
+      setSaveState("saving");
+      setError(null);
 
-    try {
-      const response = await fetch("/api/usage/preferences", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ timezone, projectMode }),
-      });
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Unable to save preferences.");
+      if (savedIndicatorTimeoutRef.current) {
+        clearTimeout(savedIndicatorTimeoutRef.current);
+        savedIndicatorTimeoutRef.current = null;
       }
 
-      setStatus(
-        `Saved account timezone ${payload.timezone} and project mode ${payload.projectMode}.`,
-      );
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to save preferences.",
-      );
-    } finally {
-      setIsSaving(false);
+      try {
+        const response = await fetch("/api/usage/preferences", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            timezone: nextTimezone,
+            projectMode: nextProjectMode,
+          }),
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Unable to save preferences.");
+        }
+
+        setSavedTimezone(payload.timezone);
+        setSavedProjectMode(payload.projectMode);
+        setSaveState("saved");
+        savedIndicatorTimeoutRef.current = setTimeout(() => {
+          setSaveState("idle");
+          savedIndicatorTimeoutRef.current = null;
+        }, 1500);
+      } catch (requestError) {
+        setError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Unable to save preferences.",
+        );
+        setSaveState("idle");
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!hasChanges) {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+
+      return;
     }
-  };
+
+    setSaveState("idle");
+    setError(null);
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      void savePreferences(timezone, projectMode);
+      saveTimeoutRef.current = null;
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
+  }, [hasChanges, projectMode, savePreferences, timezone]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      if (savedIndicatorTimeoutRef.current) {
+        clearTimeout(savedIndicatorTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <Card>
-      <CardHeader>
+    <Card
+      size="sm"
+      className="gap-0 bg-background/90 shadow-sm ring-1 ring-border/60"
+    >
+      <CardHeader className="gap-2 border-b border-border/50 pb-2 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle>Preferences</CardTitle>
-        <CardDescription>
-          Timezone controls dashboard date boundaries. Project mode controls how
-          project names appear in the dashboard.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {status ? (
-          <Alert>
-            <AlertDescription>{status}</AlertDescription>
-          </Alert>
+        {statusText ? (
+          <p className="text-sm text-muted-foreground">{statusText}</p>
         ) : null}
+      </CardHeader>
+      <CardContent className="space-y-3 pt-3">
         {error ? (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="border-destructive/20">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : null}
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
-          <div className="space-y-2">
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="space-y-1.5">
             <Label htmlFor="timezone">Timezone</Label>
             <Select value={timezone} onValueChange={setTimezone}>
               <SelectTrigger className="w-full">
@@ -155,7 +195,7 @@ export function SettingsPreferences({
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="project-mode">Project mode</Label>
             <Select
               value={projectMode}
@@ -172,18 +212,7 @@ export function SettingsPreferences({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-sm text-muted-foreground">
-              {
-                projectModeOptions.find(
-                  (option) => option.value === projectMode,
-                )?.description
-              }
-            </p>
           </div>
-
-          <Button type="button" onClick={savePreferences} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save"}
-          </Button>
         </div>
       </CardContent>
     </Card>

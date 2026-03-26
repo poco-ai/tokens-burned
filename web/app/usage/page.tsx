@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
 import { AccountMenu } from "@/components/usage/account-menu";
-import { ActivityTrendCard } from "@/components/usage/activity-trend-card";
 import { BreakdownTabs } from "@/components/usage/breakdown-tabs";
 import { EmptyState } from "@/components/usage/empty-state";
 import { FiltersBar } from "@/components/usage/filters-bar";
@@ -16,7 +15,6 @@ import { resolveDashboardRange } from "@/lib/usage/date-range";
 import { formatDateTime } from "@/lib/usage/format";
 import { getUsagePreference } from "@/lib/usage/preferences";
 import {
-  getActivityTrend,
   getBreakdowns,
   getFilterOptions,
   getLastSyncedAt,
@@ -73,23 +71,15 @@ export default async function UsagePage({ searchParams }: UsagePageProps) {
     projectKey: query.projectKey,
   };
 
-  const [
-    overview,
-    tokenTrend,
-    activityTrend,
-    breakdowns,
-    filterOptions,
-    lastSyncedAt,
-    keys,
-  ] = await Promise.all([
-    getOverviewMetrics({ userId: session.user.id, range, filters }),
-    getTokenTrend({ userId: session.user.id, range, filters }),
-    getActivityTrend({ userId: session.user.id, range, filters }),
-    getBreakdowns({ userId: session.user.id, range, filters }),
-    getFilterOptions(session.user.id),
-    getLastSyncedAt(session.user.id),
-    listUsageApiKeys(session.user.id),
-  ]);
+  const [overview, tokenTrend, breakdowns, filterOptions, lastSyncedAt, keys] =
+    await Promise.all([
+      getOverviewMetrics({ userId: session.user.id, range, filters }),
+      getTokenTrend({ userId: session.user.id, range, filters }),
+      getBreakdowns({ userId: session.user.id, range, filters }),
+      getFilterOptions(session.user.id),
+      getLastSyncedAt(session.user.id),
+      listUsageApiKeys(session.user.id),
+    ]);
 
   const hasData =
     overview.totalTokens.current > 0 || overview.sessions.current > 0;
@@ -134,10 +124,7 @@ export default async function UsagePage({ searchParams }: UsagePageProps) {
         {hasData ? (
           <>
             <KpiGrid overview={overview} />
-            <div className="grid gap-4 xl:grid-cols-2">
-              <TokenTrendCard data={tokenTrend} />
-              <ActivityTrendCard data={activityTrend} />
-            </div>
+            <TokenTrendCard data={tokenTrend} />
             <BreakdownTabs breakdowns={breakdowns} />
           </>
         ) : (
