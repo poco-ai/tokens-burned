@@ -3,7 +3,9 @@ import { platform } from "node:os";
 import { createInterface } from "node:readline";
 import { ApiClient } from "../infrastructure/api/client";
 import {
+  type Config,
   getDefaultApiUrl,
+  getOrCreateDeviceId,
   loadConfig,
   saveConfig,
   validateApiKey,
@@ -62,8 +64,15 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   logger.info(`\nVerifying key ${apiKey.slice(0, 8)}...`);
   try {
     const client = new ApiClient(apiUrl, apiKey);
-    await client.ingest([]);
-    logger.info("Key verified.\n");
+    const settings = await client.fetchSettings();
+
+    if (!settings) {
+      logger.info(
+        "Could not verify key settings (network error). Saving anyway.\n",
+      );
+    } else {
+      logger.info("Key verified.\n");
+    }
   } catch (err) {
     if ((err as Error).message === "UNAUTHORIZED") {
       logger.error("Invalid API key. Please check and try again.");
@@ -72,11 +81,14 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
     logger.info("Could not verify key (network error). Saving anyway.\n");
   }
 
-  const config = {
+  const config: Config = {
     apiKey,
     apiUrl,
   };
   saveConfig(config);
+  const deviceId = getOrCreateDeviceId(config);
+  config.deviceId = deviceId;
+  logger.info(`Device registered: ${deviceId.slice(0, 8)}...`);
 
   const tools = getDetectedTools();
   if (tools.length > 0) {

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -5,6 +6,7 @@ import { join } from "node:path";
 export interface Config {
   apiKey: string;
   apiUrl: string;
+  deviceId?: string;
   syncInterval?: number;
   logLevel?: "debug" | "info" | "warn" | "error";
 }
@@ -14,7 +16,13 @@ const isDev = process.env.TOKENS_BURNED_DEV === "1";
 const CONFIG_FILE = join(CONFIG_DIR, isDev ? "config.dev.json" : "config.json");
 
 const DEFAULT_API_URL = "https://vibecafe.ai";
-const VALID_CONFIG_KEYS = ["apiKey", "apiUrl", "syncInterval", "logLevel"];
+const VALID_CONFIG_KEYS = [
+  "apiKey",
+  "apiUrl",
+  "deviceId",
+  "syncInterval",
+  "logLevel",
+];
 
 export function getConfigPath(): string {
   return CONFIG_FILE;
@@ -45,6 +53,15 @@ export function deleteConfig(): void {
     const { unlinkSync } = require("node:fs");
     unlinkSync(CONFIG_FILE);
   }
+}
+
+export function getOrCreateDeviceId(config: Config): string {
+  if (config.deviceId) return config.deviceId;
+
+  const next = randomUUID();
+  saveConfig({ ...config, deviceId: next });
+
+  return next;
 }
 
 export function validateApiKey(key: string): boolean {

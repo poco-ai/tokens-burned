@@ -3,9 +3,10 @@ import https from "node:https";
 import { URL } from "node:url";
 import type {
   ApiSettings,
+  DeviceMetadata,
   IngestResponse,
-  SessionMetadata,
-  TokenBucket,
+  UploadSessionMetadata,
+  UploadTokenBucket,
 } from "../../domain/types";
 
 const MAX_RETRIES = 3;
@@ -22,14 +23,15 @@ export class ApiClient {
    * Ingest buckets and sessions to server
    */
   async ingest(
-    buckets: TokenBucket[],
-    sessions?: SessionMetadata[],
+    device: DeviceMetadata,
+    buckets: UploadTokenBucket[],
+    sessions?: UploadSessionMetadata[],
     onProgress?: (sent: number, total: number) => void,
   ): Promise<{ ingested?: number; sessions?: number }> {
     let lastError: Error | undefined;
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        return await this.sendIngest(buckets, sessions, onProgress);
+        return await this.sendIngest(device, buckets, sessions, onProgress);
       } catch (err) {
         lastError = err as Error;
         const httpErr = err as { statusCode?: number; message: string };
@@ -52,17 +54,19 @@ export class ApiClient {
   }
 
   private sendIngest(
-    buckets: TokenBucket[],
-    sessions?: SessionMetadata[],
+    device: DeviceMetadata,
+    buckets: UploadTokenBucket[],
+    sessions?: UploadSessionMetadata[],
     onProgress?: (sent: number, total: number) => void,
   ): Promise<{ ingested?: number; sessions?: number }> {
     return new Promise((resolve, reject) => {
       const url = new URL("/api/usage/ingest", this.apiUrl);
-      const payload: { buckets: TokenBucket[]; sessions?: SessionMetadata[] } =
-        { buckets };
-      if (sessions && sessions.length > 0) {
-        payload.sessions = sessions;
-      }
+      const payload = {
+        schemaVersion: 2 as const,
+        device,
+        buckets,
+        sessions: sessions ?? [],
+      };
       const body = Buffer.from(JSON.stringify(payload));
       const totalBytes = body.length;
       const mod = url.protocol === "https:" ? https : http;
@@ -103,7 +107,11 @@ export class ApiClient {
               return;
             }
             try {
-              resolve(JSON.parse(data) as IngestResponse);
+              const response = JSON.parse(data) as IngestResponse;
+              resolve({
+                ingested: response.bucketCount ?? response.ingested,
+                sessions: response.sessionCount ?? response.sessions,
+              });
             } catch {
               reject(new Error(`Invalid JSON response: ${data}`));
             }
@@ -144,7 +152,7 @@ export class ApiClient {
    * Fetch user settings from server
    */
   async fetchSettings(): Promise<ApiSettings | null> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const url = new URL("/api/usage/settings", this.apiUrl);
       const mod = url.protocol === "https:" ? https : http;
 
@@ -163,6 +171,10 @@ export class ApiClient {
             data += chunk;
           });
           res.on("end", () => {
+            if (res.statusCode === 401) {
+              reject(new Error("UNAUTHORIZED"));
+              return;
+            }
             if (
               !res.statusCode ||
               res.statusCode < 200 ||
@@ -172,7 +184,18 @@ export class ApiClient {
               return;
             }
             try {
-              resolve(JSON.parse(data) as ApiSettings);
+              const settings = JSON.parse(data) as ApiSettings;
+              if (
+                settings.schemaVersion !== 2 ||
+                !settings.projectMode ||
+                !settings.projectHashSalt ||
+                !settings.timezone
+              ) {
+                resolve(null);
+                return;
+              }
+
+              resolve(settings);
             } catch {
               resolve(null);
             }

@@ -13,7 +13,7 @@ export interface TokenUsageEntry {
 }
 
 /**
- * 30-minute aggregation bucket for server sync
+ * 30-minute aggregation bucket from parsers before upload normalization
  */
 export interface TokenBucket {
   source: string;
@@ -29,6 +29,23 @@ export interface TokenBucket {
 }
 
 /**
+ * Canonical upload bucket for the v2 ingest API
+ */
+export interface UploadTokenBucket {
+  source: string;
+  model: string;
+  projectKey: string;
+  projectLabel: string;
+  bucketStart: string;
+  deviceId: string;
+  hostname: string;
+  inputTokens: number;
+  outputTokens: number;
+  cachedTokens: number;
+  totalTokens: number;
+}
+
+/**
  * Session timing event for extracting session metadata
  */
 export interface SessionEvent {
@@ -40,7 +57,7 @@ export interface SessionEvent {
 }
 
 /**
- * Session metadata for analytics
+ * Session metadata from parsers before upload normalization
  */
 export interface SessionMetadata {
   source: string;
@@ -57,6 +74,24 @@ export interface SessionMetadata {
 }
 
 /**
+ * Canonical upload session metadata for the v2 ingest API
+ */
+export interface UploadSessionMetadata {
+  source: string;
+  projectKey: string;
+  projectLabel: string;
+  sessionHash: string;
+  deviceId: string;
+  hostname: string;
+  firstMessageAt: string;
+  lastMessageAt: string;
+  durationSeconds: number;
+  activeSeconds: number;
+  messageCount: number;
+  userMessageCount: number;
+}
+
+/**
  * Result from a parser
  */
 export interface ParseResult {
@@ -68,13 +103,25 @@ export interface ParseResult {
  * API settings response
  */
 export interface ApiSettings {
-  uploadProject: boolean;
+  schemaVersion: 2;
+  projectMode: "hashed" | "raw" | "disabled";
+  projectHashSalt: string;
+  timezone: string;
+}
+
+export interface DeviceMetadata {
+  deviceId: string;
+  hostname: string;
 }
 
 /**
  * Ingest response from server
  */
 export interface IngestResponse {
+  ok?: boolean;
+  bucketCount?: number;
+  sessionCount?: number;
+  deviceId?: string;
   ingested?: number;
   sessions?: number;
 }
