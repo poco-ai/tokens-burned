@@ -17,7 +17,7 @@ import type {
   UsageOverviewMetrics,
 } from "./types";
 
-function applyUsageFilters<T extends Record<string, unknown>>(
+function applyBucketFilters<T extends Record<string, unknown>>(
   input: T,
   filters: UsageFilters,
 ) {
@@ -31,13 +31,27 @@ function applyUsageFilters<T extends Record<string, unknown>>(
   };
 }
 
+function applySessionFilters<T extends Record<string, unknown>>(
+  input: T,
+  filters: UsageFilters,
+) {
+  // Note: UsageSession doesn't have a `model` field, so we exclude it here
+  return {
+    ...input,
+    ...(filters.apiKeyId ? { apiKeyId: filters.apiKeyId } : {}),
+    ...(filters.deviceId ? { deviceId: filters.deviceId } : {}),
+    ...(filters.source ? { source: filters.source } : {}),
+    ...(filters.projectKey ? { projectKey: filters.projectKey } : {}),
+  };
+}
+
 async function loadBuckets(input: {
   userId: string;
   range: DashboardRange;
   filters: UsageFilters;
 }) {
   return prisma.usageBucket.findMany({
-    where: applyUsageFilters(
+    where: applyBucketFilters(
       {
         userId: input.userId,
         bucketStart: {
@@ -57,7 +71,7 @@ async function loadSessions(input: {
   filters: UsageFilters;
 }) {
   return prisma.usageSession.findMany({
-    where: applyUsageFilters(
+    where: applySessionFilters(
       {
         userId: input.userId,
         firstMessageAt: {
@@ -312,6 +326,28 @@ function ensureBreakdownRow(
   return next;
 }
 
+function buildDeviceDisplayLabels(
+  devices: Array<{ deviceId: string; hostname: string }>,
+) {
+  const hostnameCounts = new Map<string, number>();
+
+  for (const device of devices) {
+    hostnameCounts.set(
+      device.hostname,
+      (hostnameCounts.get(device.hostname) ?? 0) + 1,
+    );
+  }
+
+  return new Map(
+    devices.map((device) => [
+      device.deviceId,
+      (hostnameCounts.get(device.hostname) ?? 0) > 1
+        ? `${device.hostname} · ${device.deviceId.slice(0, 8)}`
+        : device.hostname,
+    ]),
+  );
+}
+
 export async function getBreakdowns(input: {
   userId: string;
   range: DashboardRange;
@@ -327,9 +363,7 @@ export async function getBreakdowns(input: {
     }),
   ]);
 
-  const deviceLabels = new Map(
-    devices.map((device) => [device.deviceId, device.hostname]),
-  );
+  const deviceLabels = buildDeviceDisplayLabels(devices);
   const byDevice = new Map<string, BreakdownRow>();
   const byTool = new Map<string, BreakdownRow>();
   const byModel = new Map<string, BreakdownRow>();
@@ -411,6 +445,7 @@ export async function getFilterOptions(
       },
     }),
   ]);
+  const deviceLabels = buildDeviceDisplayLabels(devices);
 
   const sources = new Map<string, FilterOption>();
   const models = new Map<string, FilterOption>();
@@ -429,7 +464,7 @@ export async function getFilterOptions(
     apiKeys,
     devices: devices.map((device) => ({
       value: device.deviceId,
-      label: device.hostname,
+      label: deviceLabels.get(device.deviceId) ?? device.hostname,
     })),
     sources: Array.from(sources.values()).sort((left, right) =>
       left.label.localeCompare(right.label),
