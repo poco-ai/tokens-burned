@@ -17,6 +17,41 @@ export const usageSettingsSchema = z.object({
   timezone: z.string().trim().min(1),
 });
 
+export const ingestBucketSchema = z.object({
+  source: z.string(),
+  model: z.string(),
+  projectKey: z.string(),
+  projectLabel: z.string(),
+  bucketStart: z.string().datetime(),
+  inputTokens: z.number().int().nonnegative(),
+  outputTokens: z.number().int().nonnegative(),
+  cachedTokens: z.number().int().nonnegative(),
+  totalTokens: z.number().int().nonnegative(),
+});
+
+export const ingestSessionSchema = z.object({
+  source: z.string(),
+  projectKey: z.string(),
+  projectLabel: z.string(),
+  sessionHash: z.string(),
+  firstMessageAt: z.string().datetime(),
+  lastMessageAt: z.string().datetime(),
+  durationSeconds: z.number().int().nonnegative(),
+  activeSeconds: z.number().int().nonnegative(),
+  messageCount: z.number().int().nonnegative(),
+  userMessageCount: z.number().int().nonnegative(),
+});
+
+export const ingestRequestSchema = z.object({
+  schemaVersion: z.literal(schemaVersion),
+  device: z.object({
+    deviceId: z.string().min(8),
+    hostname: z.string().min(1),
+  }),
+  buckets: z.array(ingestBucketSchema),
+  sessions: z.array(ingestSessionSchema),
+});
+
 export const dashboardQuerySchema = z
   .object({
     preset: dashboardPresetSchema.optional(),
