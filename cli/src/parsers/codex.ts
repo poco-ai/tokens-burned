@@ -100,17 +100,15 @@ class CodexParser implements IParser {
         try {
           const obj = JSON.parse(line) as CodexEvent;
 
-          if (obj.timestamp) {
+          if (obj.type === "turn_context" && obj.timestamp) {
             const evTs = new Date(obj.timestamp);
             if (!Number.isNaN(evTs.getTime())) {
-              const isUserTurn =
-                obj.type === "turn_context" || obj.type === "session_meta";
               sessionEvents.push({
                 sessionId: filePath,
                 source: "codex",
                 project: sessionProject,
                 timestamp: evTs,
-                role: isUserTurn ? "user" : "assistant",
+                role: "user",
               });
             }
           }
@@ -132,6 +130,14 @@ class CodexParser implements IParser {
 
           const timestamp = obj.timestamp ? new Date(obj.timestamp) : null;
           if (!timestamp || Number.isNaN(timestamp.getTime())) continue;
+
+          sessionEvents.push({
+            sessionId: filePath,
+            source: "codex",
+            project: sessionProject,
+            timestamp,
+            role: "assistant",
+          });
 
           // Prefer incremental per-request usage; compute delta from cumulative total as fallback
           let usage = info.last_token_usage;
@@ -162,10 +168,7 @@ class CodexParser implements IParser {
           const model =
             info.model || payload.model || turnContextModel || sessionModel;
 
-          // OpenAI API: input_tokens INCLUDES cached, output_tokens INCLUDES reasoning.
-          // Normalize to Anthropic-style semantics where each field is non-overlapping.
           const cachedInput = usage.cached_input_tokens || 0;
-          const reasoningOutput = usage.reasoning_output_tokens || 0;
 
           entries.push({
             source: "codex",
@@ -173,9 +176,8 @@ class CodexParser implements IParser {
             project: sessionProject,
             timestamp,
             inputTokens: (usage.input_tokens || 0) - cachedInput,
-            outputTokens: (usage.output_tokens || 0) - reasoningOutput,
-            cachedInputTokens: cachedInput,
-            reasoningOutputTokens: reasoningOutput,
+            outputTokens: usage.output_tokens || 0,
+            cachedTokens: cachedInput,
           });
         } catch {}
       }

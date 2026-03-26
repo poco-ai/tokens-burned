@@ -115,6 +115,7 @@ class OpenCodeParser implements IParser {
 
       const project = row.rootPath ? basename(row.rootPath) : "unknown";
       const sessionId = row.sessionID || "unknown";
+      if (row.role !== "user" && row.role !== "assistant") continue;
 
       sessionEvents.push({
         sessionId,
@@ -141,9 +142,8 @@ class OpenCodeParser implements IParser {
         project,
         timestamp,
         inputTokens: tokens.input || 0,
-        outputTokens: tokens.output || 0,
-        cachedInputTokens: tokens.cache?.read || 0,
-        reasoningOutputTokens: tokens.reasoning || 0,
+        outputTokens: (tokens.output || 0) + (tokens.reasoning || 0),
+        cachedTokens: tokens.cache?.read || 0,
       });
     }
 
@@ -192,6 +192,7 @@ class OpenCodeParser implements IParser {
 
         const rootPath = data.path?.root;
         const project = rootPath ? basename(rootPath) : "unknown";
+        if (data.role !== "user" && data.role !== "assistant") continue;
 
         sessionEvents.push({
           sessionId: sessionDir.name,
@@ -211,9 +212,8 @@ class OpenCodeParser implements IParser {
           project,
           timestamp,
           inputTokens: tokens.input || 0,
-          outputTokens: tokens.output || 0,
-          cachedInputTokens: tokens.cache?.read || 0,
-          reasoningOutputTokens: tokens.reasoning || 0,
+          outputTokens: (tokens.output || 0) + (tokens.reasoning || 0),
+          cachedTokens: tokens.cache?.read || 0,
         });
       }
     }

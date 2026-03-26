@@ -97,7 +97,9 @@ class GeminiCliParser implements IParser {
         const ts = new Date(timestamp);
         if (Number.isNaN(ts.getTime())) continue;
 
-        const role = msg.role === "user" ? "user" : "assistant";
+        if (msg.role !== "user" && msg.role !== "assistant") continue;
+
+        const role = msg.role;
         sessionEvents.push({
           sessionId: filePath,
           source: "gemini-cli",
@@ -119,9 +121,8 @@ class GeminiCliParser implements IParser {
             project: "unknown",
             timestamp: ts,
             inputTokens: (tokens.input || 0) - cached,
-            outputTokens: (tokens.output || 0) - thoughts,
-            cachedInputTokens: cached,
-            reasoningOutputTokens: thoughts,
+            outputTokens: (tokens.output || 0) + thoughts,
+            cachedTokens: cached,
           });
         } else if (usage) {
           const cached = usage.cachedContentTokenCount || 0;
@@ -134,10 +135,9 @@ class GeminiCliParser implements IParser {
             inputTokens:
               (usage.promptTokenCount || usage.input_tokens || 0) - cached,
             outputTokens:
-              (usage.candidatesTokenCount || usage.output_tokens || 0) -
+              (usage.candidatesTokenCount || usage.output_tokens || 0) +
               thoughts,
-            cachedInputTokens: cached,
-            reasoningOutputTokens: thoughts,
+            cachedTokens: cached,
           });
         }
       }

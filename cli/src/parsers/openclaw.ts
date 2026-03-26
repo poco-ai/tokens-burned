@@ -119,6 +119,7 @@ class OpenClawParser implements IParser {
                 typeof timestamp === "number" ? timestamp : timestamp,
               );
               if (Number.isNaN(ts.getTime())) continue;
+              if (msg.role !== "user" && msg.role !== "assistant") continue;
 
               sessionEvents.push({
                 sessionId: filePath,
@@ -153,13 +154,12 @@ class OpenClawParser implements IParser {
                   "completionTokens",
                   "completion_tokens",
                 ),
-                cachedInputTokens: getTokens(
+                cachedTokens: getTokens(
                   usage,
                   "cacheRead",
                   "cache_read",
                   "cache_read_input_tokens",
                 ),
-                reasoningOutputTokens: 0,
               });
             } catch {}
           }

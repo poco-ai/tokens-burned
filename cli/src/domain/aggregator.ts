@@ -30,8 +30,7 @@ export function aggregateToBuckets(entries: TokenUsageEntry[]): TokenBucket[] {
         hostname: host,
         inputTokens: 0,
         outputTokens: 0,
-        cachedInputTokens: 0,
-        reasoningOutputTokens: 0,
+        cachedTokens: 0,
         totalTokens: 0,
       });
     }
@@ -40,12 +39,9 @@ export function aggregateToBuckets(entries: TokenUsageEntry[]): TokenBucket[] {
     if (!b) continue;
     b.inputTokens += e.inputTokens || 0;
     b.outputTokens += e.outputTokens || 0;
-    b.cachedInputTokens += e.cachedInputTokens || 0;
-    b.reasoningOutputTokens += e.reasoningOutputTokens || 0;
+    b.cachedTokens += e.cachedTokens || 0;
     b.totalTokens +=
-      (e.inputTokens || 0) +
-      (e.outputTokens || 0) +
-      (e.reasoningOutputTokens || 0);
+      (e.inputTokens || 0) + (e.outputTokens || 0) + (e.cachedTokens || 0);
   }
 
   return Array.from(map.values());

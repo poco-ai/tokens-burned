@@ -146,8 +146,7 @@ class CopilotCliParser implements IParser {
               timestamp,
               inputTokens: Math.max(0, totalInput - cachedRead),
               outputTokens: output,
-              cachedInputTokens: cachedRead,
-              reasoningOutputTokens: 0,
+              cachedTokens: cachedRead,
             });
           }
         } catch {}

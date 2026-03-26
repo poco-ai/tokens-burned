@@ -49,14 +49,32 @@ function toUploadBuckets(
   settings: ApiSettings,
   device: DeviceMetadata,
 ): UploadTokenBucket[] {
-  return buckets.map((bucket) => {
+  const aggregated = new Map<string, UploadTokenBucket>();
+
+  for (const bucket of buckets) {
     const project = toProjectIdentity({
       project: bucket.project || "unknown",
       mode: settings.projectMode,
       salt: settings.projectHashSalt,
     });
+    const key = [
+      bucket.source,
+      bucket.model,
+      project.projectKey,
+      bucket.bucketStart,
+      device.deviceId,
+    ].join("|");
 
-    return {
+    const existing = aggregated.get(key);
+    if (existing) {
+      existing.inputTokens += bucket.inputTokens;
+      existing.outputTokens += bucket.outputTokens;
+      existing.cachedTokens += bucket.cachedTokens || 0;
+      existing.totalTokens += bucket.totalTokens;
+      continue;
+    }
+
+    aggregated.set(key, {
       source: bucket.source,
       model: bucket.model,
       projectKey: project.projectKey,
@@ -65,15 +83,13 @@ function toUploadBuckets(
       deviceId: device.deviceId,
       hostname: device.hostname,
       inputTokens: bucket.inputTokens,
-      outputTokens: bucket.outputTokens + (bucket.reasoningOutputTokens || 0),
-      cachedTokens: bucket.cachedInputTokens || 0,
-      totalTokens:
-        bucket.inputTokens +
-        bucket.outputTokens +
-        (bucket.reasoningOutputTokens || 0) +
-        (bucket.cachedInputTokens || 0),
-    };
-  });
+      outputTokens: bucket.outputTokens,
+      cachedTokens: bucket.cachedTokens || 0,
+      totalTokens: bucket.totalTokens,
+    });
+  }
+
+  return Array.from(aggregated.values());
 }
 
 function toUploadSessions(

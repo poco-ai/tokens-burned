@@ -66,12 +66,7 @@ class ClaudeCodeParser implements IParser {
           const ts = new Date(timestamp);
           if (Number.isNaN(ts.getTime())) continue;
 
-          if (
-            obj.type === "user" ||
-            obj.type === "assistant" ||
-            obj.type === "tool_use" ||
-            obj.type === "tool_result"
-          ) {
+          if (obj.type === "user" || obj.type === "assistant") {
             sessionEvents.push({
               sessionId,
               source: "claude-code",
@@ -102,8 +97,7 @@ class ClaudeCodeParser implements IParser {
             timestamp: ts,
             inputTokens: usage.input_tokens || 0,
             outputTokens: usage.output_tokens || 0,
-            cachedInputTokens: usage.cache_read_input_tokens || 0,
-            reasoningOutputTokens: 0,
+            cachedTokens: usage.cache_read_input_tokens || 0,
           });
         } catch {}
       }
@@ -129,12 +123,7 @@ class ClaudeCodeParser implements IParser {
           const ts = new Date(timestamp);
           if (Number.isNaN(ts.getTime())) continue;
 
-          if (
-            obj.type === "user" ||
-            obj.type === "assistant" ||
-            obj.type === "tool_use" ||
-            obj.type === "tool_result"
-          ) {
+          if (obj.type === "user" || obj.type === "assistant") {
             sessionEvents.push({
               sessionId,
               source: "claude-code",
