@@ -10,6 +10,24 @@ export const projectModeSchema = z.enum(projectModes);
 export const usageApiKeyStatusSchema = z.enum(usageApiKeyStatuses);
 export const dashboardPresetSchema = z.enum(dashboardPresets);
 
+export function isValidTimezone(timezone: string): boolean {
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: timezone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const timezoneSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(100)
+  .refine(isValidTimezone, {
+    message: "Invalid timezone. Use IANA format like Asia/Shanghai.",
+  });
+
 const dashboardDateParamSchema = z
   .string()
   .trim()
@@ -100,7 +118,7 @@ export const usageKeyUpdateSchema = z
 
 export const usagePreferenceUpdateSchema = z
   .object({
-    timezone: z.string().trim().min(1).max(100).optional(),
+    timezone: timezoneSchema.optional(),
     projectMode: projectModeSchema.optional(),
   })
   .refine(

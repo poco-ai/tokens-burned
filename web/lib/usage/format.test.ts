@@ -9,8 +9,12 @@ import {
 } from "./format";
 
 describe("usage format helpers", () => {
-  it("formats token counts with separators", () => {
-    expect(formatTokenCount(1234567)).toBe("1,234,567");
+  it("formats token counts with K/M/B suffixes", () => {
+    expect(formatTokenCount(999)).toBe("999");
+    expect(formatTokenCount(1000)).toBe("1.0K");
+    expect(formatTokenCount(12345)).toBe("12.3K");
+    expect(formatTokenCount(1234567)).toBe("1.2M");
+    expect(formatTokenCount(1234567890)).toBe("1.2B");
   });
 
   it("formats durations using compact units", () => {

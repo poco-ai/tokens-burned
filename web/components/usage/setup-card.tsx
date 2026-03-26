@@ -13,7 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -23,6 +22,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ProjectMode } from "@/lib/usage/types";
+
+const timezoneOptions = [
+  { value: "UTC", label: "UTC" },
+  { value: "Asia/Shanghai", label: "Asia/Shanghai (UTC+8)" },
+  { value: "Asia/Hong_Kong", label: "Asia/Hong Kong (UTC+8)" },
+  { value: "Asia/Tokyo", label: "Asia/Tokyo (UTC+9)" },
+  { value: "Asia/Seoul", label: "Asia/Seoul (UTC+9)" },
+  { value: "Asia/Singapore", label: "Asia/Singapore (UTC+8)" },
+  { value: "Asia/Dubai", label: "Asia/Dubai (UTC+4)" },
+  { value: "Asia/Kolkata", label: "Asia/Kolkata (UTC+5:30)" },
+  { value: "Europe/London", label: "Europe/London (UTC+0/+1)" },
+  { value: "Europe/Paris", label: "Europe/Paris (UTC+1/+2)" },
+  { value: "Europe/Berlin", label: "Europe/Berlin (UTC+1/+2)" },
+  { value: "Europe/Moscow", label: "Europe/Moscow (UTC+3)" },
+  { value: "America/New_York", label: "America/New York (UTC-5/-4)" },
+  { value: "America/Chicago", label: "America/Chicago (UTC-6/-5)" },
+  { value: "America/Denver", label: "America/Denver (UTC-7/-6)" },
+  { value: "America/Los_Angeles", label: "America/Los Angeles (UTC-8/-7)" },
+  { value: "America/Toronto", label: "America/Toronto (UTC-5/-4)" },
+  { value: "America/Vancouver", label: "America/Vancouver (UTC-8/-7)" },
+  { value: "America/Sao_Paulo", label: "America/Sao Paulo (UTC-3)" },
+  { value: "Australia/Sydney", label: "Australia/Sydney (UTC+10/+11)" },
+  { value: "Australia/Melbourne", label: "Australia/Melbourne (UTC+10/+11)" },
+  { value: "Pacific/Auckland", label: "Pacific/Auckland (UTC+12/+13)" },
+];
 
 type SetupCardProps = {
   initialTimezone: string;
@@ -128,12 +152,18 @@ export function SetupCard({
 
           <div className="space-y-2">
             <Label htmlFor="timezone">Timezone</Label>
-            <Input
-              id="timezone"
-              value={timezone}
-              onChange={(event) => setTimezone(event.target.value)}
-              placeholder="Asia/Shanghai"
-            />
+            <Select value={timezone} onValueChange={setTimezone}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select timezone" />
+              </SelectTrigger>
+              <SelectContent>
+                {timezoneOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

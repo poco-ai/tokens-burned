@@ -1,4 +1,3 @@
-const numberFormatter = new Intl.NumberFormat("en-US");
 const percentageFormatter = new Intl.NumberFormat("en-US", {
   style: "percent",
   minimumFractionDigits: 1,
@@ -53,8 +52,20 @@ function normalizeDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
 }
 
-export function formatTokenCount(value: number) {
-  return numberFormatter.format(value);
+export function formatTokenCount(value: number): string {
+  if (value < 1000) {
+    return String(value);
+  }
+
+  if (value < 1_000_000) {
+    return `${(value / 1000).toFixed(1)}K`;
+  }
+
+  if (value < 1_000_000_000) {
+    return `${(value / 1_000_000).toFixed(1)}M`;
+  }
+
+  return `${(value / 1_000_000_000).toFixed(1)}B`;
 }
 
 export function formatDuration(seconds: number) {
