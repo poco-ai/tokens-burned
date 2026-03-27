@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -25,29 +26,29 @@ export function AccountMenu({ email, username }: AccountMenuProps) {
   const tUsage = useTranslations("usage.accountMenu");
   const tSocial = useTranslations("social.nav");
   const identity = username ?? email;
-  const links = username
-    ? [
-        { href: `/u/${username}`, label: tSocial("profile") },
-        { href: "/people", label: tSocial("people") },
-        { href: "/following", label: tSocial("following") },
-        { href: "/followers", label: tSocial("followers") },
-        { href: "/usage", label: tSocial("dashboard") },
-      ]
-    : [];
+  const links = [
+    ...(username
+      ? [{ href: `/u/${username}`, label: tSocial("profile") }]
+      : []),
+    { href: "/usage", label: tSocial("dashboard") },
+    { href: "/people", label: tSocial("people") },
+  ];
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
-          className="inline-flex h-8 items-center gap-1 rounded-full border bg-background px-1.5 pr-2 text-sm font-medium text-foreground ring-1 ring-foreground/10 transition-colors hover:bg-muted"
+          variant="outline"
+          size="sm"
+          className="gap-2 px-2"
           aria-label={tUsage("open")}
         >
           <span className="inline-flex size-5 items-center justify-center rounded-full bg-foreground text-[0.7rem] font-semibold text-background">
             {getInitial(identity)}
           </span>
           <ChevronDown className="size-3.5 text-muted-foreground" />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64 p-1.5">
         <div className="space-y-3">
@@ -60,19 +61,17 @@ export function AccountMenu({ email, username }: AccountMenuProps) {
             ) : null}
             <div className="mt-1 break-all text-sm font-medium">{email}</div>
           </div>
-          {links.length > 0 ? (
-            <div className="space-y-1 px-1">
-              {links.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="flex h-8 items-center rounded-md px-2 text-sm text-foreground transition-colors hover:bg-muted"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          ) : null}
+          <div className="space-y-1 px-1">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex h-8 items-center rounded-md px-2 text-sm text-foreground transition-colors hover:bg-muted"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
           <LogoutButton variant="ghost" className="w-full justify-start">
             {t("signOut")}
           </LogoutButton>
