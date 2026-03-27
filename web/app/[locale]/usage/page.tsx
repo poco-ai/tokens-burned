@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
-import { LanguageSwitcher } from "@/components/shared/language-switcher";
-import { ThemeSwitcher } from "@/components/shared/theme-switcher";
-import { AccountMenu } from "@/components/usage/account-menu";
+import { AppShell } from "@/components/app/app-shell";
 import { BreakdownTabs } from "@/components/usage/breakdown-tabs";
 import { EmptyState } from "@/components/usage/empty-state";
 import { FiltersBar } from "@/components/usage/filters-bar";
@@ -114,18 +112,24 @@ export default async function UsagePage({
     : t("noSyncYet");
 
   return (
-    <UsagePageShell
-      title={t("overviewTitle")}
-      lastSyncedText={lastSyncedText}
-      headerActions={
-        <>
-          <LanguageSwitcher authenticated />
-          <ThemeSwitcher authenticated />
+    <AppShell
+      locale={locale}
+      viewer={{
+        email: session.user.email,
+        username: session.user.username,
+      }}
+    >
+      <UsagePageShell
+        title={t("overviewTitle")}
+        lastSyncedText={lastSyncedText}
+        headerActions={
           <SettingsDialog
             initialLocale={preference.locale}
             initialTheme={preference.theme}
             initialTimezone={preference.timezone}
             initialProjectMode={preference.projectMode}
+            initialPublicProfileEnabled={preference.publicProfileEnabled}
+            initialBio={preference.bio}
             initialKeys={keys.map((key) => ({
               id: key.id,
               name: key.name,
@@ -135,35 +139,31 @@ export default async function UsagePage({
               createdAt: key.createdAt.toISOString(),
             }))}
           />
-          <AccountMenu
-            email={session.user.email}
-            username={session.user.username}
+        }
+      >
+        <div className="space-y-4">
+          <FiltersBar
+            preset={range.preset}
+            range={{
+              from: range.from.toISOString(),
+              to: range.to.toISOString(),
+              timezone: range.timezone,
+            }}
+            filters={filters}
+            options={filterOptions}
           />
-        </>
-      }
-    >
-      <div className="space-y-4">
-        <FiltersBar
-          preset={range.preset}
-          range={{
-            from: range.from.toISOString(),
-            to: range.to.toISOString(),
-            timezone: range.timezone,
-          }}
-          filters={filters}
-          options={filterOptions}
-        />
 
-        {hasData ? (
-          <>
-            <KpiGrid overview={overview} />
-            <TokenTrendCard data={tokenTrend} />
-            <BreakdownTabs breakdowns={breakdowns} />
-          </>
-        ) : (
-          <EmptyState hasKeys={filterOptions.apiKeys.length > 0} />
-        )}
-      </div>
-    </UsagePageShell>
+          {hasData ? (
+            <>
+              <KpiGrid overview={overview} />
+              <TokenTrendCard data={tokenTrend} />
+              <BreakdownTabs breakdowns={breakdowns} />
+            </>
+          ) : (
+            <EmptyState hasKeys={filterOptions.apiKeys.length > 0} />
+          )}
+        </div>
+      </UsagePageShell>
+    </AppShell>
   );
 }
