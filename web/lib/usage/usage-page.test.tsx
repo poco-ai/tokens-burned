@@ -24,6 +24,9 @@ const mocks = vi.hoisted(() => ({
       return key;
     },
   ),
+  AppShell: vi.fn(({ children }: { children: React.ReactNode }) =>
+    React.createElement("div", { "data-slot": "app-shell" }, children),
+  ),
   AccountMenu: vi.fn(() =>
     React.createElement("div", { "data-slot": "account-menu" }),
   ),
@@ -63,6 +66,10 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("next-intl/server", () => ({
   getTranslations: mocks.getTranslations,
+}));
+
+vi.mock("@/components/app/app-shell", () => ({
+  AppShell: mocks.AppShell,
 }));
 
 vi.mock("@/components/usage/account-menu", () => ({

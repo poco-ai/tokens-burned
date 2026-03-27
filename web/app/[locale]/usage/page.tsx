@@ -120,7 +120,6 @@ export default async function UsagePage({
       }}
     >
       <UsagePageShell
-        title={t("overviewTitle")}
         lastSyncedText={lastSyncedText}
         headerActions={
           <SettingsDialog

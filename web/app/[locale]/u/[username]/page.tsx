@@ -89,7 +89,7 @@ export default async function PublicProfilePage({
                 )}
 
                 <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-baseline gap-2">
                     <h1 className="text-xl font-semibold tracking-tight">
                       {profile.name}
                     </h1>
