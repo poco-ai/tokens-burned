@@ -126,13 +126,17 @@ export const usagePreferenceUpdateSchema = z
     theme: themeModeSchema.optional(),
     timezone: timezoneSchema.optional(),
     projectMode: projectModeSchema.optional(),
+    publicProfileEnabled: z.boolean().optional(),
+    bio: z.string().trim().max(160).nullable().optional(),
   })
   .refine(
     (input) =>
       input.locale !== undefined ||
       input.theme !== undefined ||
       input.timezone !== undefined ||
-      input.projectMode !== undefined,
+      input.projectMode !== undefined ||
+      input.publicProfileEnabled !== undefined ||
+      input.bio !== undefined,
     {
       message: "At least one field is required.",
     },

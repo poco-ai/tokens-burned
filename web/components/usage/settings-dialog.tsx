@@ -19,6 +19,8 @@ type SettingsDialogProps = {
   initialTheme: string;
   initialTimezone: string;
   initialProjectMode: ProjectMode;
+  initialPublicProfileEnabled: boolean;
+  initialBio: string | null;
   initialKeys: UsageKeyRecord[];
 };
 
@@ -27,6 +29,8 @@ export function SettingsDialog({
   initialTheme,
   initialTimezone,
   initialProjectMode,
+  initialPublicProfileEnabled,
+  initialBio,
   initialKeys,
 }: SettingsDialogProps) {
   const t = useTranslations("usage.settings");
@@ -56,6 +60,8 @@ export function SettingsDialog({
               initialTheme={initialTheme}
               initialTimezone={initialTimezone}
               initialProjectMode={initialProjectMode}
+              initialPublicProfileEnabled={initialPublicProfileEnabled}
+              initialBio={initialBio}
             />
             <KeyManager initialKeys={initialKeys} variant="dialog" />
           </div>

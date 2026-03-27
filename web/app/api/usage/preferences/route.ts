@@ -27,6 +27,8 @@ export async function GET() {
     theme: preference.theme,
     timezone: preference.timezone,
     projectMode: preference.projectMode,
+    publicProfileEnabled: preference.publicProfileEnabled,
+    bio: preference.bio,
   });
 }
 
@@ -45,5 +47,7 @@ export async function PATCH(request: Request) {
     theme: preference.theme,
     timezone: preference.timezone,
     projectMode: preference.projectMode,
+    publicProfileEnabled: preference.publicProfileEnabled,
+    bio: preference.bio,
   });
 }

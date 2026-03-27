@@ -65,6 +65,8 @@ export async function updateUsagePreference(
     theme?: ThemeMode;
     timezone?: string;
     projectMode?: ProjectMode;
+    publicProfileEnabled?: boolean;
+    bio?: string | null;
   },
 ) {
   await ensureUsagePreference(userId);
@@ -76,6 +78,8 @@ export async function updateUsagePreference(
       theme: input.theme,
       timezone: input.timezone,
       projectMode: input.projectMode,
+      publicProfileEnabled: input.publicProfileEnabled,
+      bio: input.bio,
     },
   });
 }

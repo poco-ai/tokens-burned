@@ -36,6 +36,8 @@ type PreferenceSnapshot = {
   theme?: ThemeMode;
   timezone: string;
   projectMode: ProjectMode;
+  publicProfileEnabled?: boolean;
+  bio?: string | null;
 };
 
 export type PreferenceSaveState = "idle" | "saving" | "saved";
@@ -54,7 +56,9 @@ export function hasPreferenceChanges(
     initial.locale !== current.locale ||
     initial.theme !== current.theme ||
     initial.timezone !== current.timezone ||
-    initial.projectMode !== current.projectMode
+    initial.projectMode !== current.projectMode ||
+    initial.publicProfileEnabled !== current.publicProfileEnabled ||
+    (initial.bio ?? "") !== (current.bio ?? "")
   );
 }
 

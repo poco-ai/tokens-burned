@@ -51,6 +51,8 @@ type SettingsPreferencesProps = {
   initialTheme: string;
   initialTimezone: string;
   initialProjectMode: ProjectMode;
+  initialPublicProfileEnabled: boolean;
+  initialBio: string | null;
 };
 
 export function SettingsPreferences({
@@ -58,19 +60,34 @@ export function SettingsPreferences({
   initialTheme,
   initialTimezone,
   initialProjectMode,
+  initialPublicProfileEnabled,
+  initialBio,
 }: SettingsPreferencesProps) {
   const t = useTranslations("usage.settings");
   const [timezone, setTimezone] = useState(initialTimezone);
   const [projectMode, setProjectMode] =
     useState<ProjectMode>(initialProjectMode);
+  const [publicProfileEnabled, setPublicProfileEnabled] = useState(
+    initialPublicProfileEnabled,
+  );
+  const [bio, setBio] = useState(initialBio ?? "");
   const [savedTimezone, setSavedTimezone] = useState(initialTimezone);
   const [savedProjectMode, setSavedProjectMode] =
     useState<ProjectMode>(initialProjectMode);
+  const [savedPublicProfileEnabled, setSavedPublicProfileEnabled] = useState(
+    initialPublicProfileEnabled,
+  );
+  const [savedBio, setSavedBio] = useState(initialBio ?? "");
   const [saveState, setSaveState] = useState<PreferenceSaveState>("idle");
   const [error, setError] = useState<string | null>(null);
   const hasChanges = hasPreferenceChanges(
-    { timezone: savedTimezone, projectMode: savedProjectMode },
-    { timezone, projectMode },
+    {
+      timezone: savedTimezone,
+      projectMode: savedProjectMode,
+      publicProfileEnabled: savedPublicProfileEnabled,
+      bio: savedBio,
+    },
+    { timezone, projectMode, publicProfileEnabled, bio },
   );
   const statusText =
     saveState === "saving"
@@ -84,7 +101,12 @@ export function SettingsPreferences({
   );
 
   const savePreferences = useCallback(
-    async (nextTimezone: string, nextProjectMode: ProjectMode) => {
+    async (
+      nextTimezone: string,
+      nextProjectMode: ProjectMode,
+      nextPublicProfileEnabled: boolean,
+      nextBio: string,
+    ) => {
       setSaveState("saving");
       setError(null);
 
@@ -102,6 +124,8 @@ export function SettingsPreferences({
           body: JSON.stringify({
             timezone: nextTimezone,
             projectMode: nextProjectMode,
+            publicProfileEnabled: nextPublicProfileEnabled,
+            bio: nextBio.trim() ? nextBio.trim() : null,
           }),
         });
         const payload = await response.json();
@@ -112,6 +136,8 @@ export function SettingsPreferences({
 
         setSavedTimezone(payload.timezone);
         setSavedProjectMode(payload.projectMode);
+        setSavedPublicProfileEnabled(payload.publicProfileEnabled);
+        setSavedBio(payload.bio ?? "");
         setSaveState("saved");
         savedIndicatorTimeoutRef.current = setTimeout(() => {
           setSaveState("idle");
@@ -147,7 +173,7 @@ export function SettingsPreferences({
     }
 
     saveTimeoutRef.current = setTimeout(() => {
-      void savePreferences(timezone, projectMode);
+      void savePreferences(timezone, projectMode, publicProfileEnabled, bio);
       saveTimeoutRef.current = null;
     }, 500);
 
@@ -157,7 +183,14 @@ export function SettingsPreferences({
         saveTimeoutRef.current = null;
       }
     };
-  }, [hasChanges, projectMode, savePreferences, timezone]);
+  }, [
+    bio,
+    hasChanges,
+    projectMode,
+    publicProfileEnabled,
+    savePreferences,
+    timezone,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -237,6 +270,44 @@ export function SettingsPreferences({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="public-profile">{t("publicProfile")}</Label>
+            <Select
+              value={publicProfileEnabled ? "enabled" : "disabled"}
+              onValueChange={(value) =>
+                setPublicProfileEnabled(value === "enabled")
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t("selectPublicProfile")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="disabled">
+                  {t("publicProfileOptions.disabled")}
+                </SelectItem>
+                <SelectItem value="enabled">
+                  {t("publicProfileOptions.enabled")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5 lg:col-span-2">
+            <Label htmlFor="profile-bio">{t("bio")}</Label>
+            <textarea
+              id="profile-bio"
+              value={bio}
+              onChange={(event) => setBio(event.target.value.slice(0, 160))}
+              placeholder={t("bioPlaceholder")}
+              maxLength={160}
+              rows={3}
+              className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 dark:bg-input/30"
+            />
+            <div className="text-xs text-muted-foreground">
+              {bio.length}/160
+            </div>
           </div>
         </div>
       </CardContent>

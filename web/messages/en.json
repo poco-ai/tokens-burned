@@ -44,6 +44,8 @@
     "register": {
       "title": "Create your account",
       "description": "Choose a unique username, then use your email and password to get started.",
+      "nameHint": "Display name shown on your profile, can be changed anytime",
+      "usernameHint": "Unique identifier for your profile URL, only letters, numbers, underscores and periods",
       "submit": "Create account",
       "submitting": "Creating account...",
       "haveAccount": "Already have an account?",
@@ -67,6 +69,10 @@
   },
   "usage": {
     "overviewTitle": "Overview",
+    "nav": {
+      "people": "People",
+      "profile": "Profile"
+    },
     "lastSynced": "Last synced {value}",
     "noSyncYet": "No sync yet",
     "settings": {
@@ -81,8 +87,16 @@
       "theme": "Theme",
       "timezone": "Timezone",
       "projectMode": "Project mode",
+      "publicProfile": "Public profile",
+      "bio": "Bio",
       "selectTimezone": "Select timezone",
       "selectProjectMode": "Select project mode",
+      "selectPublicProfile": "Select profile visibility",
+      "bioPlaceholder": "What are you building with AI?",
+      "publicProfileOptions": {
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
       "projectModes": {
         "hashed": "Hashed",
         "raw": "Raw",
@@ -215,6 +229,71 @@
         "createKey": "Create key",
         "saveChanges": "Save changes"
       }
+    }
+  },
+  "social": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "people": "People",
+      "profile": "Profile",
+      "following": "Following",
+      "followers": "Followers",
+      "signIn": "Sign in",
+      "register": "Register"
+    },
+    "profile": {
+      "activityTitle": "AI Coding Activity",
+      "activitySubtitle": "Past 365 days",
+      "totalTokens": "Total Tokens",
+      "activeTime": "Active Time",
+      "sessions": "Sessions",
+      "activeDays": "Active Days",
+      "topTools": "Top Tools",
+      "topModels": "Top Models",
+      "joined": "Joined {date}",
+      "followers": "followers",
+      "following": "following",
+      "follow": "Follow",
+      "followingAction": "Following",
+      "followToLogin": "Sign in to follow",
+      "mutual": "Mutual follow",
+      "privateBadge": "Private profile",
+      "privateBannerTitle": "Your profile is private",
+      "privateBannerDescription": "Enable Public profile in Settings on the dashboard to let other people discover this page.",
+      "goToDashboard": "Open dashboard",
+      "noActivity": "No public activity yet.",
+      "noTopTools": "No tool usage yet.",
+      "noTopModels": "No model usage yet.",
+      "less": "Less",
+      "more": "More"
+    },
+    "people": {
+      "title": "People",
+      "description": "Discover public AI coding profiles.",
+      "search": "Search",
+      "searchPlaceholder": "Search by username or name",
+      "allPublic": "Showing public profiles",
+      "results": "{count} results",
+      "empty": "No public profiles found."
+    },
+    "network": {
+      "followingTitle": "Following",
+      "followingDescription": "People you follow.",
+      "followersTitle": "Followers",
+      "followersDescription": "People following you.",
+      "emptyFollowing": "You are not following anyone yet.",
+      "emptyFollowers": "No followers yet."
+    },
+    "card": {
+      "followers": "Followers",
+      "following": "Following",
+      "mutual": "Mutual",
+      "private": "Private",
+      "you": "You",
+      "viewProfile": "View profile"
+    },
+    "errors": {
+      "followFailed": "Unable to update the follow state."
     }
   }
 }

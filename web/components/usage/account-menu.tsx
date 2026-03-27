@@ -9,6 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Link } from "@/i18n/navigation";
 
 type AccountMenuProps = {
   email: string;
@@ -22,7 +23,17 @@ function getInitial(value: string) {
 export function AccountMenu({ email, username }: AccountMenuProps) {
   const t = useTranslations("common");
   const tUsage = useTranslations("usage.accountMenu");
+  const tSocial = useTranslations("social.nav");
   const identity = username ?? email;
+  const links = username
+    ? [
+        { href: `/u/${username}`, label: tSocial("profile") },
+        { href: "/people", label: tSocial("people") },
+        { href: "/following", label: tSocial("following") },
+        { href: "/followers", label: tSocial("followers") },
+        { href: "/usage", label: tSocial("dashboard") },
+      ]
+    : [];
 
   return (
     <Popover>
@@ -49,6 +60,19 @@ export function AccountMenu({ email, username }: AccountMenuProps) {
             ) : null}
             <div className="mt-1 break-all text-sm font-medium">{email}</div>
           </div>
+          {links.length > 0 ? (
+            <div className="space-y-1 px-1">
+              {links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex h-8 items-center rounded-md px-2 text-sm text-foreground transition-colors hover:bg-muted"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          ) : null}
           <LogoutButton variant="ghost" className="w-full justify-start">
             {t("signOut")}
           </LogoutButton>

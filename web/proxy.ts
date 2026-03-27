@@ -8,7 +8,13 @@ import {
   stripLocalePrefix,
 } from "./lib/i18n";
 
-const PROTECTED_PREFIXES = ["/usage", "/settings", "/settings/keys"];
+const PROTECTED_PREFIXES = [
+  "/usage",
+  "/settings",
+  "/settings/keys",
+  "/following",
+  "/followers",
+];
 const AUTH_PAGES = ["/login", "/register"];
 const handleI18nRouting = createMiddleware(routing);
 

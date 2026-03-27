@@ -44,6 +44,8 @@
     "register": {
       "title": "创建你的账号",
       "description": "先设置一个唯一用户名，再使用邮箱和密码开始使用。",
+      "nameHint": "用于展示的昵称，可以是中文名，随时可改",
+      "usernameHint": "唯一标识符，用于个人主页地址，只能包含字母、数字、下划线和英文句点",
       "submit": "创建账号",
       "submitting": "创建中...",
       "haveAccount": "已经有账号？",
@@ -67,6 +69,10 @@
   },
   "usage": {
     "overviewTitle": "概览",
+    "nav": {
+      "people": "用户",
+      "profile": "主页"
+    },
     "lastSynced": "上次同步：{value}",
     "noSyncYet": "还没有同步记录",
     "settings": {
@@ -81,8 +87,16 @@
       "theme": "主题",
       "timezone": "时区",
       "projectMode": "项目模式",
+      "publicProfile": "公开主页",
+      "bio": "简介",
       "selectTimezone": "选择时区",
       "selectProjectMode": "选择项目模式",
+      "selectPublicProfile": "选择主页可见性",
+      "bioPlaceholder": "介绍一下你如何使用 AI 编程",
+      "publicProfileOptions": {
+        "enabled": "开启",
+        "disabled": "关闭"
+      },
       "projectModes": {
         "hashed": "哈希",
         "raw": "原始值",
@@ -215,6 +229,71 @@
         "createKey": "创建 Key",
         "saveChanges": "保存修改"
       }
+    }
+  },
+  "social": {
+    "nav": {
+      "dashboard": "仪表盘",
+      "people": "用户",
+      "profile": "主页",
+      "following": "关注中",
+      "followers": "粉丝",
+      "signIn": "登录",
+      "register": "注册"
+    },
+    "profile": {
+      "activityTitle": "AI 编程活跃度",
+      "activitySubtitle": "过去 365 天",
+      "totalTokens": "总 Tokens",
+      "activeTime": "活跃时长",
+      "sessions": "会话数",
+      "activeDays": "活跃天数",
+      "topTools": "常用工具",
+      "topModels": "常用模型",
+      "joined": "加入于 {date}",
+      "followers": "粉丝",
+      "following": "关注",
+      "follow": "关注",
+      "followingAction": "已关注",
+      "followToLogin": "登录后关注",
+      "mutual": "互相关注",
+      "privateBadge": "主页未公开",
+      "privateBannerTitle": "你的主页当前未公开",
+      "privateBannerDescription": "你可以在仪表盘的设置中开启公开主页，让其他人发现并关注你。",
+      "goToDashboard": "打开仪表盘",
+      "noActivity": "还没有公开活动数据。",
+      "noTopTools": "还没有工具使用记录。",
+      "noTopModels": "还没有模型使用记录。",
+      "less": "少",
+      "more": "多"
+    },
+    "people": {
+      "title": "用户",
+      "description": "发现公开的 AI 编程主页。",
+      "search": "搜索",
+      "searchPlaceholder": "按用户名或名称搜索",
+      "allPublic": "当前展示公开主页",
+      "results": "{count} 条结果",
+      "empty": "没有找到公开主页。"
+    },
+    "network": {
+      "followingTitle": "关注中",
+      "followingDescription": "你关注的用户。",
+      "followersTitle": "粉丝",
+      "followersDescription": "关注你的用户。",
+      "emptyFollowing": "你还没有关注任何人。",
+      "emptyFollowers": "还没有粉丝。"
+    },
+    "card": {
+      "followers": "粉丝",
+      "following": "关注",
+      "mutual": "互关",
+      "private": "未公开",
+      "you": "你",
+      "viewProfile": "查看主页"
+    },
+    "errors": {
+      "followFailed": "无法更新关注状态。"
     }
   }
 }

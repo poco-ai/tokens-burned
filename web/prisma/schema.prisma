@@ -50,6 +50,8 @@ model User {
   devices         Device[]
   usageBuckets    UsageBucket[]
   usageSessions   UsageSession[]
+  followers       Follow[]          @relation("FollowFollowing")
+  following       Follow[]          @relation("FollowFollower")
 
   @@unique([email])
   @@map("user")
@@ -110,10 +112,25 @@ model UsagePreference {
   theme           ThemeMode   @default(system)
   timezone        String      @default("UTC")
   projectMode     ProjectMode @default(hashed)
+  publicProfileEnabled Boolean @default(false)
+  bio             String?
   projectHashSalt String
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId, createdAt])
+  @@index([followingId, createdAt])
 }
 
 model UsageApiKey {
