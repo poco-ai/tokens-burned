@@ -1,0 +1,34 @@
+.scroller {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scroller::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroller::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: transparent;
+}
+
+.scroller:hover,
+.scroller:focus-within {
+  scrollbar-color: color-mix(in oklab, var(--border) 80%, transparent)
+    transparent;
+}
+
+.scroller:hover::-webkit-scrollbar-thumb,
+.scroller:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--border) 80%, transparent);
+}
+
+.scroller:hover::-webkit-scrollbar-thumb:hover,
+.scroller:focus-within::-webkit-scrollbar-thumb:hover {
+  background: var(--border);
+}

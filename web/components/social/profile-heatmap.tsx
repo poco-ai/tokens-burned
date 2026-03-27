@@ -1,6 +1,7 @@
 import type { ProfileHeatmapDay } from "@/lib/social/queries";
 import { formatDuration, formatTokenCount } from "@/lib/usage/format";
 import { cn } from "@/lib/utils";
+import styles from "./profile-heatmap.module.css";
 
 type ProfileHeatmapProps = {
   locale: string;
@@ -37,10 +38,12 @@ function buildWeeks(days: ProfileHeatmapDay[]) {
   }
 
   const firstDate = parseDateKey(days[0].date);
-  const padding = firstDate.getUTCDay();
+  const leadingPadding = firstDate.getUTCDay();
+  const trailingPadding = (7 - ((leadingPadding + days.length) % 7)) % 7;
   const padded: HeatmapCell[] = [
-    ...Array.from({ length: padding }, () => null),
+    ...Array.from({ length: leadingPadding }, () => null),
     ...days,
+    ...Array.from({ length: trailingPadding }, () => null),
   ];
 
   return chunk(padded, 7);
@@ -94,51 +97,61 @@ export function ProfileHeatmap({
     };
   });
   const weekdayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  const cellClassName =
+    "size-3 rounded-[2px] ring-1 ring-black/5 dark:ring-white/5";
 
   return (
-    <div className="space-y-3 overflow-x-auto">
-      <div
-        className="grid min-w-max gap-1"
-        style={{
-          gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`,
-        }}
-      >
-        {monthLabels.map((item) => (
-          <div key={item.key} className="h-4 text-[11px] text-muted-foreground">
-            {item.label}
+    <div className="space-y-3">
+      <div className={cn(styles.scroller, "overflow-x-auto pb-2")}>
+        <div className="min-w-max space-y-3">
+          <div
+            className="grid gap-1"
+            style={{
+              gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))`,
+            }}
+          >
+            {monthLabels.map((item, index) => (
+              <div
+                key={item.key || `empty-week-${index}`}
+                className="h-4 text-[11px] text-muted-foreground"
+              >
+                {item.label}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="flex min-w-max gap-1">
-        {weeks.map((week) => {
-          const firstDay = week.find(
-            (value): value is ProfileHeatmapDay => value !== null,
-          );
-          const weekKey = firstDay?.date ?? "empty-week";
+          <div className="flex min-w-max gap-1">
+            {weeks.map((week, weekIndex) => {
+              const firstDay = week.find(
+                (value): value is ProfileHeatmapDay => value !== null,
+              );
+              const weekKey = firstDay?.date ?? `empty-week-${weekIndex}`;
 
-          return (
-            <div key={weekKey} className="grid grid-rows-7 gap-1">
-              {week.map((day, dayIndex) =>
-                day ? (
-                  <div
-                    key={day.date}
-                    title={`${day.date} · ${formatDuration(day.activeSeconds)} · ${day.sessions} sessions · ${formatTokenCount(day.totalTokens)} tokens`}
-                    className={cn(
-                      "size-3 rounded-[2px] ring-1 ring-black/5 dark:ring-white/5",
-                      getLevelClassName(day.level),
-                    )}
-                  />
-                ) : (
-                  <div
-                    key={`${weekKey}-${weekdayKeys[dayIndex]}`}
-                    className="size-3"
-                  />
-                ),
-              )}
-            </div>
-          );
-        })}
+              return (
+                <div key={weekKey} className="grid grid-rows-7 gap-1">
+                  {week.map((day, dayIndex) =>
+                    day ? (
+                      <div
+                        key={day.date}
+                        title={`${day.date} · ${formatDuration(day.activeSeconds)} · ${day.sessions} sessions · ${formatTokenCount(day.totalTokens)} tokens`}
+                        className={cn(
+                          cellClassName,
+                          getLevelClassName(day.level),
+                        )}
+                      />
+                    ) : (
+                      <div
+                        key={`${weekKey}-${weekdayKeys[dayIndex]}`}
+                        aria-hidden="true"
+                        className="size-3"
+                      />
+                    ),
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center justify-end gap-1 text-[11px] text-muted-foreground">
@@ -146,10 +159,7 @@ export function ProfileHeatmap({
         {[0, 1, 2, 3, 4].map((level) => (
           <span
             key={level}
-            className={cn(
-              "size-3 rounded-[2px] ring-1 ring-black/5 dark:ring-white/5",
-              getLevelClassName(level as ProfileHeatmapDay["level"]),
-            )}
+            className={cn(cellClassName, getLevelClassName(level))}
           />
         ))}
         <span>{moreLabel}</span>
