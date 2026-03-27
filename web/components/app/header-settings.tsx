@@ -14,8 +14,6 @@ export async function AppHeaderSettings({ userId }: AppHeaderSettingsProps) {
 
   return (
     <SettingsDialog
-      initialLocale={preference.locale}
-      initialTheme={preference.theme}
       initialTimezone={preference.timezone}
       initialProjectMode={preference.projectMode}
       initialPublicProfileEnabled={preference.publicProfileEnabled}

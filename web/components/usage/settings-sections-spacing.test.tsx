@@ -11,15 +11,19 @@ vi.mock("next-intl", () => ({
       preferencesTitle: "Preferences",
       saving: "Saving...",
       saved: "Saved",
-      language: "Language",
-      theme: "Theme",
       timezone: "Timezone",
       projectMode: "Project mode",
+      publicProfile: "Public profile",
+      bio: "Bio",
+      bioPlaceholder: "What are you building with AI?",
       selectTimezone: "Select timezone",
       selectProjectMode: "Select project mode",
+      selectPublicProfile: "Select public profile",
       "projectModes.hashed": "Hashed",
       "projectModes.raw": "Raw",
       "projectModes.disabled": "Disabled",
+      "publicProfileOptions.disabled": "Disabled",
+      "publicProfileOptions.enabled": "Enabled",
       pageTitle: "CLI API Keys",
       dialogTitle: "API Keys",
       total: "1 total",
@@ -55,29 +59,24 @@ vi.mock("next-intl", () => ({
     })[key] ?? key,
 }));
 
-vi.mock("@/components/shared/language-switcher", () => ({
-  LanguageSwitcher: () => <div data-slot="language-switcher" />,
-}));
-
-vi.mock("@/components/shared/theme-switcher", () => ({
-  ThemeSwitcher: () => <div data-slot="theme-switcher" />,
-}));
-
 describe("settings dialog section spacing", () => {
-  it("renders the preferences section with tighter header and field spacing", () => {
+  it("renders the preferences section without language/theme and keeps key fields on one row", () => {
     const markup = renderToStaticMarkup(
       <SettingsPreferences
-        initialLocale="en"
-        initialTheme="system"
         initialTimezone="Asia/Shanghai"
         initialProjectMode="raw"
+        initialPublicProfileEnabled={false}
+        initialBio=""
       />,
     );
 
     expect(markup).toContain("border-b border-border/50 pb-2");
     expect(markup).toContain("space-y-3 pt-3");
-    expect(markup).toContain("grid gap-3 lg:grid-cols-2");
+    expect(markup).toContain("grid gap-3 md:grid-cols-3");
     expect(markup).toContain("space-y-1.5");
+    expect(markup).toContain("md:col-span-3");
+    expect(markup).not.toContain("language-switcher");
+    expect(markup).not.toContain("theme-switcher");
     expect(markup).not.toContain("space-y-4 pt-4");
   });
 

@@ -51,8 +51,8 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   }
 
   const apiUrl = opts.apiUrl || getDefaultApiUrl();
-  logger.info(`Get your API key at: ${apiUrl}/usage/setup\n`);
-  openBrowser(`${apiUrl}/usage/setup`);
+  logger.info(`Open ${apiUrl}/usage and create your API key from Settings.\n`);
+  openBrowser(`${apiUrl}/usage`);
 
   let apiKey: string;
   while (true) {

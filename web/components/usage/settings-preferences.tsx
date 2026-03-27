@@ -2,8 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LanguageSwitcher } from "@/components/shared/language-switcher";
-import { ThemeSwitcher } from "@/components/shared/theme-switcher";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -47,8 +45,6 @@ const timezoneOptions = [
 ];
 
 type SettingsPreferencesProps = {
-  initialLocale: string;
-  initialTheme: string;
   initialTimezone: string;
   initialProjectMode: ProjectMode;
   initialPublicProfileEnabled: boolean;
@@ -56,8 +52,6 @@ type SettingsPreferencesProps = {
 };
 
 export function SettingsPreferences({
-  initialLocale,
-  initialTheme,
   initialTimezone,
   initialProjectMode,
   initialPublicProfileEnabled,
@@ -222,21 +216,7 @@ export function SettingsPreferences({
           </Alert>
         ) : null}
 
-        <div className="grid gap-3 lg:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="preference-language">{t("language")}</Label>
-            <div id="preference-language">
-              <LanguageSwitcher authenticated={Boolean(initialLocale)} />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="preference-theme">{t("theme")}</Label>
-            <div id="preference-theme">
-              <ThemeSwitcher authenticated={Boolean(initialTheme)} />
-            </div>
-          </div>
-
+        <div className="grid gap-3 md:grid-cols-3">
           <div className="space-y-1.5">
             <Label htmlFor="timezone">{t("timezone")}</Label>
             <Select value={timezone} onValueChange={setTimezone}>
@@ -294,7 +274,7 @@ export function SettingsPreferences({
             </Select>
           </div>
 
-          <div className="space-y-1.5 lg:col-span-2">
+          <div className="space-y-1.5 md:col-span-3">
             <Label htmlFor="profile-bio">{t("bio")}</Label>
             <textarea
               id="profile-bio"

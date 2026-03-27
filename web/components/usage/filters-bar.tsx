@@ -54,6 +54,7 @@ type FiltersBarProps = {
   };
   filters: UsageFilters;
   options: UsageFilterOptions;
+  lastSyncedText?: string;
 };
 
 const ALL_VALUE = "__all__";
@@ -134,6 +135,7 @@ export function FiltersBar({
   range,
   filters,
   options,
+  lastSyncedText,
 }: FiltersBarProps) {
   const t = useTranslations("usage.filters");
   const router = useRouter();
@@ -248,7 +250,7 @@ export function FiltersBar({
 
   return (
     <div className="rounded-2xl bg-background px-4 py-4 ring-1 ring-foreground/10 sm:px-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           {presets.map((item) =>
             item === "custom" ? (
@@ -374,9 +376,7 @@ export function FiltersBar({
               </div>
             </PopoverContent>
           </Popover>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2">
           {activeChips.visible.map((chip) => {
             const meta = getFilterMeta(chip.key);
 
@@ -407,6 +407,12 @@ export function FiltersBar({
             </Button>
           ) : null}
         </div>
+
+        {lastSyncedText ? (
+          <p className="text-sm text-muted-foreground xl:text-right">
+            {lastSyncedText}
+          </p>
+        ) : null}
       </div>
     </div>
   );

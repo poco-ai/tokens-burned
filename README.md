@@ -124,8 +124,8 @@ SHADOW_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tokens_burned_
 
 1. 打开 `http://localhost:3000/register` 注册账号
 2. 登录后进入 `http://localhost:3000/usage`
-3. 进入 `http://localhost:3000/settings/keys` 创建一个 CLI API key
-4. 进入 `http://localhost:3000/usage/setup` 设置时区和项目模式
+3. 点击右上角 `Settings` 创建一个 CLI API key
+4. 在同一个 `Settings` 弹窗里设置时区和项目模式
 
 ### CLI 端
 
@@ -162,13 +162,8 @@ http://localhost:3000/usage
   - 总 token、输入、输出、reasoning、缓存
   - 活跃时长、总时长、会话数、消息数、用户消息数
   - 设备 / 工具 / 模型 / 项目分组分析
-- `/usage/setup`
-  - 账户统一时区设置
-  - 项目隐私模式设置（`hashed | raw | disabled`）
-  - CLI 初始化说明
-- `/settings/keys`
-  - 多 API key 管理
-  - 创建、重命名、启用 / 停用、删除
+  - 统一设置弹窗（时区、主题、语言、项目模式、公开主页）
+  - 多 API key 管理（创建、重命名、启用 / 停用、删除）
 
 ### CLI
 

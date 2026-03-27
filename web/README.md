@@ -36,14 +36,12 @@ pnpm --filter ./web dev
 - `http://localhost:3000/register`
 - `http://localhost:3000/login`
 - `http://localhost:3000/usage`
-- `http://localhost:3000/usage/setup`
-- `http://localhost:3000/settings/keys`
 
 ## 典型联调流程
 
 1. 注册一个新账号
-2. 登录后创建一个 CLI API key
-3. 在 `/usage/setup` 设置账户时区与项目模式
+2. 登录后在 `/usage` 右上角打开 `Settings`
+3. 在设置弹窗里创建一个 CLI API key，并设置账户时区与项目模式
 4. 在仓库根目录执行：
 
 ```bash

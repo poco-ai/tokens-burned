@@ -2,6 +2,7 @@
 
 import { Settings2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,27 +17,32 @@ import { KeyManager, type UsageKeyRecord } from "./key-manager";
 import { SettingsPreferences } from "./settings-preferences";
 
 type SettingsDialogProps = {
-  initialLocale: string;
-  initialTheme: string;
   initialTimezone: string;
   initialProjectMode: ProjectMode;
   initialPublicProfileEnabled: boolean;
   initialBio: string | null;
   initialKeys: UsageKeyRecord[];
   triggerVariant?: "button" | "icon";
+  triggerLabel?: ReactNode;
+  triggerButtonVariant?: "default" | "outline" | "secondary" | "ghost";
+  triggerButtonSize?: "default" | "sm";
+  triggerClassName?: string;
 };
 
 export function SettingsDialog({
-  initialLocale,
-  initialTheme,
   initialTimezone,
   initialProjectMode,
   initialPublicProfileEnabled,
   initialBio,
   initialKeys,
   triggerVariant = "button",
+  triggerLabel,
+  triggerButtonVariant = "outline",
+  triggerButtonSize = "sm",
+  triggerClassName,
 }: SettingsDialogProps) {
   const t = useTranslations("usage.settings");
+  const resolvedTriggerLabel = triggerLabel ?? t("button");
 
   return (
     <Dialog>
@@ -46,19 +52,28 @@ export function SettingsDialog({
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label={t("button")}
-            title={t("button")}
+            className={triggerClassName}
+            aria-label={
+              typeof resolvedTriggerLabel === "string"
+                ? resolvedTriggerLabel
+                : t("button")
+            }
+            title={
+              typeof resolvedTriggerLabel === "string"
+                ? resolvedTriggerLabel
+                : t("button")
+            }
           >
             <Settings2 className="size-3.5" />
           </Button>
         ) : (
           <Button
             type="button"
-            variant="outline"
-            size="sm"
-            className="border-border/60 bg-background/80 shadow-xs"
+            variant={triggerButtonVariant}
+            size={triggerButtonSize}
+            className={triggerClassName}
           >
-            {t("button")}
+            {resolvedTriggerLabel}
           </Button>
         )}
       </DialogTrigger>
@@ -71,8 +86,6 @@ export function SettingsDialog({
         <div className="overflow-y-auto bg-muted/15 p-4 sm:p-5">
           <div className="space-y-4">
             <SettingsPreferences
-              initialLocale={initialLocale}
-              initialTheme={initialTheme}
               initialTimezone={initialTimezone}
               initialProjectMode={initialProjectMode}
               initialPublicProfileEnabled={initialPublicProfileEnabled}

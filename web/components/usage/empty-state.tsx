@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
+import type { ReactNode } from "react";
 
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,13 +8,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Link } from "@/i18n/navigation";
 
 type EmptyStateProps = {
-  hasKeys: boolean;
+  primaryAction: ReactNode;
+  secondaryAction?: ReactNode;
 };
 
-export async function EmptyState({ hasKeys }: EmptyStateProps) {
+export async function EmptyState({
+  primaryAction,
+  secondaryAction,
+}: EmptyStateProps) {
   const t = await getTranslations("usage.emptyState");
 
   return (
@@ -31,14 +34,8 @@ export async function EmptyState({ hasKeys }: EmptyStateProps) {
         </ol>
 
         <div className="flex flex-wrap gap-2">
-          <Button asChild>
-            <Link href={hasKeys ? "/usage/setup" : "/settings/keys"}>
-              {hasKeys ? t("openSetupGuide") : t("createFirstKey")}
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/settings/keys">{t("manageKeys")}</Link>
-          </Button>
+          {primaryAction}
+          {secondaryAction}
         </div>
       </CardContent>
     </Card>

@@ -110,6 +110,21 @@ export default async function UsagePage({
         value: formatDateTime(lastSyncedAt, preference.timezone, locale),
       })
     : t("noSyncYet");
+  const settingsDialogProps = {
+    initialTimezone: preference.timezone,
+    initialProjectMode: preference.projectMode,
+    initialPublicProfileEnabled: preference.publicProfileEnabled,
+    initialBio: preference.bio,
+    initialKeys: keys.map((key) => ({
+      id: key.id,
+      name: key.name,
+      prefix: key.prefix,
+      status: key.status,
+      lastUsedAt: key.lastUsedAt?.toISOString() ?? null,
+      createdAt: key.createdAt.toISOString(),
+    })),
+  } as const;
+  const hasKeys = filterOptions.apiKeys.length > 0;
 
   return (
     <AppShell
@@ -120,26 +135,10 @@ export default async function UsagePage({
         username: session.user.username,
       }}
       settingsDialog={
-        <SettingsDialog
-          initialLocale={preference.locale}
-          initialTheme={preference.theme}
-          initialTimezone={preference.timezone}
-          initialProjectMode={preference.projectMode}
-          initialPublicProfileEnabled={preference.publicProfileEnabled}
-          initialBio={preference.bio}
-          initialKeys={keys.map((key) => ({
-            id: key.id,
-            name: key.name,
-            prefix: key.prefix,
-            status: key.status,
-            lastUsedAt: key.lastUsedAt?.toISOString() ?? null,
-            createdAt: key.createdAt.toISOString(),
-          }))}
-          triggerVariant="icon"
-        />
+        <SettingsDialog {...settingsDialogProps} triggerVariant="icon" />
       }
     >
-      <UsagePageShell lastSyncedText={lastSyncedText}>
+      <UsagePageShell>
         <div className="space-y-4">
           <FiltersBar
             preset={range.preset}
@@ -150,6 +149,7 @@ export default async function UsagePage({
             }}
             filters={filters}
             options={filterOptions}
+            lastSyncedText={lastSyncedText}
           />
 
           {hasData ? (
@@ -159,7 +159,28 @@ export default async function UsagePage({
               <BreakdownTabs breakdowns={breakdowns} />
             </>
           ) : (
-            <EmptyState hasKeys={filterOptions.apiKeys.length > 0} />
+            <EmptyState
+              primaryAction={
+                <SettingsDialog
+                  {...settingsDialogProps}
+                  triggerLabel={
+                    hasKeys
+                      ? t("emptyState.openSetupGuide")
+                      : t("emptyState.createFirstKey")
+                  }
+                  triggerButtonVariant="default"
+                  triggerButtonSize="default"
+                />
+              }
+              secondaryAction={
+                <SettingsDialog
+                  {...settingsDialogProps}
+                  triggerLabel={t("emptyState.manageKeys")}
+                  triggerButtonVariant="outline"
+                  triggerButtonSize="default"
+                />
+              }
+            />
           )}
         </div>
       </UsagePageShell>
