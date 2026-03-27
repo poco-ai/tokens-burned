@@ -1,0 +1,41 @@
+# Dependencies
+**/node_modules
+.pnpm-store
+
+# Build outputs
+**/.next
+**/dist
+**/generated
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Documentation
+*.md
+!web/README.md
+
+# Tests
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/coverage
+
+# CLI (not needed for web)
+cli/
+
+# Misc
+.DS_Store
+*.tgz

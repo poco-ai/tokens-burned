@@ -1,0 +1,17 @@
+node_modules
+.next
+dist
+*.log
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+*.md
+.vscode
+.idea
+coverage
+.nyc_output
+*.test.ts
+*.test.tsx
+__tests__
