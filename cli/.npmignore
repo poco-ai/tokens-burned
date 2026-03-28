@@ -1,0 +1,10 @@
+# Explicit pack exclusions so npm does not use .gitignore (avoids gitignore-fallback
+# warnings and keeps behavior clear when the repo ignores dist/).
+# Published files are listed in package.json "files" (dist); do not add dist/ here.
+
+src/
+*.test.ts
+vitest.config.ts
+tsconfig.json
+tsup.config.ts
+biome.json
