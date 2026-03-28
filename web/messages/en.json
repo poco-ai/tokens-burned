@@ -268,7 +268,8 @@
       "following": "Following",
       "followers": "Followers",
       "signIn": "Sign in",
-      "register": "Register"
+      "register": "Register",
+      "leaderboard": "Leaderboard"
     },
     "profile": {
       "activityTitle": "AI Coding Activity",
@@ -323,6 +324,35 @@
     },
     "errors": {
       "followFailed": "Unable to update the follow state."
+    },
+    "leaderboard": {
+      "periods": {
+        "day": "Today",
+        "week": "7D",
+        "month": "30D",
+        "allTime": "All time"
+      },
+      "metricSelectLabel": "Leaderboard metric",
+      "metrics": {
+        "totalTokens": "Total tokens"
+      },
+      "globalTitle": "Global leaderboard",
+      "followingTitle": "Following leaderboard",
+      "emptyGlobal": "No public usage has been synced yet.",
+      "emptyFollowing": "No one in your network has leaderboard activity in this window yet.",
+      "privateNoticeTitle": "Your profile is hidden from the global leaderboard",
+      "privateNoticeDescription": "Enable Public profile from the dashboard if you want your usage to appear in the public rankings.",
+      "openDashboard": "Open dashboard",
+      "signInTitle": "Sign in for a network leaderboard",
+      "signInDescription": "Your following leaderboard is personalized and only appears after you sign in.",
+      "table": {
+        "rank": "Rank",
+        "user": "User",
+        "totalTokens": "Total Tokens",
+        "activeTime": "Active Time",
+        "sessions": "Sessions",
+        "followers": "Followers"
+      }
     }
   }
 }

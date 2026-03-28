@@ -268,7 +268,8 @@
       "following": "关注中",
       "followers": "粉丝",
       "signIn": "登录",
-      "register": "注册"
+      "register": "注册",
+      "leaderboard": "排行榜"
     },
     "profile": {
       "activityTitle": "AI 编程活跃度",
@@ -323,6 +324,35 @@
     },
     "errors": {
       "followFailed": "无法更新关注状态。"
+    },
+    "leaderboard": {
+      "periods": {
+        "day": "今日",
+        "week": "7 天",
+        "month": "30 天",
+        "allTime": "总榜"
+      },
+      "metricSelectLabel": "排行榜指标",
+      "metrics": {
+        "totalTokens": "总 Tokens"
+      },
+      "globalTitle": "全站排行榜",
+      "followingTitle": "关注排行榜",
+      "emptyGlobal": "还没有公开的使用数据。",
+      "emptyFollowing": "你的关注网络里在这个窗口内还没有排行榜数据。",
+      "privateNoticeTitle": "你的主页还没有进入全站排行榜",
+      "privateNoticeDescription": "如果你希望自己的使用数据出现在公开榜单里，可以先在仪表盘中开启公开主页。",
+      "openDashboard": "打开仪表盘",
+      "signInTitle": "登录后查看关注排行榜",
+      "signInDescription": "关注榜是个性化视图，登录后才会展示。",
+      "table": {
+        "rank": "排名",
+        "user": "用户",
+        "totalTokens": "总 Tokens",
+        "activeTime": "活跃时长",
+        "sessions": "会话数",
+        "followers": "粉丝"
+      }
     }
   }
 }

@@ -29,9 +29,13 @@ export async function AppShell({
   const navItems = viewer
     ? [
         { href: "/usage", label: t("dashboard"), match: "prefix" as const },
+        { href: "/leaderboard", label: t("leaderboard") },
         { href: "/people", label: t("people") },
       ]
-    : [{ href: "/people", label: t("people") }];
+    : [
+        { href: "/leaderboard", label: t("leaderboard") },
+        { href: "/people", label: t("people") },
+      ];
 
   return (
     <main className={cn("min-h-screen bg-muted/30", mainClassName)}>
