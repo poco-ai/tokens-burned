@@ -2,7 +2,7 @@
 
 import { Settings2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,13 +12,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  type PreferenceNoticeDetail,
-  preferenceNoticeEventName,
-} from "@/lib/usage/preference-notice";
 import type { ProjectMode } from "@/lib/usage/types";
-import { KeyManager, type UsageKeyRecord } from "./key-manager";
-import { SettingsPreferences } from "./settings-preferences";
+import type { UsageKeyRecord } from "./key-manager";
+import { SettingsBody } from "./settings-body";
 
 type SettingsDialogProps = {
   initialTimezone: string;
@@ -31,13 +27,6 @@ type SettingsDialogProps = {
   triggerButtonVariant?: "default" | "outline" | "secondary" | "ghost";
   triggerButtonSize?: "default" | "sm";
   triggerClassName?: string;
-};
-
-type SettingsPreferenceState = {
-  timezone: string;
-  projectMode: ProjectMode;
-  publicProfileEnabled: boolean;
-  bio: string | null;
 };
 
 export function SettingsDialog({
@@ -54,50 +43,6 @@ export function SettingsDialog({
 }: SettingsDialogProps) {
   const t = useTranslations("usage.settings");
   const resolvedTriggerLabel = triggerLabel ?? t("button");
-  const [preferences, setPreferences] = useState<SettingsPreferenceState>({
-    timezone: initialTimezone,
-    projectMode: initialProjectMode,
-    publicProfileEnabled: initialPublicProfileEnabled,
-    bio: initialBio,
-  });
-
-  useEffect(() => {
-    setPreferences({
-      timezone: initialTimezone,
-      projectMode: initialProjectMode,
-      publicProfileEnabled: initialPublicProfileEnabled,
-      bio: initialBio,
-    });
-  }, [
-    initialBio,
-    initialProjectMode,
-    initialPublicProfileEnabled,
-    initialTimezone,
-  ]);
-
-  useEffect(() => {
-    const handlePreferenceSaved = (event: Event) => {
-      const customEvent = event as CustomEvent<PreferenceNoticeDetail>;
-
-      if (customEvent.detail.type !== "saved") {
-        return;
-      }
-
-      setPreferences(customEvent.detail.preference);
-    };
-
-    window.addEventListener(
-      preferenceNoticeEventName,
-      handlePreferenceSaved as EventListener,
-    );
-
-    return () => {
-      window.removeEventListener(
-        preferenceNoticeEventName,
-        handlePreferenceSaved as EventListener,
-      );
-    };
-  }, []);
 
   return (
     <Dialog>
@@ -139,15 +84,14 @@ export function SettingsDialog({
         </DialogHeader>
 
         <div className="overflow-y-auto bg-muted p-4 sm:p-5">
-          <div className="space-y-4">
-            <SettingsPreferences
-              initialTimezone={preferences.timezone}
-              initialProjectMode={preferences.projectMode}
-              initialPublicProfileEnabled={preferences.publicProfileEnabled}
-              initialBio={preferences.bio}
-            />
-            <KeyManager initialKeys={initialKeys} variant="dialog" />
-          </div>
+          <SettingsBody
+            initialTimezone={initialTimezone}
+            initialProjectMode={initialProjectMode}
+            initialPublicProfileEnabled={initialPublicProfileEnabled}
+            initialBio={initialBio}
+            initialKeys={initialKeys}
+            keyManagerVariant="dialog"
+          />
         </div>
       </DialogContent>
     </Dialog>

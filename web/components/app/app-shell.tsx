@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { AppHeaderNav } from "@/components/app/header-nav";
-import { AppHeaderSettings } from "@/components/app/header-settings";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,6 @@ type AppShellProps = {
     email: string;
     username?: string | null;
   } | null;
-  settingsDialog?: ReactNode;
   mainClassName?: string;
   children: ReactNode;
 };
@@ -24,7 +22,6 @@ type AppShellProps = {
 export async function AppShell({
   locale,
   viewer,
-  settingsDialog,
   mainClassName,
   children,
 }: AppShellProps) {
@@ -56,9 +53,6 @@ export async function AppShell({
               variant="compact"
             />
             <ThemeSwitcher authenticated={Boolean(viewer)} variant="compact" />
-            {viewer
-              ? (settingsDialog ?? <AppHeaderSettings userId={viewer.id} />)
-              : null}
 
             {viewer ? (
               <AccountMenu email={viewer.email} username={viewer.username} />

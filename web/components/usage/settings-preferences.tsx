@@ -183,92 +183,112 @@ export function SettingsPreferences({
   }, []);
 
   return (
-    <Card size="sm" className="gap-0 bg-card shadow-sm ring-1 ring-border/60">
-      <CardHeader className="border-b border-border/50 bg-card pb-2">
-        <CardTitle>{t("preferencesTitle")}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 pt-3">
-        {error ? (
-          <Alert variant="destructive" className="border-destructive/20">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
+    <div className="space-y-4">
+      {error ? (
+        <Alert variant="destructive" className="border-destructive/20">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="timezone">{t("timezone")}</Label>
-            <Select value={timezone} onValueChange={setTimezone}>
-              <SelectTrigger className={settingsControlClassName}>
-                <SelectValue placeholder={t("selectTimezone")} />
-              </SelectTrigger>
-              <SelectContent className={settingsSelectContentClassName}>
-                {timezoneOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+      <Card size="sm" className="gap-0 bg-card shadow-sm ring-1 ring-border/60">
+        <CardHeader className="border-b border-border/50 bg-card pb-2">
+          <CardTitle>{t("profileSectionTitle")}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 pt-3">
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="timezone">{t("timezone")}</Label>
+              <Select value={timezone} onValueChange={setTimezone}>
+                <SelectTrigger
+                  id="timezone"
+                  className={settingsControlClassName}
+                >
+                  <SelectValue placeholder={t("selectTimezone")} />
+                </SelectTrigger>
+                <SelectContent className={settingsSelectContentClassName}>
+                  {timezoneOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="public-profile">{t("publicProfile")}</Label>
+              <Select
+                value={publicProfileEnabled ? "enabled" : "disabled"}
+                onValueChange={(value) =>
+                  setPublicProfileEnabled(value === "enabled")
+                }
+              >
+                <SelectTrigger
+                  id="public-profile"
+                  className={settingsControlClassName}
+                >
+                  <SelectValue placeholder={t("selectPublicProfile")} />
+                </SelectTrigger>
+                <SelectContent className={settingsSelectContentClassName}>
+                  <SelectItem value="disabled">
+                    {t("publicProfileOptions.disabled")}
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="project-mode">{t("projectMode")}</Label>
-            <Select
-              value={projectMode}
-              onValueChange={(value) => setProjectMode(value as ProjectMode)}
-            >
-              <SelectTrigger className={settingsControlClassName}>
-                <SelectValue placeholder={t("selectProjectMode")} />
-              </SelectTrigger>
-              <SelectContent className={settingsSelectContentClassName}>
-                {projectModeOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {t(`projectModes.${option.value}`)}
+                  <SelectItem value="enabled">
+                    {t("publicProfileOptions.enabled")}
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="public-profile">{t("publicProfile")}</Label>
-            <Select
-              value={publicProfileEnabled ? "enabled" : "disabled"}
-              onValueChange={(value) =>
-                setPublicProfileEnabled(value === "enabled")
-              }
-            >
-              <SelectTrigger className={settingsControlClassName}>
-                <SelectValue placeholder={t("selectPublicProfile")} />
-              </SelectTrigger>
-              <SelectContent className={settingsSelectContentClassName}>
-                <SelectItem value="disabled">
-                  {t("publicProfileOptions.disabled")}
-                </SelectItem>
-                <SelectItem value="enabled">
-                  {t("publicProfileOptions.enabled")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5 md:col-span-3">
-            <Label htmlFor="profile-bio">{t("bio")}</Label>
-            <textarea
-              id="profile-bio"
-              value={bio}
-              onChange={(event) => setBio(event.target.value.slice(0, 160))}
-              placeholder={t("bioPlaceholder")}
-              maxLength={160}
-              rows={3}
-              className="w-full rounded-lg border border-border/60 bg-background px-2.5 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
-            />
-            <div className="text-xs text-muted-foreground">
-              {bio.length}/160
+            <div className="space-y-1.5 md:col-span-2">
+              <Label htmlFor="profile-bio">{t("bio")}</Label>
+              <textarea
+                id="profile-bio"
+                value={bio}
+                onChange={(event) => setBio(event.target.value.slice(0, 160))}
+                placeholder={t("bioPlaceholder")}
+                maxLength={160}
+                rows={3}
+                className="w-full rounded-lg border border-border/60 bg-background px-2.5 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+              />
+              <div className="text-xs text-muted-foreground">
+                {bio.length}/160
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <Card size="sm" className="gap-0 bg-card shadow-sm ring-1 ring-border/60">
+        <CardHeader className="border-b border-border/50 bg-card pb-2">
+          <CardTitle>{t("preferencesTitle")}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 pt-3">
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="project-mode">{t("projectMode")}</Label>
+              <Select
+                value={projectMode}
+                onValueChange={(value) => setProjectMode(value as ProjectMode)}
+              >
+                <SelectTrigger
+                  id="project-mode"
+                  className={settingsControlClassName}
+                >
+                  <SelectValue placeholder={t("selectProjectMode")} />
+                </SelectTrigger>
+                <SelectContent className={settingsSelectContentClassName}>
+                  {projectModeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {t(`projectModes.${option.value}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

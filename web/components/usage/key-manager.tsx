@@ -16,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { summarizeUsageKeys } from "@/lib/usage/settings-view";
 import type { UsageApiKeyStatus } from "@/lib/usage/types";
 import { cn } from "@/lib/utils";
 import { KeyDialog } from "./key-dialog";
@@ -59,7 +58,6 @@ export function KeyManager({ initialKeys, variant = "page" }: KeyManagerProps) {
   const [renameTarget, setRenameTarget] = useState<UsageKeyRecord | null>(null);
   const [pendingKeyId, setPendingKeyId] = useState<string | null>(null);
   const [isDialogPending, setIsDialogPending] = useState(false);
-  const summary = summarizeUsageKeys(keys);
   const isDialog = variant === "dialog";
 
   const request = async <T,>(
@@ -214,14 +212,6 @@ export function KeyManager({ initialKeys, variant = "page" }: KeyManagerProps) {
       <Card size="sm" className={settingsPanelElevatedClassName}>
         <CardHeader className="flex flex-wrap items-center gap-2 border-b border-border/50 bg-card pb-2">
           <CardTitle>{isDialog ? t("dialogTitle") : t("pageTitle")}</CardTitle>
-          <div className="flex flex-wrap items-center gap-1.5 sm:ml-1.5">
-            <Badge variant="outline" className={summaryBadgeClassName}>
-              {t("total", { count: summary.total })}
-            </Badge>
-            <Badge variant="outline" className={activeBadgeClassName}>
-              {t("active", { count: summary.active })}
-            </Badge>
-          </div>
           <Button
             type="button"
             variant="outline"
@@ -269,22 +259,22 @@ export function KeyManager({ initialKeys, variant = "page" }: KeyManagerProps) {
             <Table className={cn(isDialog ? "min-w-[760px]" : undefined)}>
               <TableHeader>
                 <TableRow className="border-border/50">
-                  <TableHead className="h-8 px-3 text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
+                  <TableHead className="h-8 px-3 text-center text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
                     {t("table.name")}
                   </TableHead>
-                  <TableHead className="h-8 px-3 text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
+                  <TableHead className="h-8 px-3 text-center text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
                     {t("table.prefix")}
                   </TableHead>
-                  <TableHead className="h-8 px-3 text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
+                  <TableHead className="h-8 px-3 text-center text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
                     {t("table.status")}
                   </TableHead>
-                  <TableHead className="h-8 px-3 text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
+                  <TableHead className="h-8 px-3 text-center text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
                     {t("table.lastUsed")}
                   </TableHead>
-                  <TableHead className="h-8 px-3 text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
+                  <TableHead className="h-8 px-3 text-center text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
                     {t("table.created")}
                   </TableHead>
-                  <TableHead className="h-8 px-3 text-right text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
+                  <TableHead className="h-8 px-3 text-center text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
                     {t("table.actions")}
                   </TableHead>
                 </TableRow>
@@ -292,15 +282,15 @@ export function KeyManager({ initialKeys, variant = "page" }: KeyManagerProps) {
               <TableBody>
                 {keys.map((key) => (
                   <TableRow key={key.id} className="border-border/50">
-                    <TableCell className="px-3 py-2.5 font-medium">
+                    <TableCell className="px-3 py-2.5 text-center font-medium">
                       {key.name}
                     </TableCell>
-                    <TableCell className="px-3 py-2.5">
-                      <code className="rounded-md border border-border/60 bg-muted/40 px-2 py-1 text-[12px] text-foreground/80">
+                    <TableCell className="px-3 py-2.5 text-center">
+                      <code className="inline-block rounded-md border border-border/60 bg-muted/40 px-2 py-1 text-[12px] text-foreground/80">
                         {key.prefix}
                       </code>
                     </TableCell>
-                    <TableCell className="px-3 py-2.5">
+                    <TableCell className="px-3 py-2.5 text-center">
                       <Badge
                         variant="outline"
                         className={
@@ -312,14 +302,14 @@ export function KeyManager({ initialKeys, variant = "page" }: KeyManagerProps) {
                         {t(`status.${key.status}`)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="px-3 py-2.5 text-muted-foreground">
+                    <TableCell className="px-3 py-2.5 text-center text-muted-foreground">
                       {formatTimestamp(key.lastUsedAt)}
                     </TableCell>
-                    <TableCell className="px-3 py-2.5 text-muted-foreground">
+                    <TableCell className="px-3 py-2.5 text-center text-muted-foreground">
                       {formatTimestamp(key.createdAt)}
                     </TableCell>
-                    <TableCell className="px-3 py-2.5">
-                      <div className="flex items-center justify-end gap-0.5">
+                    <TableCell className="px-3 py-2.5 text-center">
+                      <div className="flex items-center justify-center gap-0.5">
                         <Button
                           type="button"
                           variant="ghost"

@@ -3,16 +3,16 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { AppShell } from "@/components/app/app-shell";
+import { Button } from "@/components/ui/button";
 import { BreakdownGrid } from "@/components/usage/breakdown-grid";
 import { EmptyState } from "@/components/usage/empty-state";
 import { FiltersBar } from "@/components/usage/filters-bar";
 import { KpiGrid } from "@/components/usage/kpi-grid";
 import { UsagePageShell } from "@/components/usage/page-shell";
 import { SessionsSection } from "@/components/usage/sessions-section";
-import { SettingsDialog } from "@/components/usage/settings-dialog";
 import { TokenTrendCard } from "@/components/usage/token-trend-card";
+import { Link } from "@/i18n/navigation";
 import { getSessionOrRedirect } from "@/lib/session";
-import { listUsageApiKeys } from "@/lib/usage/api-keys";
 import { dashboardQuerySchema } from "@/lib/usage/contracts";
 import { resolveDashboardRange } from "@/lib/usage/date-range";
 import { formatDateTime } from "@/lib/usage/format";
@@ -102,7 +102,6 @@ export default async function UsagePage({
     sessions,
     filterOptions,
     lastSyncedAt,
-    keys,
   ] = await Promise.all([
     getOverviewMetrics({ userId: session.user.id, range, filters }),
     getTokenTrend({ userId: session.user.id, range, filters }),
@@ -110,7 +109,6 @@ export default async function UsagePage({
     getSessionRows({ userId: session.user.id, range, filters }),
     getFilterOptions(session.user.id),
     getLastSyncedAt(session.user.id),
-    listUsageApiKeys(session.user.id),
   ]);
 
   const hasData =
@@ -120,20 +118,6 @@ export default async function UsagePage({
         value: formatDateTime(lastSyncedAt, preference.timezone, locale),
       })
     : t("noSyncYet");
-  const settingsDialogProps = {
-    initialTimezone: preference.timezone,
-    initialProjectMode: preference.projectMode,
-    initialPublicProfileEnabled: preference.publicProfileEnabled,
-    initialBio: preference.bio,
-    initialKeys: keys.map((key) => ({
-      id: key.id,
-      name: key.name,
-      prefix: key.prefix,
-      status: key.status,
-      lastUsedAt: key.lastUsedAt?.toISOString() ?? null,
-      createdAt: key.createdAt.toISOString(),
-    })),
-  } as const;
   const hasKeys = filterOptions.apiKeys.length > 0;
 
   return (
@@ -144,9 +128,6 @@ export default async function UsagePage({
         email: session.user.email,
         username: session.user.username,
       }}
-      settingsDialog={
-        <SettingsDialog {...settingsDialogProps} triggerVariant="icon" />
-      }
     >
       <UsagePageShell>
         <div className="space-y-4">
@@ -175,24 +156,18 @@ export default async function UsagePage({
           ) : (
             <EmptyState
               primaryAction={
-                <SettingsDialog
-                  {...settingsDialogProps}
-                  triggerLabel={
-                    hasKeys
+                <Button asChild size="default" type="button">
+                  <Link href="/settings">
+                    {hasKeys
                       ? t("emptyState.openSetupGuide")
-                      : t("emptyState.createFirstKey")
-                  }
-                  triggerButtonVariant="default"
-                  triggerButtonSize="default"
-                />
+                      : t("emptyState.createFirstKey")}
+                  </Link>
+                </Button>
               }
               secondaryAction={
-                <SettingsDialog
-                  {...settingsDialogProps}
-                  triggerLabel={t("emptyState.manageKeys")}
-                  triggerButtonVariant="outline"
-                  triggerButtonSize="default"
-                />
+                <Button asChild variant="outline" size="default" type="button">
+                  <Link href="/settings">{t("emptyState.manageKeys")}</Link>
+                </Button>
               }
             />
           )}

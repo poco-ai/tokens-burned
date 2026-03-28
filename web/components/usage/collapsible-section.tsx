@@ -36,7 +36,7 @@ export function CollapsibleSection({
     >
       <button
         type="button"
-        className="flex w-full items-start justify-between gap-3 px-4 py-3 text-left sm:px-6"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left sm:px-6"
         onClick={() => setIsOpen((current) => !current)}
         aria-expanded={isOpen}
       >

@@ -169,6 +169,7 @@ export function TokenTrendCard({ data }: TokenTrendCardProps) {
               <XAxis dataKey="label" minTickGap={24} tick={{ fontSize: 12 }} />
               <YAxis tickFormatter={formatTokenCount} tick={{ fontSize: 12 }} />
               <Tooltip
+                cursor={{ fill: "var(--muted)", opacity: 0.45 }}
                 content={(props) => <TokenTrendTooltipContent {...props} />}
               />
               {TOKEN_TREND_SERIES.map((series) => (
