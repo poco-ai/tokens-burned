@@ -42,11 +42,11 @@ export function LeaderboardTable({
   labels,
 }: LeaderboardTableProps) {
   return (
-    <Card className="shadow-sm ring-1 ring-border/60">
-      <CardHeader className="border-b border-border/50 pb-3">
+    <Card className="gap-0 py-3 shadow-sm ring-1 ring-border/60">
+      <CardHeader className="border-b border-border/50 pb-2">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent className="pt-2">
         {entries.length === 0 ? (
           <div className="flex min-h-28 items-center rounded-xl border border-dashed px-4 text-sm text-muted-foreground">
             {emptyLabel}
