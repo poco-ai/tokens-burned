@@ -14,13 +14,14 @@ type LogoutButtonProps = {
   variant?: ButtonProps["variant"];
   size?: ButtonProps["size"];
   className?: string;
-};
+} & Omit<ButtonProps, "children" | "onClick" | "type" | "disabled">;
 
 export function LogoutButton({
   children,
   variant = "outline",
   size = "default",
   className,
+  ...rest
 }: LogoutButtonProps) {
   const router = useRouter();
   const t = useTranslations("common");
@@ -46,6 +47,7 @@ export function LogoutButton({
       className={cn(className)}
       onClick={handleClick}
       disabled={isPending}
+      {...rest}
     >
       {isPending ? t("signingOut") : (children ?? t("signOut"))}
     </Button>

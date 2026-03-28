@@ -1,10 +1,19 @@
 "use client";
 
+import {
+  ArrowLeftRight,
+  Cog,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Users,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { Link } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 
 type AccountMenuProps = {
   email: string;
@@ -15,20 +24,55 @@ function getInitial(value: string) {
   return value.trim().charAt(0).toUpperCase() || "?";
 }
 
+function humanizeUsername(username: string) {
+  return username
+    .replace(/[._-]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function getIdentityLines(email: string, username?: string | null) {
+  if (username) {
+    return {
+      primary: humanizeUsername(username),
+      secondary: `@${username}`,
+    };
+  }
+
+  const local = email.split("@")[0]?.trim() || email;
+  return { primary: local, secondary: email };
+}
+
+type MenuLink = {
+  href: string;
+  label: string;
+  icon: typeof Home;
+};
+
 export function AccountMenu({ email, username }: AccountMenuProps) {
   const t = useTranslations("common");
   const tUsage = useTranslations("usage.accountMenu");
   const tSocial = useTranslations("social.nav");
   const identity = username ?? email;
+  const { primary, secondary } = getIdentityLines(email, username);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const closeTimeoutRef = useRef<number | null>(null);
-  const links = [
+
+  const links: MenuLink[] = [
     ...(username
-      ? [{ href: `/u/${username}`, label: tSocial("profile") }]
+      ? [{ href: `/u/${username}`, label: tSocial("profile"), icon: Home }]
       : []),
-    { href: "/usage", label: tSocial("dashboard") },
-    { href: "/people", label: tSocial("people") },
+    {
+      href: "/usage",
+      label: tSocial("dashboard"),
+      icon: LayoutDashboard,
+    },
+    { href: "/people", label: tSocial("people"), icon: Users },
+    { href: "/settings", label: t("settings"), icon: Cog },
   ];
 
   useEffect(() => {
@@ -97,7 +141,8 @@ export function AccountMenu({ email, username }: AccountMenuProps) {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 flex w-64 flex-col gap-2.5 rounded-lg bg-popover p-2.5 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden"
+          aria-label={tUsage("menuLabel")}
+          className="absolute right-0 top-full z-50 mt-2 flex w-64 flex-col gap-0 rounded-lg bg-popover p-2 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden"
           onPointerEnter={openMenu}
           onPointerLeave={closeMenu}
           onBlur={(event) => {
@@ -110,29 +155,75 @@ export function AccountMenu({ email, username }: AccountMenuProps) {
             }
           }}
         >
-          <div className="rounded-lg px-2 py-1.5">
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("account")}
+          <div
+            className="flex items-center gap-3 rounded-lg bg-muted/40 px-2 py-2"
+            role="none"
+          >
+            <span
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background"
+              aria-hidden
+            >
+              {getInitial(identity)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-semibold leading-tight text-foreground">
+                {primary}
+              </div>
+              <div className="truncate text-xs leading-tight text-muted-foreground">
+                {secondary}
+              </div>
             </div>
-            {username ? (
-              <div className="mt-1 text-sm font-semibold">@{username}</div>
-            ) : null}
-            <div className="mt-1 break-all text-sm font-medium">{email}</div>
+            {/* TODO: Enable routing or a real multi-account switcher once the product flow exists (e.g. /usage, settings, or provider linking). */}
+            <button
+              type="button"
+              disabled
+              className={cn(
+                "inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-primary/40 text-muted-foreground",
+                "cursor-not-allowed opacity-60",
+                "focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
+              )}
+              title={tUsage("accountSwitcher")}
+              aria-label={tUsage("accountSwitcher")}
+            >
+              <ArrowLeftRight className="size-4" strokeWidth={2} />
+            </button>
           </div>
-          <div className="space-y-1 px-1">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex h-8 items-center rounded-md px-2 text-sm text-foreground transition-colors hover:bg-muted"
-              >
-                {link.label}
-              </Link>
-            ))}
+
+          <div className="mt-2 flex flex-col gap-0.5 border-t border-border/60 pt-2">
+            {links.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  role="menuitem"
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  onClick={() => setOpen(false)}
+                >
+                  <Icon
+                    className="size-4 shrink-0 text-muted-foreground"
+                    aria-hidden
+                  />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
           </div>
-          <LogoutButton variant="ghost" className="w-full justify-start">
-            {t("signOut")}
-          </LogoutButton>
+
+          <div className="mt-1 border-t border-border/60 pt-1">
+            <LogoutButton
+              role="menuitem"
+              variant="ghost"
+              size="sm"
+              className="h-auto w-full justify-start gap-2 px-2 py-1.5 font-normal text-foreground hover:bg-muted"
+            >
+              <LogOut
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden
+              />
+              {t("signOut")}
+            </LogoutButton>
+          </div>
         </div>
       ) : null}
     </div>
