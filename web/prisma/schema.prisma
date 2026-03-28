@@ -34,24 +34,33 @@ enum ThemeMode {
   system
 }
 
+enum LeaderboardSnapshotPeriod {
+  day
+  week
+  month
+  all_time
+}
+
 model User {
-  id              String            @id
-  name            String
-  username        String            @unique
-  email           String
-  emailVerified   Boolean           @default(false)
-  image           String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  sessions        Session[]
-  accounts        Account[]
-  usagePreference UsagePreference?
-  usageApiKeys    UsageApiKey[]
-  devices         Device[]
-  usageBuckets    UsageBucket[]
-  usageSessions   UsageSession[]
-  followers       Follow[]          @relation("FollowFollowing")
-  following       Follow[]          @relation("FollowFollower")
+  id                         String                     @id
+  name                       String
+  username                   String                     @unique
+  email                      String
+  emailVerified              Boolean                    @default(false)
+  image                      String?
+  createdAt                  DateTime                   @default(now())
+  updatedAt                  DateTime                   @updatedAt
+  sessions                   Session[]
+  accounts                   Account[]
+  usagePreference            UsagePreference?
+  usageApiKeys               UsageApiKey[]
+  devices                    Device[]
+  usageBuckets               UsageBucket[]
+  usageSessions              UsageSession[]
+  leaderboardDays            LeaderboardUserDay[]
+  leaderboardSnapshotEntries LeaderboardSnapshotEntry[]
+  followers                  Follow[]                   @relation("FollowFollowing")
+  following                  Follow[]                   @relation("FollowFollower")
 
   @@unique([email])
   @@map("user")
@@ -106,18 +115,18 @@ model Verification {
 }
 
 model UsagePreference {
-  id              String      @id @default(cuid())
-  userId          String      @unique
-  locale          AppLocale   @default(en)
-  theme           ThemeMode   @default(system)
-  timezone        String      @default("UTC")
-  projectMode     ProjectMode @default(hashed)
-  publicProfileEnabled Boolean @default(false)
-  bio             String?
-  projectHashSalt String
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                   String      @id @default(cuid())
+  userId               String      @unique
+  locale               AppLocale   @default(en)
+  theme                ThemeMode   @default(system)
+  timezone             String      @default("UTC")
+  projectMode          ProjectMode @default(hashed)
+  publicProfileEnabled Boolean     @default(false)
+  bio                  String?
+  projectHashSalt      String
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Follow {
@@ -164,23 +173,23 @@ model Device {
 }
 
 model UsageBucket {
-  id           String   @id @default(cuid())
-  userId       String
-  apiKeyId     String?
-  deviceId     String
-  source       String
-  model        String
-  projectKey   String
-  projectLabel String
-  bucketStart  DateTime
-  inputTokens  Int
-  outputTokens Int
-  reasoningTokens Int @default(0)
-  cachedTokens Int
-  totalTokens  Int
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  userId          String
+  apiKeyId        String?
+  deviceId        String
+  source          String
+  model           String
+  projectKey      String
+  projectLabel    String
+  bucketStart     DateTime
+  inputTokens     Int
+  outputTokens    Int
+  reasoningTokens Int      @default(0)
+  cachedTokens    Int
+  totalTokens     Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, deviceId, source, model, projectKey, bucketStart])
   @@index([userId, bucketStart])
@@ -207,4 +216,62 @@ model UsageSession {
 
   @@unique([userId, deviceId, source, sessionHash])
   @@index([userId, firstMessageAt])
+}
+
+model LeaderboardUserDay {
+  id              String   @id @default(cuid())
+  userId          String
+  statDate        DateTime
+  inputTokens     Int      @default(0)
+  outputTokens    Int      @default(0)
+  reasoningTokens Int      @default(0)
+  cachedTokens    Int      @default(0)
+  totalTokens     Int      @default(0)
+  activeSeconds   Int      @default(0)
+  sessions        Int      @default(0)
+  messages        Int      @default(0)
+  userMessages    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, statDate])
+  @@index([statDate, userId])
+  @@index([userId, statDate])
+  @@map("leaderboard_user_day")
+}
+
+model LeaderboardSnapshot {
+  id          String                     @id @default(cuid())
+  period      LeaderboardSnapshotPeriod  @unique
+  windowStart DateTime?
+  windowEnd   DateTime?
+  generatedAt DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
+  entries     LeaderboardSnapshotEntry[]
+
+  @@map("leaderboard_snapshot")
+}
+
+model LeaderboardSnapshotEntry {
+  id              String              @id @default(cuid())
+  snapshotId      String
+  userId          String
+  rank            Int
+  inputTokens     Int                 @default(0)
+  outputTokens    Int                 @default(0)
+  reasoningTokens Int                 @default(0)
+  cachedTokens    Int                 @default(0)
+  totalTokens     Int                 @default(0)
+  activeSeconds   Int                 @default(0)
+  sessions        Int                 @default(0)
+  createdAt       DateTime            @default(now())
+  snapshot        LeaderboardSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([snapshotId, userId])
+  @@unique([snapshotId, rank])
+  @@index([snapshotId, rank])
+  @@index([userId, rank])
+  @@map("leaderboard_snapshot_entry")
 }
