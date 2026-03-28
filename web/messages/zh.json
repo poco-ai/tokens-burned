@@ -70,7 +70,7 @@
   "usage": {
     "overviewTitle": "概览",
     "nav": {
-      "people": "用户",
+      "people": "广场",
       "profile": "主页"
     },
     "lastSynced": "上次同步：{value}",
@@ -79,6 +79,7 @@
       "button": "设置",
       "title": "设置",
       "description": "管理偏好设置和 CLI API Key。",
+      "profileSectionTitle": "个人资料",
       "preferencesTitle": "偏好设置",
       "saving": "保存中...",
       "saved": "已保存",
@@ -208,7 +209,9 @@
       }
     },
     "accountMenu": {
-      "open": "打开账户菜单"
+      "open": "打开账户菜单",
+      "accountSwitcher": "账户切换",
+      "menuLabel": "账户操作"
     },
     "keys": {
       "pageTitle": "CLI API Keys",
@@ -260,7 +263,7 @@
   "social": {
     "nav": {
       "dashboard": "仪表盘",
-      "people": "用户",
+      "people": "广场",
       "profile": "主页",
       "following": "关注中",
       "followers": "粉丝",

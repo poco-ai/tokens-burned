@@ -79,6 +79,7 @@
       "button": "Settings",
       "title": "Settings",
       "description": "Manage preferences and CLI API keys.",
+      "profileSectionTitle": "Profile",
       "preferencesTitle": "Preferences",
       "saving": "Saving...",
       "saved": "Saved",
@@ -208,7 +209,9 @@
       }
     },
     "accountMenu": {
-      "open": "Open account menu"
+      "open": "Open account menu",
+      "accountSwitcher": "Account switcher",
+      "menuLabel": "Account actions"
     },
     "keys": {
       "pageTitle": "CLI API Keys",
