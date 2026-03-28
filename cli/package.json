@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/poco-ai/tokens-burned.git"
+    "url": "git+https://github.com/poco-ai/tokens-burned.git"
   },
   "homepage": "https://github.com/poco-ai/tokens-burned",
   "publishConfig": {
