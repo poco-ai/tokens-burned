@@ -1,6 +1,6 @@
 {
   "name": "@poco-ai/tokens-burned",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Collect and sync local AI coding CLI usage data",
   "license": "MIT",
