@@ -235,44 +235,10 @@ export function TokenTrendCard({
   return (
     <Card>
       <CardHeader className="flex flex-col gap-4">
-        <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center">
-          <CardTitle className="shrink-0">{t("title")}</CardTitle>
-
-          <div className="flex min-w-0 flex-col gap-3 lg:ml-auto lg:flex-row lg:items-center lg:justify-end">
-            {metricView === "tokens" ? (
-              <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground lg:justify-end">
-                {TOKEN_TREND_SERIES.map((series) => (
-                  <div key={series.dataKey} className="flex items-center gap-2">
-                    <span
-                      className="size-3 rounded-sm"
-                      style={{
-                        backgroundColor: series.color,
-                        opacity: series.opacity,
-                      }}
-                    />
-                    <span>{t(series.labelKey)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : metricView === "totalTime" ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground lg:justify-end">
-                <span
-                  className="size-3 rounded-sm"
-                  style={{ backgroundColor: "var(--chart-3)" }}
-                />
-                <span>{t("totalTime")}</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground lg:justify-end">
-                <span
-                  className="size-3 rounded-sm"
-                  style={{ backgroundColor: "var(--chart-2)" }}
-                />
-                <span>{t("cost")}</span>
-              </div>
-            )}
-
-            <div className="inline-flex items-center gap-1 lg:shrink-0">
+        <div className="flex w-full min-w-0 flex-row flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+            <CardTitle className="shrink-0">{t("title")}</CardTitle>
+            <div className="inline-flex shrink-0 items-center gap-1">
               {TREND_VIEW_OPTIONS.map((view) => (
                 <Button
                   key={view.value}
@@ -286,6 +252,39 @@ export function TokenTrendCard({
               ))}
             </div>
           </div>
+
+          {metricView === "tokens" ? (
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm text-muted-foreground sm:shrink-0">
+              {TOKEN_TREND_SERIES.map((series) => (
+                <div key={series.dataKey} className="flex items-center gap-2">
+                  <span
+                    className="size-3 rounded-sm"
+                    style={{
+                      backgroundColor: series.color,
+                      opacity: series.opacity,
+                    }}
+                  />
+                  <span>{t(series.labelKey)}</span>
+                </div>
+              ))}
+            </div>
+          ) : metricView === "totalTime" ? (
+            <div className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
+              <span
+                className="size-3 rounded-sm"
+                style={{ backgroundColor: "var(--chart-3)" }}
+              />
+              <span>{t("totalTime")}</span>
+            </div>
+          ) : (
+            <div className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
+              <span
+                className="size-3 rounded-sm"
+                style={{ backgroundColor: "var(--chart-2)" }}
+              />
+              <span>{t("cost")}</span>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>

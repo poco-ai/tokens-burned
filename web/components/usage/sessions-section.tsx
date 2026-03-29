@@ -34,7 +34,7 @@ export function SessionsSection({
       description={t("description")}
       countLabel={t("count", { count: sessions.length })}
       defaultOpen={defaultOpen}
-      contentClassName="pt-0"
+      contentClassName="pt-4"
     >
       {sessions.length === 0 ? (
         <div className="flex min-h-32 items-center rounded-xl border border-dashed px-4 text-sm text-muted-foreground">

@@ -362,11 +362,11 @@ export function BreakdownGrid({
 
           return (
             <Card key={card.key} size="sm" className="min-h-[280px]">
-              <CardHeader className="flex flex-col gap-3 pb-2 lg:flex-row lg:items-center">
-                <CardTitle className="shrink-0">
+              <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+                <CardTitle className="min-w-0 shrink truncate">
                   {t(`tabs.${card.labelKey}`)}
                 </CardTitle>
-                <div className="inline-flex items-center gap-1 lg:ml-auto lg:shrink-0">
+                <div className="inline-flex shrink-0 items-center gap-1">
                   {BREAKDOWN_VIEW_OPTIONS.map((view) => (
                     <Button
                       key={view.value}
