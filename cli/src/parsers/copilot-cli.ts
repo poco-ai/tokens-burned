@@ -140,6 +140,7 @@ class CopilotCliParser implements IParser {
             }
 
             entries.push({
+              sessionId,
               source: "copilot-cli",
               model,
               project: currentProject,
@@ -156,7 +157,7 @@ class CopilotCliParser implements IParser {
 
     return {
       buckets: aggregateToBuckets(entries),
-      sessions: extractSessions(sessionEvents),
+      sessions: extractSessions(sessionEvents, entries),
     };
   }
 }

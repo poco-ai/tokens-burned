@@ -116,6 +116,7 @@ class GeminiCliParser implements IParser {
           const cached = tokens.cached || 0;
           const thoughts = tokens.thoughts || 0;
           entries.push({
+            sessionId: filePath,
             source: "gemini-cli",
             model: msg.model || data.model || "unknown",
             project: "unknown",
@@ -129,6 +130,7 @@ class GeminiCliParser implements IParser {
           const cached = usage.cachedContentTokenCount || 0;
           const thoughts = usage.thoughtsTokenCount || 0;
           entries.push({
+            sessionId: filePath,
             source: "gemini-cli",
             model: msg.model || data.model || "unknown",
             project: "unknown",
@@ -146,7 +148,7 @@ class GeminiCliParser implements IParser {
 
     return {
       buckets: aggregateToBuckets(entries),
-      sessions: extractSessions(sessionEvents),
+      sessions: extractSessions(sessionEvents, entries),
     };
   }
 }

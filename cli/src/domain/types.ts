@@ -2,6 +2,7 @@
  * Token usage entry - raw parsed result from a single message/event
  */
 export interface TokenUsageEntry {
+  sessionId?: string;
   source: string;
   model: string;
   project: string;
@@ -10,6 +11,15 @@ export interface TokenUsageEntry {
   outputTokens: number;
   reasoningTokens: number;
   cachedTokens: number;
+}
+
+export interface SessionModelUsage {
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens: number;
+  cachedTokens: number;
+  totalTokens: number;
 }
 
 /**
@@ -72,6 +82,13 @@ export interface SessionMetadata {
   messageCount: number;
   userMessageCount: number;
   userPromptHours: number[];
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens: number;
+  cachedTokens: number;
+  totalTokens: number;
+  primaryModel: string;
+  modelUsages: SessionModelUsage[];
 }
 
 /**
@@ -90,6 +107,13 @@ export interface UploadSessionMetadata {
   activeSeconds: number;
   messageCount: number;
   userMessageCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens: number;
+  cachedTokens: number;
+  totalTokens: number;
+  primaryModel: string;
+  modelUsages: SessionModelUsage[];
 }
 
 /**

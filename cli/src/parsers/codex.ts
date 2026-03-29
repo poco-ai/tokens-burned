@@ -172,6 +172,7 @@ class CodexParser implements IParser {
           const reasoningTokens = usage.reasoning_output_tokens || 0;
 
           entries.push({
+            sessionId: filePath,
             source: "codex",
             model,
             project: sessionProject,
@@ -187,7 +188,7 @@ class CodexParser implements IParser {
 
     return {
       buckets: aggregateToBuckets(entries),
-      sessions: extractSessions(sessionEvents),
+      sessions: extractSessions(sessionEvents, entries),
     };
   }
 }

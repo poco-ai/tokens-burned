@@ -134,6 +134,7 @@ class OpenClawParser implements IParser {
               if (!usage) continue;
 
               entries.push({
+                sessionId: filePath,
                 source: "openclaw",
                 model: msg.model || obj.model || "unknown",
                 project,
@@ -170,7 +171,7 @@ class OpenClawParser implements IParser {
 
     return {
       buckets: aggregateToBuckets(entries),
-      sessions: extractSessions(sessionEvents),
+      sessions: extractSessions(sessionEvents, entries),
     };
   }
 

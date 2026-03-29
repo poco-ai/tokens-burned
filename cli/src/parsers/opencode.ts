@@ -137,6 +137,7 @@ class OpenCodeParser implements IParser {
       if (!tokens || (!tokens.input && !tokens.output)) continue;
 
       entries.push({
+        sessionId,
         source: "opencode",
         model: row.modelID || "unknown",
         project,
@@ -150,7 +151,7 @@ class OpenCodeParser implements IParser {
 
     return {
       buckets: aggregateToBuckets(entries),
-      sessions: extractSessions(sessionEvents),
+      sessions: extractSessions(sessionEvents, entries),
     };
   }
 
@@ -208,6 +209,7 @@ class OpenCodeParser implements IParser {
         if (!tokens || (!tokens.input && !tokens.output)) continue;
 
         entries.push({
+          sessionId: sessionDir.name,
           source: "opencode",
           model: data.modelID || "unknown",
           project,
@@ -222,7 +224,7 @@ class OpenCodeParser implements IParser {
 
     return {
       buckets: aggregateToBuckets(entries),
-      sessions: extractSessions(sessionEvents),
+      sessions: extractSessions(sessionEvents, entries),
     };
   }
 }

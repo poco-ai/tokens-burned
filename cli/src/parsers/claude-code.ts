@@ -91,6 +91,7 @@ class ClaudeCodeParser implements IParser {
           }
 
           entries.push({
+            sessionId,
             source: "claude-code",
             model: msg.model || "unknown",
             project,
@@ -139,7 +140,7 @@ class ClaudeCodeParser implements IParser {
 
     return {
       buckets: aggregateToBuckets(entries),
-      sessions: extractSessions(sessionEvents),
+      sessions: extractSessions(sessionEvents, entries),
     };
   }
 }

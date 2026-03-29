@@ -137,6 +137,13 @@ function toUploadSessions(
       activeSeconds: session.activeSeconds,
       messageCount: session.messageCount,
       userMessageCount: session.userMessageCount,
+      inputTokens: session.inputTokens,
+      outputTokens: session.outputTokens,
+      reasoningTokens: session.reasoningTokens,
+      cachedTokens: session.cachedTokens,
+      totalTokens: session.totalTokens,
+      primaryModel: session.primaryModel,
+      modelUsages: session.modelUsages,
     };
   });
 }
