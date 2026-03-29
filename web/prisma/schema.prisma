@@ -41,6 +41,13 @@ enum LeaderboardSnapshotPeriod {
   all_time
 }
 
+enum FollowTag {
+  coworker
+  friend
+  peer
+  inspiration
+}
+
 model User {
   id                         String                     @id
   name                       String
@@ -133,12 +140,14 @@ model Follow {
   id          String   @id @default(cuid())
   followerId  String
   followingId String
+  tag         FollowTag?
   createdAt   DateTime @default(now())
   follower    User     @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
   following   User     @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
   @@index([followerId, createdAt])
+  @@index([followerId, tag, createdAt])
   @@index([followingId, createdAt])
 }
 
