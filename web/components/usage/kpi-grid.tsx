@@ -184,6 +184,7 @@ function DeltaBadge({
         title={title}
         className={cn(
           "inline-flex shrink-0 items-center rounded-md px-1.5 py-0.5 leading-none font-medium",
+          "opacity-0 transition-opacity duration-150 group-hover/card:opacity-100",
           compact ? "text-[0.6rem]" : "text-[0.65rem]",
           getDeltaToneClasses(deltaTone),
         )}
