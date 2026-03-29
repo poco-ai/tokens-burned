@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getTokenTrend: vi.fn(),
   getActivityTrend: vi.fn(),
   getBreakdowns: vi.fn(),
+  getPricingSummaryAndRows: vi.fn(),
   getSessionRows: vi.fn(),
   getFilterOptions: vi.fn(),
   getLastSyncedAt: vi.fn(),
@@ -142,6 +143,7 @@ vi.mock("@/lib/usage/queries", () => ({
   getTokenTrend: mocks.getTokenTrend,
   getActivityTrend: mocks.getActivityTrend,
   getBreakdowns: mocks.getBreakdowns,
+  getPricingSummaryAndRows: mocks.getPricingSummaryAndRows,
   getSessionRows: mocks.getSessionRows,
   getFilterOptions: mocks.getFilterOptions,
   getLastSyncedAt: mocks.getLastSyncedAt,
@@ -191,6 +193,8 @@ describe("UsagePage", () => {
         outputTokens: 40,
         reasoningTokens: 10,
         cachedTokens: 10,
+        estimatedCostUsd: 1.25,
+        totalSeconds: 120,
       },
     ]);
     mocks.getActivityTrend.mockResolvedValue([
@@ -209,6 +213,19 @@ describe("UsagePage", () => {
       tools: [],
       models: [],
       projects: [],
+    });
+    mocks.getPricingSummaryAndRows.mockResolvedValue({
+      summary: {
+        currentUsd: 1.25,
+        previousUsd: 0.75,
+        deltaUsd: 0.5,
+        pricedTokens: 120,
+        totalTokens: 120,
+        coverage: 1,
+        pricedModels: 1,
+        totalModels: 1,
+      },
+      modelPricingRows: [],
     });
     mocks.getSessionRows.mockResolvedValue([]);
     mocks.getFilterOptions.mockResolvedValue({
@@ -238,6 +255,12 @@ describe("UsagePage", () => {
     expect(mocks.TokenTrendCard).toHaveBeenCalledOnce();
     expect(mocks.SessionsSection).toHaveBeenCalledOnce();
     expect(mocks.getSessionRows).toHaveBeenCalledOnce();
+    expect(mocks.KpiGrid).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelPricingRows: [],
+      }),
+      undefined,
+    );
     expect(mocks.ActivityTrendCard).not.toHaveBeenCalled();
     expect(markup).toContain('data-slot="token-trend-card"');
     expect(markup).toContain('data-slot="sessions-section"');

@@ -1,6 +1,9 @@
 const datePartsFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const dateTimeFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const percentageFormatterCache = new Map<string, Intl.NumberFormat>();
+const compactCurrencyFormatterCache = new Map<string, Intl.NumberFormat>();
+const preciseCurrencyFormatterCache = new Map<string, Intl.NumberFormat>();
+const rateCurrencyFormatterCache = new Map<string, Intl.NumberFormat>();
 
 function getDatePartsFormatter(timezone: string) {
   const cached = datePartsFormatterCache.get(timezone);
@@ -62,6 +65,65 @@ function getPercentageFormatter(locale = "en") {
   return formatter;
 }
 
+function getCompactCurrencyFormatter(locale = "en") {
+  const cached = compactCurrencyFormatterCache.get(locale);
+
+  if (cached) {
+    return cached;
+  }
+
+  const formatter = new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: "USD",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  });
+
+  compactCurrencyFormatterCache.set(locale, formatter);
+
+  return formatter;
+}
+
+function getPreciseCurrencyFormatter(locale = "en", maximumFractionDigits = 2) {
+  const cacheKey = `${locale}:${maximumFractionDigits}`;
+  const cached = preciseCurrencyFormatterCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const formatter = new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits,
+  });
+
+  preciseCurrencyFormatterCache.set(cacheKey, formatter);
+
+  return formatter;
+}
+
+function getRateCurrencyFormatter(maximumFractionDigits = 4) {
+  const cacheKey = String(maximumFractionDigits);
+  const cached = rateCurrencyFormatterCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const formatter = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits,
+  });
+
+  rateCurrencyFormatterCache.set(cacheKey, formatter);
+
+  return formatter;
+}
+
 function normalizeDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
 }
@@ -113,6 +175,33 @@ export function formatDuration(
 
 export function formatPercentage(value: number, locale = "en") {
   return getPercentageFormatter(locale).format(value);
+}
+
+export function formatUsdAmount(
+  value: number,
+  locale = "en",
+  options?: { compact?: boolean },
+) {
+  const absValue = Math.abs(value);
+
+  if (options?.compact && absValue >= 1000) {
+    return getCompactCurrencyFormatter(locale).format(value);
+  }
+
+  if (absValue >= 1) {
+    return getPreciseCurrencyFormatter(locale, 2).format(value);
+  }
+
+  if (absValue >= 0.01) {
+    return getPreciseCurrencyFormatter(locale, 4).format(value);
+  }
+
+  return getPreciseCurrencyFormatter(locale, 6).format(value);
+}
+
+export function formatUsdRatePerMillion(value: number) {
+  const maximumFractionDigits = value >= 1 ? 2 : 4;
+  return `${getRateCurrencyFormatter(maximumFractionDigits).format(value)}/M`;
 }
 
 export function formatDateInput(value: Date | string, timezone: string) {

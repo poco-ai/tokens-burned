@@ -5,6 +5,9 @@ const mocks = vi.hoisted(() => ({
   usageSessionFindMany: vi.fn(),
   deviceFindMany: vi.fn(),
   usageApiKeyFindMany: vi.fn(),
+  getPricingCatalog: vi.fn(),
+  resolveOfficialPricingMatch: vi.fn(),
+  estimateCostUsd: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -24,7 +27,21 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-import { getBreakdowns, getFilterOptions, getSessionRows } from "./queries";
+vi.mock("@/lib/pricing/catalog", () => ({
+  getPricingCatalog: mocks.getPricingCatalog,
+}));
+
+vi.mock("@/lib/pricing/resolve", () => ({
+  resolveOfficialPricingMatch: mocks.resolveOfficialPricingMatch,
+  estimateCostUsd: mocks.estimateCostUsd,
+}));
+
+import {
+  getBreakdowns,
+  getFilterOptions,
+  getSessionRows,
+  getTokenTrend,
+} from "./queries";
 
 const range = {
   from: new Date("2026-03-19T00:00:00.000Z"),
@@ -41,6 +58,9 @@ describe("getBreakdowns", () => {
     mocks.usageSessionFindMany.mockResolvedValue([]);
     mocks.deviceFindMany.mockResolvedValue([]);
     mocks.usageApiKeyFindMany.mockResolvedValue([]);
+    mocks.getPricingCatalog.mockResolvedValue(null);
+    mocks.resolveOfficialPricingMatch.mockReturnValue(null);
+    mocks.estimateCostUsd.mockReturnValue(null);
   });
 
   it("disambiguates duplicate device hostnames in the device breakdown", async () => {
@@ -102,6 +122,9 @@ describe("getFilterOptions", () => {
     mocks.usageSessionFindMany.mockResolvedValue([]);
     mocks.deviceFindMany.mockResolvedValue([]);
     mocks.usageApiKeyFindMany.mockResolvedValue([]);
+    mocks.getPricingCatalog.mockResolvedValue(null);
+    mocks.resolveOfficialPricingMatch.mockReturnValue(null);
+    mocks.estimateCostUsd.mockReturnValue(null);
   });
 
   it("disambiguates duplicate device hostnames in filter options", async () => {
@@ -138,6 +161,9 @@ describe("getSessionRows", () => {
     mocks.usageSessionFindMany.mockResolvedValue([]);
     mocks.deviceFindMany.mockResolvedValue([]);
     mocks.usageApiKeyFindMany.mockResolvedValue([]);
+    mocks.getPricingCatalog.mockResolvedValue(null);
+    mocks.resolveOfficialPricingMatch.mockReturnValue(null);
+    mocks.estimateCostUsd.mockReturnValue(null);
   });
 
   it("returns sessions with disambiguated device labels", async () => {
@@ -191,5 +217,64 @@ describe("getSessionRows", () => {
         userMessageCount: 4,
       },
     ]);
+  });
+});
+
+describe("getTokenTrend", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.usageBucketFindMany.mockResolvedValue([]);
+    mocks.usageSessionFindMany.mockResolvedValue([]);
+    mocks.deviceFindMany.mockResolvedValue([]);
+    mocks.usageApiKeyFindMany.mockResolvedValue([]);
+    mocks.getPricingCatalog.mockResolvedValue(new Map());
+    mocks.resolveOfficialPricingMatch.mockReturnValue({
+      providerId: "openai",
+      providerName: "OpenAI",
+      modelId: "gpt-5",
+      modelName: "GPT-5",
+      cost: { input: 1, output: 2 },
+    });
+    mocks.estimateCostUsd.mockReturnValue({
+      totalUsd: 1.5,
+      inputUsd: 0.5,
+      outputUsd: 1,
+      reasoningUsd: 0,
+      cacheUsd: 0,
+    });
+  });
+
+  it("returns token trend points with estimated cost and total duration", async () => {
+    mocks.usageBucketFindMany.mockResolvedValue([
+      {
+        bucketStart: new Date("2026-03-25T00:00:00.000Z"),
+        model: "gpt-5",
+        inputTokens: 100,
+        outputTokens: 200,
+        reasoningTokens: 50,
+        cachedTokens: 25,
+        totalTokens: 375,
+      },
+    ]);
+    mocks.usageSessionFindMany.mockResolvedValue([
+      {
+        firstMessageAt: new Date("2026-03-25T12:00:00.000Z"),
+        durationSeconds: 1200,
+      },
+    ]);
+
+    const points = await getTokenTrend({
+      userId: "user_123",
+      range,
+      filters: {},
+    });
+
+    expect(points).toHaveLength(7);
+    expect(points.at(-1)).toMatchObject({
+      label: "2026-03-25",
+      totalTokens: 375,
+      estimatedCostUsd: 1.5,
+      totalSeconds: 1200,
+    });
   });
 });

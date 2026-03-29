@@ -1,3 +1,9 @@
+import { getPricingCatalog } from "@/lib/pricing/catalog";
+import {
+  estimateCostUsd,
+  resolveOfficialPricingMatch,
+  resolveOfficialPricingProvider,
+} from "@/lib/pricing/resolve";
 import { prisma } from "@/lib/prisma";
 import {
   getPreviousRange,
@@ -9,12 +15,14 @@ import type {
   BreakdownRow,
   DashboardRange,
   FilterOption,
+  ModelPricingRow,
   TokenTrendPoint,
   UsageBreakdowns,
   UsageFilterOptions,
   UsageFilters,
   UsageMetricTotals,
   UsageOverviewMetrics,
+  UsagePricingSummary,
   UsageSessionRow,
 } from "./types";
 
@@ -84,6 +92,33 @@ async function loadSessions(input: {
     ),
     orderBy: { firstMessageAt: "asc" },
   });
+}
+
+type UsageBucketRecord = Awaited<ReturnType<typeof loadBuckets>>[number];
+
+function estimateBucketCostUsd(
+  bucket: Pick<
+    UsageBucketRecord,
+    | "model"
+    | "inputTokens"
+    | "outputTokens"
+    | "reasoningTokens"
+    | "cachedTokens"
+  >,
+  catalog: Awaited<ReturnType<typeof getPricingCatalog>>,
+) {
+  const match = resolveOfficialPricingMatch(catalog, bucket.model);
+  const estimate = estimateCostUsd(
+    {
+      inputTokens: bucket.inputTokens,
+      outputTokens: bucket.outputTokens,
+      reasoningTokens: bucket.reasoningTokens,
+      cachedTokens: bucket.cachedTokens,
+    },
+    match?.cost,
+  );
+
+  return estimate?.totalUsd ?? 0;
 }
 
 function emptyTotals(): UsageMetricTotals {
@@ -210,7 +245,11 @@ export async function getTokenTrend(input: {
   range: DashboardRange;
   filters: UsageFilters;
 }) {
-  const buckets = await loadBuckets(input);
+  const [catalog, buckets, sessions] = await Promise.all([
+    getPricingCatalog(),
+    loadBuckets(input),
+    loadSessions(input),
+  ]);
   const seeded = new Map<string, TokenTrendPoint>(
     listRangeBuckets(input.range).map((bucket) => [
       bucket.key,
@@ -222,6 +261,8 @@ export async function getTokenTrend(input: {
         outputTokens: 0,
         reasoningTokens: 0,
         cachedTokens: 0,
+        estimatedCostUsd: 0,
+        totalSeconds: 0,
       },
     ]),
   );
@@ -239,6 +280,18 @@ export async function getTokenTrend(input: {
     point.outputTokens += bucket.outputTokens;
     point.reasoningTokens += bucket.reasoningTokens;
     point.cachedTokens += bucket.cachedTokens;
+    point.estimatedCostUsd += estimateBucketCostUsd(bucket, catalog);
+  }
+
+  for (const session of sessions) {
+    const key = groupByHourOrDay(input.range, session.firstMessageAt);
+    const point = seeded.get(key);
+
+    if (!point) {
+      continue;
+    }
+
+    point.totalSeconds += session.durationSeconds;
   }
 
   return Array.from(seeded.values());
@@ -315,7 +368,9 @@ function ensureBreakdownRow(
     outputTokens: 0,
     reasoningTokens: 0,
     cachedTokens: 0,
+    estimatedCostUsd: 0,
     activeSeconds: 0,
+    totalSeconds: 0,
     sessions: 0,
     messages: 0,
     userMessages: 0,
@@ -354,7 +409,8 @@ export async function getBreakdowns(input: {
   range: DashboardRange;
   filters: UsageFilters;
 }): Promise<UsageBreakdowns> {
-  const [buckets, sessions, devices] = await Promise.all([
+  const [catalog, buckets, sessions, devices] = await Promise.all([
+    getPricingCatalog(),
     loadBuckets(input),
     loadSessions(input),
     prisma.device.findMany({
@@ -383,6 +439,7 @@ export async function getBreakdowns(input: {
       bucket.projectKey,
       bucket.projectLabel,
     );
+    const estimatedCostUsd = estimateBucketCostUsd(bucket, catalog);
 
     for (const row of [deviceRow, toolRow, modelRow, projectRow]) {
       row.totalTokens += bucket.totalTokens;
@@ -390,6 +447,7 @@ export async function getBreakdowns(input: {
       row.outputTokens += bucket.outputTokens;
       row.reasoningTokens += bucket.reasoningTokens;
       row.cachedTokens += bucket.cachedTokens;
+      row.estimatedCostUsd += estimatedCostUsd;
     }
   }
 
@@ -408,6 +466,7 @@ export async function getBreakdowns(input: {
 
     for (const row of [deviceRow, toolRow, projectRow]) {
       row.activeSeconds += session.activeSeconds;
+      row.totalSeconds += session.durationSeconds;
       row.sessions += 1;
       row.messages += session.messageCount;
       row.userMessages += session.userMessageCount;
@@ -419,6 +478,161 @@ export async function getBreakdowns(input: {
     tools: finalizeBreakdownRows(byTool),
     models: finalizeBreakdownRows(byModel),
     projects: finalizeBreakdownRows(byProject),
+  };
+}
+
+function buildModelPricingRows(
+  buckets: UsageBucketRecord[],
+  catalog: Awaited<ReturnType<typeof getPricingCatalog>>,
+): ModelPricingRow[] {
+  const byModel = new Map<string, ModelPricingRow>();
+
+  for (const bucket of buckets) {
+    const existing = byModel.get(bucket.model);
+
+    if (existing) {
+      existing.totalTokens += bucket.totalTokens;
+      existing.inputTokens += bucket.inputTokens;
+      existing.outputTokens += bucket.outputTokens;
+      existing.reasoningTokens += bucket.reasoningTokens;
+      existing.cachedTokens += bucket.cachedTokens;
+      continue;
+    }
+
+    byModel.set(bucket.model, {
+      rawModel: bucket.model,
+      pricingProviderId: null,
+      pricingProviderName: null,
+      matchedModelId: null,
+      matchedModelName: null,
+      inputRateUsdPerMillion: null,
+      outputRateUsdPerMillion: null,
+      reasoningRateUsdPerMillion: null,
+      cacheRateUsdPerMillion: null,
+      totalTokens: bucket.totalTokens,
+      inputTokens: bucket.inputTokens,
+      outputTokens: bucket.outputTokens,
+      reasoningTokens: bucket.reasoningTokens,
+      cachedTokens: bucket.cachedTokens,
+      estimatedCostUsd: null,
+      estimatedInputUsd: null,
+      estimatedOutputUsd: null,
+      estimatedReasoningUsd: null,
+      estimatedCacheUsd: null,
+    });
+  }
+
+  const rows = Array.from(byModel.values());
+
+  for (const row of rows) {
+    const provider = resolveOfficialPricingProvider(catalog, row.rawModel);
+    row.pricingProviderId = provider?.providerId ?? null;
+    row.pricingProviderName = provider?.providerName ?? null;
+
+    const match = resolveOfficialPricingMatch(catalog, row.rawModel);
+
+    if (!match) {
+      continue;
+    }
+
+    const estimate = estimateCostUsd(
+      {
+        inputTokens: row.inputTokens,
+        outputTokens: row.outputTokens,
+        reasoningTokens: row.reasoningTokens,
+        cachedTokens: row.cachedTokens,
+      },
+      match.cost,
+    );
+
+    row.pricingProviderId = match.providerId;
+    row.pricingProviderName = match.providerName;
+    row.matchedModelId = match.modelId;
+    row.matchedModelName = match.modelName;
+    row.inputRateUsdPerMillion = match.cost?.input ?? null;
+    row.outputRateUsdPerMillion = match.cost?.output ?? null;
+    row.reasoningRateUsdPerMillion = match.cost?.reasoning ?? null;
+    row.cacheRateUsdPerMillion = match.cost?.cache_read ?? null;
+    row.estimatedCostUsd = estimate?.totalUsd ?? null;
+    row.estimatedInputUsd = estimate?.inputUsd ?? null;
+    row.estimatedOutputUsd = estimate?.outputUsd ?? null;
+    row.estimatedReasoningUsd = estimate?.reasoningUsd ?? null;
+    row.estimatedCacheUsd = estimate?.cacheUsd ?? null;
+  }
+
+  return rows.sort((left, right) => {
+    const rightCost = right.estimatedCostUsd ?? -1;
+    const leftCost = left.estimatedCostUsd ?? -1;
+
+    if (rightCost !== leftCost) {
+      return rightCost - leftCost;
+    }
+
+    if (right.totalTokens !== left.totalTokens) {
+      return right.totalTokens - left.totalTokens;
+    }
+
+    return left.rawModel.localeCompare(right.rawModel);
+  });
+}
+
+function summarizePricingRows(
+  currentRows: ModelPricingRow[],
+  previousRows: ModelPricingRow[],
+): UsagePricingSummary {
+  const currentUsd = currentRows.reduce(
+    (sum, row) => sum + (row.estimatedCostUsd ?? 0),
+    0,
+  );
+  const previousUsd = previousRows.reduce(
+    (sum, row) => sum + (row.estimatedCostUsd ?? 0),
+    0,
+  );
+  const pricedTokens = currentRows.reduce(
+    (sum, row) => sum + (row.estimatedCostUsd == null ? 0 : row.totalTokens),
+    0,
+  );
+  const totalTokens = currentRows.reduce(
+    (sum, row) => sum + row.totalTokens,
+    0,
+  );
+  const pricedModels = currentRows.filter(
+    (row) => row.estimatedCostUsd != null,
+  ).length;
+
+  return {
+    currentUsd,
+    previousUsd,
+    deltaUsd: currentUsd - previousUsd,
+    pricedTokens,
+    totalTokens,
+    coverage: totalTokens === 0 ? 0 : pricedTokens / totalTokens,
+    pricedModels,
+    totalModels: currentRows.length,
+  };
+}
+
+export async function getPricingSummaryAndRows(input: {
+  userId: string;
+  range: DashboardRange;
+  filters: UsageFilters;
+}): Promise<{
+  summary: UsagePricingSummary;
+  modelPricingRows: ModelPricingRow[];
+}> {
+  const previousRange = getPreviousRange(input.range);
+  const [catalog, currentBuckets, previousBuckets] = await Promise.all([
+    getPricingCatalog(),
+    loadBuckets(input),
+    loadBuckets({ ...input, range: previousRange }),
+  ]);
+
+  const modelPricingRows = buildModelPricingRows(currentBuckets, catalog);
+  const previousRows = buildModelPricingRows(previousBuckets, catalog);
+
+  return {
+    summary: summarizePricingRows(modelPricingRows, previousRows),
+    modelPricingRows,
   };
 }
 

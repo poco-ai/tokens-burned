@@ -67,6 +67,8 @@ export type TokenTrendPoint = {
   outputTokens: number;
   reasoningTokens: number;
   cachedTokens: number;
+  estimatedCostUsd: number;
+  totalSeconds: number;
 };
 
 export type ActivityTrendPoint = {
@@ -87,11 +89,46 @@ export type BreakdownRow = {
   outputTokens: number;
   reasoningTokens: number;
   cachedTokens: number;
+  estimatedCostUsd: number;
   activeSeconds: number;
+  totalSeconds: number;
   sessions: number;
   messages: number;
   userMessages: number;
   share: number;
+};
+
+export type UsagePricingSummary = {
+  currentUsd: number;
+  previousUsd: number;
+  deltaUsd: number;
+  pricedTokens: number;
+  totalTokens: number;
+  coverage: number;
+  pricedModels: number;
+  totalModels: number;
+};
+
+export type ModelPricingRow = {
+  rawModel: string;
+  pricingProviderId: string | null;
+  pricingProviderName: string | null;
+  matchedModelId: string | null;
+  matchedModelName: string | null;
+  inputRateUsdPerMillion: number | null;
+  outputRateUsdPerMillion: number | null;
+  reasoningRateUsdPerMillion: number | null;
+  cacheRateUsdPerMillion: number | null;
+  totalTokens: number;
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens: number;
+  cachedTokens: number;
+  estimatedCostUsd: number | null;
+  estimatedInputUsd: number | null;
+  estimatedOutputUsd: number | null;
+  estimatedReasoningUsd: number | null;
+  estimatedCacheUsd: number | null;
 };
 
 export type FilterOption = {

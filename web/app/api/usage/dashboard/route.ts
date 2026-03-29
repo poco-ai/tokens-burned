@@ -9,6 +9,7 @@ import {
   getBreakdowns,
   getLastSyncedAt,
   getOverviewMetrics,
+  getPricingSummaryAndRows,
   getSessionRows,
   getTokenTrend,
 } from "@/lib/usage/queries";
@@ -67,6 +68,7 @@ export async function GET(request: Request) {
     tokenTrend,
     activityTrend,
     breakdowns,
+    pricing,
     sessions,
     lastSyncedAt,
   ] = await Promise.all([
@@ -74,6 +76,7 @@ export async function GET(request: Request) {
     getTokenTrend({ userId: session.user.id, range, filters }),
     getActivityTrend({ userId: session.user.id, range, filters }),
     getBreakdowns({ userId: session.user.id, range, filters }),
+    getPricingSummaryAndRows({ userId: session.user.id, range, filters }),
     getSessionRows({ userId: session.user.id, range, filters }),
     getLastSyncedAt(session.user.id),
   ]);
@@ -90,6 +93,8 @@ export async function GET(request: Request) {
     tokenTrend,
     activityTrend,
     breakdowns,
+    pricingSummary: pricing.summary,
+    modelPricingRows: pricing.modelPricingRows,
     sessions,
     lastSyncedAt: lastSyncedAt?.toISOString() ?? null,
   });

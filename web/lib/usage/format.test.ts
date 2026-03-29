@@ -6,6 +6,7 @@ import {
   formatDuration,
   formatPercentage,
   formatTokenCount,
+  formatUsdRatePerMillion,
 } from "./format";
 
 describe("usage format helpers", () => {
@@ -30,6 +31,11 @@ describe("usage format helpers", () => {
 
   it("formats percentages for shares", () => {
     expect(formatPercentage(0.256)).toBe("25.6%");
+  });
+
+  it("formats USD rates per million tokens", () => {
+    expect(formatUsdRatePerMillion(15)).toBe("$15/M");
+    expect(formatUsdRatePerMillion(0.175)).toBe("$0.175/M");
   });
 
   it("formats date-only filter values in the account timezone", () => {
