@@ -279,11 +279,11 @@ model LeaderboardSnapshotEntry {
   snapshotId      String
   userId          String
   rank            Int
-  inputTokens     Int                 @default(0)
-  outputTokens    Int                 @default(0)
-  reasoningTokens Int                 @default(0)
-  cachedTokens    Int                 @default(0)
-  totalTokens     Int                 @default(0)
+  inputTokens     BigInt              @default(0)
+  outputTokens    BigInt              @default(0)
+  reasoningTokens BigInt              @default(0)
+  cachedTokens    BigInt              @default(0)
+  totalTokens     BigInt              @default(0)
   activeSeconds   Int                 @default(0)
   sessions        Int                 @default(0)
   createdAt       DateTime            @default(now())

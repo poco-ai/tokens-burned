@@ -77,6 +77,14 @@ function coerceInt(value: number | null | undefined) {
   return value ?? 0;
 }
 
+function tokenSumToBigInt(value: number | null | undefined) {
+  return BigInt(Math.trunc(value ?? 0));
+}
+
+function snapshotTokensToNumber(value: bigint | number) {
+  return typeof value === "bigint" ? Number(value) : value;
+}
+
 function buildWindowWhere(window: LeaderboardWindow) {
   if (!window.start || !window.end) {
     return {};
@@ -535,11 +543,11 @@ async function rebuildGlobalSnapshot(period: LeaderboardPeriod, now: Date) {
           snapshotId: nextSnapshot.id,
           userId: row.userId,
           rank: row.rank,
-          inputTokens: row.inputTokens,
-          outputTokens: row.outputTokens,
-          reasoningTokens: row.reasoningTokens,
-          cachedTokens: row.cachedTokens,
-          totalTokens: row.totalTokens,
+          inputTokens: tokenSumToBigInt(row.inputTokens),
+          outputTokens: tokenSumToBigInt(row.outputTokens),
+          reasoningTokens: tokenSumToBigInt(row.reasoningTokens),
+          cachedTokens: tokenSumToBigInt(row.cachedTokens),
+          totalTokens: tokenSumToBigInt(row.totalTokens),
           activeSeconds: row.activeSeconds,
           sessions: row.sessions,
         })),
@@ -592,11 +600,11 @@ async function ensureGlobalSnapshot(period: LeaderboardPeriod, now: Date) {
       summaries: rows.map((row) => ({
         rank: row.rank,
         userId: row.userId,
-        inputTokens: row.inputTokens,
-        outputTokens: row.outputTokens,
-        reasoningTokens: row.reasoningTokens,
-        cachedTokens: row.cachedTokens,
-        totalTokens: row.totalTokens,
+        inputTokens: snapshotTokensToNumber(row.inputTokens),
+        outputTokens: snapshotTokensToNumber(row.outputTokens),
+        reasoningTokens: snapshotTokensToNumber(row.reasoningTokens),
+        cachedTokens: snapshotTokensToNumber(row.cachedTokens),
+        totalTokens: snapshotTokensToNumber(row.totalTokens),
         estimatedCostUsd: 0,
         activeSeconds: row.activeSeconds,
         sessions: row.sessions,
