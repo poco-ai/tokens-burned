@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { aggregateToBuckets } from "./aggregator";
 
 describe("aggregateToBuckets", () => {
-  it("includes cached tokens in totalTokens", () => {
+  it("includes cached and reasoning tokens in totalTokens", () => {
     const [bucket] = aggregateToBuckets([
       {
         source: "codex",
@@ -19,6 +19,6 @@ describe("aggregateToBuckets", () => {
 
     expect(bucket.outputTokens).toBe(60);
     expect(bucket.reasoningTokens).toBe(10);
-    expect(bucket.totalTokens).toBe(185);
+    expect(bucket.totalTokens).toBe(195);
   });
 });

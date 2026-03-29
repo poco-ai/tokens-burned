@@ -32,7 +32,11 @@ export async function runDaemon(opts: DaemonOptions = {}): Promise<void> {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
-      await runSync(config, { throws: true, quiet: true });
+      await runSync(config, {
+        quiet: true,
+        source: "daemon",
+        throws: true,
+      });
     } catch (err) {
       if ((err as Error).message === "UNAUTHORIZED") {
         log("API key invalid. Exiting.");

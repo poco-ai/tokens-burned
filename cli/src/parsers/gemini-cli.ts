@@ -121,7 +121,7 @@ class GeminiCliParser implements IParser {
             project: "unknown",
             timestamp: ts,
             inputTokens: (tokens.input || 0) - cached,
-            outputTokens: (tokens.output || 0) + thoughts,
+            outputTokens: tokens.output || 0,
             reasoningTokens: thoughts,
             cachedTokens: cached,
           });
@@ -136,8 +136,7 @@ class GeminiCliParser implements IParser {
             inputTokens:
               (usage.promptTokenCount || usage.input_tokens || 0) - cached,
             outputTokens:
-              (usage.candidatesTokenCount || usage.output_tokens || 0) +
-              thoughts,
+              usage.candidatesTokenCount || usage.output_tokens || 0,
             reasoningTokens: thoughts,
             cachedTokens: cached,
           });

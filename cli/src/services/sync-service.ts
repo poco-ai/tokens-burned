@@ -13,6 +13,16 @@ import {
   type Config,
   getOrCreateDeviceId,
 } from "../infrastructure/config/manager";
+import {
+  describeExistingSyncLock,
+  tryAcquireSyncLock,
+} from "../infrastructure/runtime/lock";
+import {
+  markSyncFailed,
+  markSyncStarted,
+  markSyncSucceeded,
+  type SyncSource,
+} from "../infrastructure/runtime/state";
 import { logger } from "../utils/logger";
 import { runAllParsers } from "./parser-service";
 
@@ -33,8 +43,16 @@ function formatTime(secs: number): string {
 }
 
 export interface SyncOptions {
+  serviceMode?: boolean;
+  source?: SyncSource;
   throws?: boolean;
   quiet?: boolean;
+}
+
+export interface SyncResult {
+  buckets: number;
+  sessions: number;
+  skipped?: "locked";
 }
 
 function toDeviceMetadata(config: Config): DeviceMetadata {
@@ -123,95 +141,130 @@ function toUploadSessions(
   });
 }
 
-function handleSettingsFailure(
-  message: string,
-  throws: boolean,
-  error?: Error,
-): never {
-  logger.error(message);
-  if (throws && error) throw error;
-  process.exit(1);
+class SyncFailure extends Error {
+  constructor(
+    message: string,
+    readonly kind: "auth_error" | "error",
+    readonly causeError?: Error,
+  ) {
+    super(message);
+  }
 }
 
 export async function runSync(
   config: Config,
   opts: SyncOptions = {},
-): Promise<number> {
-  const { throws = false, quiet = false } = opts;
-
-  // Run all parsers
+): Promise<SyncResult> {
   const {
-    buckets: allBuckets,
-    sessions: allSessions,
-    parserResults,
-  } = await runAllParsers();
+    quiet = false,
+    serviceMode = false,
+    source = "manual",
+    throws = false,
+  } = opts;
 
-  if (allBuckets.length === 0 && allSessions.length === 0) {
-    if (!quiet) logger.info("No new usage data found.");
-    return 0;
+  const lock = tryAcquireSyncLock(source);
+  if (!lock) {
+    const detail = describeExistingSyncLock();
+    const message = detail
+      ? `Another sync is already running (${detail}). Skipping.`
+      : "Another sync is already running. Skipping.";
+
+    markSyncFailed(source, message, "skipped_locked");
+    logger.info(message);
+    return {
+      buckets: 0,
+      sessions: 0,
+      skipped: "locked",
+    };
   }
 
-  if (!quiet && parserResults.length > 0) {
-    for (const p of parserResults) {
-      const parts: string[] = [];
-      if (p.buckets > 0) parts.push(`${p.buckets} buckets`);
-      if (p.sessions > 0) parts.push(`${p.sessions} sessions`);
-      logger.info(`  ${p.source}: ${parts.join(", ")}`);
-    }
-  }
+  markSyncStarted(source);
 
-  const apiUrl = config.apiUrl || "http://localhost:3000";
-  const apiClient = new ApiClient(apiUrl, config.apiKey);
+  let totalIngested = 0;
+  let totalSessionsSynced = 0;
+  let caughtError: SyncFailure | null = null;
 
-  let settings: ApiSettings | null;
   try {
-    settings = await apiClient.fetchSettings();
-  } catch (error) {
-    if ((error as Error).message === "UNAUTHORIZED") {
-      handleSettingsFailure(
-        "Invalid API key. Run `tokens-burned init` to reconfigure.",
-        throws,
-        error as Error,
+    const {
+      buckets: allBuckets,
+      sessions: allSessions,
+      parserResults,
+    } = await runAllParsers();
+
+    if (allBuckets.length === 0 && allSessions.length === 0) {
+      if (!quiet || serviceMode) {
+        logger.info("No new usage data found.");
+      }
+      markSyncSucceeded(source, { buckets: 0, sessions: 0 });
+      return { buckets: 0, sessions: 0 };
+    }
+
+    if (!quiet && !serviceMode && parserResults.length > 0) {
+      for (const p of parserResults) {
+        const parts: string[] = [];
+        if (p.buckets > 0) parts.push(`${p.buckets} buckets`);
+        if (p.sessions > 0) parts.push(`${p.sessions} sessions`);
+        logger.info(`  ${p.source}: ${parts.join(", ")}`);
+      }
+    }
+
+    const apiUrl = config.apiUrl || "http://localhost:3000";
+    const apiClient = new ApiClient(apiUrl, config.apiKey);
+
+    let settings: ApiSettings | null;
+    try {
+      settings = await apiClient.fetchSettings();
+    } catch (error) {
+      if ((error as Error).message === "UNAUTHORIZED") {
+        throw new SyncFailure(
+          "Invalid API key. Run `tokens-burned init` to reconfigure.",
+          "auth_error",
+          error as Error,
+        );
+      }
+
+      settings = null;
+    }
+
+    if (!settings) {
+      throw new SyncFailure(
+        "Could not fetch usage settings. Check your server URL and API key.",
+        "error",
       );
     }
 
-    settings = null;
-  }
+    const device = toDeviceMetadata(config);
+    const uploadBuckets = toUploadBuckets(allBuckets, settings, device);
+    const uploadSessions = toUploadSessions(allSessions, settings, device);
 
-  if (!settings) {
-    handleSettingsFailure(
-      "Could not fetch usage settings. Check your server URL and API key.",
-      throws,
+    if (!quiet && !serviceMode) {
+      const projectModeLabel: Record<ApiSettings["projectMode"], string> = {
+        hashed: "哈希化",
+        raw: "原始名称",
+        disabled: "已隐藏",
+      };
+      logger.info(`📂 项目模式: ${projectModeLabel[settings.projectMode]}`);
+    }
+
+    const bucketBatches = Math.ceil(uploadBuckets.length / BATCH_SIZE);
+    const sessionBatches = Math.ceil(
+      uploadSessions.length / SESSION_BATCH_SIZE,
     );
-  }
+    const totalBatches = Math.max(bucketBatches, sessionBatches, 1);
 
-  const device = toDeviceMetadata(config);
-  const uploadBuckets = toUploadBuckets(allBuckets, settings, device);
-  const uploadSessions = toUploadSessions(allSessions, settings, device);
+    if (!quiet && !serviceMode) {
+      const parts: string[] = [];
+      if (uploadBuckets.length > 0) {
+        parts.push(`${uploadBuckets.length} buckets`);
+      }
+      if (uploadSessions.length > 0) {
+        parts.push(`${uploadSessions.length} sessions`);
+      }
+      logger.info(
+        `Uploading ${parts.join(" + ")} (${totalBatches} batch${totalBatches > 1 ? "es" : ""})...`,
+      );
+    }
 
-  const projectModeLabel: Record<ApiSettings["projectMode"], string> = {
-    hashed: "哈希化",
-    raw: "原始名称",
-    disabled: "已隐藏",
-  };
-  logger.info(`📂 项目模式: ${projectModeLabel[settings.projectMode]}`);
-
-  // Upload in batches
-  let totalIngested = 0;
-  let totalSessionsSynced = 0;
-  const bucketBatches = Math.ceil(uploadBuckets.length / BATCH_SIZE);
-  const sessionBatches = Math.ceil(uploadSessions.length / SESSION_BATCH_SIZE);
-  const totalBatches = Math.max(bucketBatches, sessionBatches, 1);
-
-  const parts: string[] = [];
-  if (uploadBuckets.length > 0) parts.push(`${uploadBuckets.length} buckets`);
-  if (uploadSessions.length > 0)
-    parts.push(`${uploadSessions.length} sessions`);
-  logger.info(
-    `Uploading ${parts.join(" + ")} (${totalBatches} batch${totalBatches > 1 ? "es" : ""})...`,
-  );
-
-  try {
     for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
       const batch = uploadBuckets.slice(
         batchIdx * BATCH_SIZE,
@@ -229,34 +282,46 @@ export async function runSync(
         device,
         batch,
         batchSessions.length > 0 ? batchSessions : undefined,
-        (sent, total) => {
-          const pct = Math.round((sent / total) * 100);
-          process.stdout.write(
-            `\r${prefix}${formatBytes(sent)}/${formatBytes(total)} (${pct}%)\x1b[K`,
-          );
-        },
+        quiet || serviceMode
+          ? undefined
+          : (sent, total) => {
+              const pct = Math.round((sent / total) * 100);
+              process.stdout.write(
+                `\r${prefix}${formatBytes(sent)}/${formatBytes(total)} (${pct}%)\x1b[K`,
+              );
+            },
       );
 
       totalIngested += result.ingested ?? batch.length;
       totalSessionsSynced += result.sessions ?? batchSessions.length;
     }
 
-    if (totalBatches > 1 || uploadBuckets.length > 0) {
+    if (
+      !quiet &&
+      !serviceMode &&
+      (totalBatches > 1 || uploadBuckets.length > 0)
+    ) {
       process.stdout.write("\n");
     }
 
     const syncParts = [`${totalIngested} buckets`];
-    if (totalSessionsSynced > 0)
+    if (totalSessionsSynced > 0) {
       syncParts.push(`${totalSessionsSynced} sessions`);
-    logger.info(`Synced ${syncParts.join(" + ")}.`);
+    }
 
-    if (!quiet && totalSessionsSynced > 0) {
+    if (serviceMode) {
+      logger.info(`sync finished: ${syncParts.join(", ")}`);
+    } else {
+      logger.info(`Synced ${syncParts.join(" + ")}.`);
+    }
+
+    if (!quiet && !serviceMode && totalSessionsSynced > 0) {
       const totalActive = uploadSessions.reduce(
         (sum, session) => sum + session.activeSeconds,
         0,
       );
       const totalDuration = uploadSessions.reduce(
-        (s, x) => s + x.durationSeconds,
+        (sum, session) => sum + session.durationSeconds,
         0,
       );
       const totalMsgs = uploadSessions.reduce(
@@ -268,25 +333,59 @@ export async function runSync(
       );
     }
 
-    if (!quiet) logger.info(`\nView your dashboard at: ${apiUrl}/usage`);
-
-    return totalIngested;
-  } catch (err) {
-    const httpErr = err as Error & { statusCode?: number };
-    if (httpErr.message === "UNAUTHORIZED") {
-      logger.error("Invalid API key. Run `tokens-burned init` to reconfigure.");
-      if (throws) throw err;
-      process.exit(1);
+    if (!quiet && !serviceMode) {
+      logger.info(`\nView your dashboard at: ${apiUrl}/usage`);
     }
-    // Report partial success
-    if (totalIngested > 0) {
-      logger.error(
+
+    markSyncSucceeded(source, {
+      buckets: totalIngested,
+      sessions: totalSessionsSynced,
+    });
+
+    return {
+      buckets: totalIngested,
+      sessions: totalSessionsSynced,
+    };
+  } catch (error) {
+    const httpErr = error as Error & { statusCode?: number };
+
+    if (httpErr.message === "UNAUTHORIZED") {
+      caughtError = new SyncFailure(
+        "Invalid API key. Run `tokens-burned init` to reconfigure.",
+        "auth_error",
+        error as Error,
+      );
+    } else if (error instanceof SyncFailure) {
+      caughtError = error;
+    } else if (totalIngested > 0) {
+      caughtError = new SyncFailure(
         `Sync partially completed (${totalIngested} buckets uploaded). ${httpErr.message}`,
+        "error",
+        error as Error,
       );
     } else {
-      logger.error(`Sync failed: ${httpErr.message}`);
+      caughtError = new SyncFailure(
+        `Sync failed: ${httpErr.message}`,
+        "error",
+        error as Error,
+      );
     }
-    if (throws) throw err;
-    process.exit(1);
+
+    markSyncFailed(source, caughtError.message, caughtError.kind);
+  } finally {
+    lock.release();
   }
+
+  if (!caughtError) {
+    return {
+      buckets: totalIngested,
+      sessions: totalSessionsSynced,
+    };
+  }
+
+  logger.error(caughtError.message);
+  if (throws) {
+    throw caughtError.causeError ?? caughtError;
+  }
+  process.exit(1);
 }

@@ -1,5 +1,8 @@
 import { existsSync } from "node:fs";
 import { getConfigPath, loadConfig } from "../infrastructure/config/manager";
+import { loadSyncState } from "../infrastructure/runtime/state";
+import { getLaunchdStatus } from "../infrastructure/service/launchd";
+import { loadServiceManifest } from "../infrastructure/service/manifest";
 import { detectInstalledTools, getAllTools } from "../parsers/registry";
 import { logger } from "../utils/logger";
 
@@ -37,5 +40,37 @@ export async function runStatus(): Promise<void> {
     const installed = existsSync(tool.dataDir) ? "installed" : "not found";
     logger.info(`    ${tool.name}: ${installed}`);
   }
+
+  const serviceManifest = loadServiceManifest();
+  if (process.platform === "darwin" || serviceManifest) {
+    const label = serviceManifest?.label;
+    const launchd =
+      process.platform === "darwin" ? getLaunchdStatus(label) : null;
+    const syncState = loadSyncState();
+
+    logger.info("\n  Background sync:");
+    logger.info(
+      `    Installed: ${launchd ? (launchd.installed ? "yes" : "no") : serviceManifest ? "yes" : "no"}`,
+    );
+    if (launchd) {
+      logger.info(`    Loaded: ${launchd.loaded ? "yes" : "no"}`);
+      logger.info(`    Label: ${launchd.label}`);
+    }
+    if (serviceManifest) {
+      logger.info(
+        `    Interval: ${Math.round(serviceManifest.intervalMs / 60000)}m`,
+      );
+      logger.info(`    Plist: ${serviceManifest.plistPath}`);
+      logger.info(`    Logs: ${serviceManifest.logPath}`);
+    }
+    logger.info(`    Last sync status: ${syncState.status}`);
+    if (syncState.lastSuccessAt) {
+      logger.info(`    Last success: ${syncState.lastSuccessAt}`);
+    }
+    if (syncState.lastError) {
+      logger.info(`    Last error: ${syncState.lastError}`);
+    }
+  }
+
   logger.info("");
 }

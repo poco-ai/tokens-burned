@@ -98,7 +98,7 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   }
 
   logger.info("\nRunning initial sync...");
-  await runSync(config);
+  await runSync(config, { source: "init" });
 
   logger.info(`\nSetup complete! View your dashboard at: ${apiUrl}/usage`);
 }

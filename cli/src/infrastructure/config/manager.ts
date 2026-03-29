@@ -28,6 +28,10 @@ export function getConfigPath(): string {
   return CONFIG_FILE;
 }
 
+export function getConfigDir(): string {
+  return CONFIG_DIR;
+}
+
 export function loadConfig(): Config | null {
   if (!existsSync(CONFIG_FILE)) return null;
   try {

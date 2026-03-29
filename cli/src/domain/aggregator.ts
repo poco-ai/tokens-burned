@@ -43,7 +43,10 @@ export function aggregateToBuckets(entries: TokenUsageEntry[]): TokenBucket[] {
     b.reasoningTokens += e.reasoningTokens || 0;
     b.cachedTokens += e.cachedTokens || 0;
     b.totalTokens +=
-      (e.inputTokens || 0) + (e.outputTokens || 0) + (e.cachedTokens || 0);
+      (e.inputTokens || 0) +
+      (e.outputTokens || 0) +
+      (e.reasoningTokens || 0) +
+      (e.cachedTokens || 0);
   }
 
   return Array.from(map.values());
