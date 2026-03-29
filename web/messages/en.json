@@ -306,6 +306,130 @@
         "createKey": "Create key",
         "saveChanges": "Save changes"
       }
+    },
+    "share": {
+      "button": "Share card",
+      "title": "Generate share card",
+      "description": "Turn the current dashboard view into a 4:3 image you can download or copy.",
+      "templates": "Template",
+      "privacy": "Privacy",
+      "preview": "Preview",
+      "sourceTitle": "Uses your current dashboard view",
+      "sourceDescription": "The share card always reflects the range and filters you already picked on the Usage page.",
+      "footerHint": "Tip: copy the caption first, then drop the image into any social app.",
+      "copyImageUnsupported": "Copying images is not supported in this browser.",
+      "actions": {
+        "copyText": "Copy caption",
+        "copyImage": "Copy image",
+        "download": "Download PNG"
+      },
+      "status": {
+        "copiedText": "Caption copied to clipboard.",
+        "copiedImage": "Image copied to clipboard.",
+        "downloaded": "PNG downloaded.",
+        "failed": "Couldn’t generate the share card. Please try again."
+      },
+      "templateOptions": {
+        "summary": {
+          "label": "Report card",
+          "description": "Lead with tokens, trend, and your usage mix."
+        },
+        "persona": {
+          "label": "Persona card",
+          "description": "Lead with your AI coding style and strongest pattern."
+        }
+      },
+      "privacyOptions": {
+        "hideProject": {
+          "title": "Hide project names",
+          "description": "Replace the top project with a neutral private label."
+        },
+        "hideCost": {
+          "title": "Hide cost",
+          "description": "Keep the dollars private while still sharing the rest of the card."
+        },
+        "hideUsername": {
+          "title": "Anonymous mode",
+          "description": "Replace your username with Anonymous Builder."
+        }
+      },
+      "card": {
+        "footer": "Made with Tokens Burned",
+        "range": {
+          "day": "Today",
+          "week": "Last 7 days",
+          "month": "Last 30 days"
+        },
+        "customRange": "{from} – {to}",
+        "anonymousUser": "Anonymous Builder",
+        "hiddenProject": "Private project",
+        "notAvailable": "—",
+        "deltaUp": "+{value} vs previous period",
+        "deltaDown": "-{value} vs previous period",
+        "deltaNeutral": "Flat vs previous period",
+        "mainTitle": "I burned",
+        "tokenLabel": "tokens",
+        "insight": "Highlight",
+        "composition": "Fuel mix",
+        "cost": "Est. cost",
+        "activeTime": "Active time",
+        "sessions": "Sessions",
+        "messages": "Messages",
+        "trend": "Trend",
+        "topModel": "Top model",
+        "topTool": "Top tool",
+        "topProject": "Top project",
+        "shareOfWork": "{value} of usage",
+        "privateValue": "Private",
+        "currentView": "Based on your current dashboard view",
+        "personaLabel": "AI Coding Persona",
+        "personaInsightLabel": "Why this fits",
+        "mix": {
+          "input": "Input",
+          "output": "Output",
+          "reasoning": "Reasoning",
+          "cache": "Cache"
+        }
+      },
+      "captions": {
+        "summary": "{user} burned {totalTokens} {period}. {insight} Built with Tokens Burned.",
+        "persona": "{user}'s AI Coding Persona is “{persona}”. {insight} Built with Tokens Burned."
+      },
+      "personas": {
+        "reasoning_master": {
+          "title": "Reasoning Beast",
+          "description": "A serious share of your workload goes into thinking before the answer lands."
+        },
+        "cache_guardian": {
+          "title": "Cache Guardian",
+          "description": "You reuse context well and squeeze more value out of repeated flows."
+        },
+        "project_deep_diver": {
+          "title": "Project Deep Diver",
+          "description": "You lock into one project and push it hard instead of context switching."
+        },
+        "model_orchestrator": {
+          "title": "Model Orchestrator",
+          "description": "You move across multiple models and know when each one should take the lead."
+        },
+        "rapid_shipper": {
+          "title": "Rapid Shipper",
+          "description": "You stack many focused sessions and keep the momentum high."
+        },
+        "steady_builder": {
+          "title": "Steady Builder",
+          "description": "You keep a calm, durable pace and compound progress over time."
+        }
+      },
+      "insights": {
+        "reasoningShare": "{value} of your tokens went into reasoning",
+        "cacheShare": "{value} of your usage came from cache hits",
+        "projectFocus": "{value} of your usage stayed inside one project",
+        "modelFocus": "{model} carried {value} of your workload",
+        "modelVariety": "You actively switched between {count} models",
+        "sessionCount": "You opened {count} sessions in this view",
+        "activeTime": "You stayed active for {value}"
+      }
     }
   },
   "social": {
@@ -372,7 +496,8 @@
       "viewProfile": "View profile"
     },
     "errors": {
-      "followFailed": "Unable to update the follow state."
+      "followFailed": "Unable to update the follow state.",
+      "tagFailed": "Unable to update the follow tag."
     },
     "leaderboard": {
       "periods": {
@@ -403,6 +528,20 @@
         "activeTime": "Active Time",
         "sessions": "Sessions",
         "followers": "Followers"
+      },
+      "followingTitleFiltered": "Following leaderboard · {tag}",
+      "emptyFollowingFiltered": "No one in the {tag} tag has leaderboard activity in this window yet."
+    },
+    "tags": {
+      "all": "All tags",
+      "none": "No tag",
+      "selectLabel": "Follow tag",
+      "filterLabel": "Filter by tag",
+      "options": {
+        "coworker": "Coworker",
+        "friend": "Friend",
+        "peer": "Peer",
+        "inspiration": "Inspiration"
       }
     }
   }

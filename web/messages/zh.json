@@ -306,6 +306,130 @@
         "createKey": "创建 Key",
         "saveChanges": "保存修改"
       }
+    },
+    "share": {
+      "button": "分享图",
+      "title": "生成分享图",
+      "description": "把当前 Usage 视图生成一张 4:3 的分享图，可下载或复制。",
+      "templates": "模板",
+      "privacy": "隐私",
+      "preview": "预览",
+      "sourceTitle": "基于当前仪表盘视图",
+      "sourceDescription": "分享图会直接继承你现在在 Usage 页面选择的时间范围和筛选条件。",
+      "footerHint": "建议先复制文案，再把图片贴到任何社交应用里。",
+      "copyImageUnsupported": "当前浏览器暂不支持复制图片。",
+      "actions": {
+        "copyText": "复制文案",
+        "copyImage": "复制图片",
+        "download": "下载 PNG"
+      },
+      "status": {
+        "copiedText": "文案已复制到剪贴板。",
+        "copiedImage": "图片已复制到剪贴板。",
+        "downloaded": "PNG 已下载。",
+        "failed": "生成分享图失败，请重试。"
+      },
+      "templateOptions": {
+        "summary": {
+          "label": "战报卡",
+          "description": "突出 token、趋势和用量构成。"
+        },
+        "persona": {
+          "label": "人格卡",
+          "description": "突出你的 AI 编码风格和最强特征。"
+        }
+      },
+      "privacyOptions": {
+        "hideProject": {
+          "title": "隐藏项目名",
+          "description": "把主项目替换成中性的私有项目标签。"
+        },
+        "hideCost": {
+          "title": "隐藏费用",
+          "description": "保留整体战报氛围，但不暴露具体金额。"
+        },
+        "hideUsername": {
+          "title": "匿名模式",
+          "description": "把用户名替换成 Anonymous Builder。"
+        }
+      },
+      "card": {
+        "footer": "Made with Tokens Burned",
+        "range": {
+          "day": "今天",
+          "week": "最近 7 天",
+          "month": "最近 30 天"
+        },
+        "customRange": "{from} – {to}",
+        "anonymousUser": "Anonymous Builder",
+        "hiddenProject": "私有项目",
+        "notAvailable": "—",
+        "deltaUp": "较上一周期 +{value}",
+        "deltaDown": "较上一周期 -{value}",
+        "deltaNeutral": "与上一周期持平",
+        "mainTitle": "我烧掉了",
+        "tokenLabel": "tokens",
+        "insight": "亮点",
+        "composition": "燃料配比",
+        "cost": "预估费用",
+        "activeTime": "活跃时长",
+        "sessions": "会话数",
+        "messages": "消息数",
+        "trend": "趋势",
+        "topModel": "主力模型",
+        "topTool": "主力工具",
+        "topProject": "主力项目",
+        "shareOfWork": "占比 {value}",
+        "privateValue": "私密",
+        "currentView": "基于你当前的仪表盘视图",
+        "personaLabel": "AI Coding Persona",
+        "personaInsightLabel": "为什么是你",
+        "mix": {
+          "input": "输入",
+          "output": "输出",
+          "reasoning": "推理",
+          "cache": "缓存"
+        }
+      },
+      "captions": {
+        "summary": "{user} 在 {period} 烧了 {totalTokens}。{insight} via Tokens Burned。",
+        "persona": "{user} 的 AI Coding Persona 是“{persona}”。{insight} via Tokens Burned。"
+      },
+      "personas": {
+        "reasoning_master": {
+          "title": "推理重炮手",
+          "description": "你有相当大一部分工作量都花在深度推理上，先想透再输出。"
+        },
+        "cache_guardian": {
+          "title": "缓存守护者",
+          "description": "你很会复用上下文，重复流程也能打出高效率。"
+        },
+        "project_deep_diver": {
+          "title": "单项目深潜者",
+          "description": "你会长期锁定一个项目，把注意力压到足够深。"
+        },
+        "model_orchestrator": {
+          "title": "多模型指挥官",
+          "description": "你会在多个模型之间切换，知道什么时候该让谁上场。"
+        },
+        "rapid_shipper": {
+          "title": "高频冲刺手",
+          "description": "你擅长用很多短平快的会话推进任务，节奏非常快。"
+        },
+        "steady_builder": {
+          "title": "稳定长跑型",
+          "description": "你保持稳定、耐久的节奏，让产出持续累积。"
+        }
+      },
+      "insights": {
+        "reasoningShare": "{value} 的 tokens 花在了推理上",
+        "cacheShare": "{value} 的使用量来自缓存命中",
+        "projectFocus": "{value} 的使用都集中在同一个项目里",
+        "modelFocus": "{model} 扛下了 {value} 的工作量",
+        "modelVariety": "你在这个视图里主动切换了 {count} 个模型",
+        "sessionCount": "你在这个视图里打开了 {count} 个会话",
+        "activeTime": "你一共保持活跃 {value}"
+      }
     }
   },
   "social": {
@@ -372,7 +496,8 @@
       "viewProfile": "查看主页"
     },
     "errors": {
-      "followFailed": "无法更新关注状态。"
+      "followFailed": "无法更新关注状态。",
+      "tagFailed": "无法更新关注标签。"
     },
     "leaderboard": {
       "periods": {
@@ -403,6 +528,20 @@
         "activeTime": "活跃时长",
         "sessions": "会话数",
         "followers": "粉丝"
+      },
+      "followingTitleFiltered": "关注排行榜 · {tag}",
+      "emptyFollowingFiltered": "你的 {tag} 分组里在这个窗口内还没有排行榜数据。"
+    },
+    "tags": {
+      "all": "全部标签",
+      "none": "未分组",
+      "selectLabel": "关注标签",
+      "filterLabel": "按标签筛选",
+      "options": {
+        "coworker": "同事",
+        "friend": "朋友",
+        "peer": "同行",
+        "inspiration": "灵感"
       }
     }
   }
