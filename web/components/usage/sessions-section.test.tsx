@@ -65,10 +65,14 @@ describe("SessionsSection", () => {
     },
   ];
 
-  it("is collapsed by default", () => {
+  it("can be collapsed with defaultOpen={false}", () => {
     const markup = renderToStaticMarkup(
       <TooltipProvider>
-        <SessionsSection sessions={sessions} timezone="Asia/Shanghai" />
+        <SessionsSection
+          sessions={sessions}
+          timezone="Asia/Shanghai"
+          defaultOpen={false}
+        />
       </TooltipProvider>,
     );
 
@@ -78,14 +82,10 @@ describe("SessionsSection", () => {
     expect(markup).not.toContain("<table");
   });
 
-  it("renders the session table when expanded", () => {
+  it("renders the session table by default", () => {
     const markup = renderToStaticMarkup(
       <TooltipProvider>
-        <SessionsSection
-          sessions={sessions}
-          timezone="Asia/Shanghai"
-          defaultOpen
-        />
+        <SessionsSection sessions={sessions} timezone="Asia/Shanghai" />
       </TooltipProvider>,
     );
 

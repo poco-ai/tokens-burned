@@ -209,9 +209,9 @@ describe("BreakdownGrid", () => {
     ],
   };
 
-  it("is collapsed by default", () => {
+  it("can be collapsed with defaultOpen={false}", () => {
     const markup = renderToStaticMarkup(
-      <BreakdownGrid breakdowns={breakdowns} />,
+      <BreakdownGrid breakdowns={breakdowns} defaultOpen={false} />,
     );
 
     expect(markup).toContain("Breakdowns");
@@ -222,7 +222,7 @@ describe("BreakdownGrid", () => {
 
   it("renders a 2x2 chart layout with per-card controls", () => {
     const markup = renderToStaticMarkup(
-      <BreakdownGrid breakdowns={breakdowns} defaultOpen />,
+      <BreakdownGrid breakdowns={breakdowns} />,
     );
 
     expect(markup).toContain("Breakdowns");

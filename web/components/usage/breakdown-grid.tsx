@@ -332,7 +332,7 @@ function BreakdownTooltipContent({
 
 export function BreakdownGrid({
   breakdowns,
-  defaultOpen = false,
+  defaultOpen = true,
   defaultMetricView = "tokens",
 }: BreakdownGridProps) {
   const locale = useLocale();

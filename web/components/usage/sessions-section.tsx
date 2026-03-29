@@ -75,7 +75,7 @@ type SessionsSectionProps = {
 export function SessionsSection({
   sessions,
   timezone,
-  defaultOpen = false,
+  defaultOpen = true,
 }: SessionsSectionProps) {
   const locale = useLocale();
   const t = useTranslations("usage.sessions");
