@@ -432,11 +432,17 @@ export function BreakdownGrid({
                           />
                           <YAxis
                             type="category"
-                            dataKey="shortName"
+                            dataKey="key"
                             width={104}
                             tick={{ fontSize: 12 }}
                             axisLine={false}
                             tickLine={false}
+                            tickFormatter={(value: string) => {
+                              const entry = chartData.find(
+                                (row) => row.key === value,
+                              );
+                              return entry?.shortName ?? value;
+                            }}
                           />
                           <Tooltip
                             cursor={{ fill: "var(--muted)", opacity: 0.45 }}
@@ -451,7 +457,7 @@ export function BreakdownGrid({
                           <Bar
                             dataKey="value"
                             radius={[0, 6, 6, 0]}
-                            background={{ fill: "var(--muted)" }}
+                            background={{ fill: "var(--card)" }}
                           >
                             {chartData.map((entry, index) => (
                               <Cell
