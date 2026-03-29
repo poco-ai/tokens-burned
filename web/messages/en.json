@@ -247,13 +247,20 @@
       "table": {
         "startedAt": "Started",
         "tool": "Tool",
+        "model": "Model",
         "project": "Project",
         "device": "Device",
-        "duration": "Duration",
-        "messages": "Messages",
-        "endedAt": "Ended {value}",
-        "totalDuration": "Total {value}",
-        "userMessages": "{value} from you"
+        "cost": "Est. Cost",
+        "tokens": "Tokens",
+        "input": "Input",
+        "output": "Output",
+        "reasoning": "Reasoning",
+        "cache": "Cache"
+      },
+      "pagination": {
+        "prev": "Previous",
+        "next": "Next",
+        "info": "{from}–{to} of {total}"
       }
     },
     "accountMenu": {

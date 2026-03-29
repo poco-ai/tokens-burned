@@ -247,13 +247,20 @@
       "table": {
         "startedAt": "开始时间",
         "tool": "工具",
+        "model": "模型",
         "project": "项目",
         "device": "设备",
-        "duration": "时长",
-        "messages": "消息数",
-        "endedAt": "结束于 {value}",
-        "totalDuration": "总时长 {value}",
-        "userMessages": "其中你发了 {value} 条"
+        "cost": "预估费用",
+        "tokens": "Tokens",
+        "input": "输入",
+        "output": "输出",
+        "reasoning": "推理",
+        "cache": "缓存"
+      },
+      "pagination": {
+        "prev": "上一页",
+        "next": "下一页",
+        "info": "第 {from}–{to} 条，共 {total} 条"
       }
     },
     "accountMenu": {
