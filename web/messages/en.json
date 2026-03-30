@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Tokens Burned",
+    "appName": "Token Arena",
     "language": "Language",
     "theme": "Theme",
     "settings": "Settings",
@@ -362,7 +362,7 @@
         }
       },
       "card": {
-        "footer": "Made with Tokens Burned",
+        "footer": "Made with Token Arena",
         "range": {
           "day": "Today",
           "week": "Last 7 days",
@@ -400,8 +400,8 @@
         }
       },
       "captions": {
-        "summary": "{user} burned {totalTokens} {period}. {insight} Built with Tokens Burned.",
-        "persona": "{user}'s AI Coding Persona is “{persona}”. {insight} Built with Tokens Burned."
+        "summary": "{user} burned {totalTokens} {period}. {insight} Built with Token Arena.",
+        "persona": "{user}'s AI Coding Persona is “{persona}”. {insight} Built with Token Arena."
       },
       "personas": {
         "reasoning_master": {

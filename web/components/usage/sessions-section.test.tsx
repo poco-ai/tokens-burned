@@ -46,7 +46,7 @@ describe("SessionsSection", () => {
       sessionHash: "abc123",
       source: "Claude Code",
       projectKey: "proj_1",
-      projectLabel: "tokens-burned",
+      projectLabel: "tokenarena",
       deviceId: "device_1",
       deviceLabel: "mac-mini",
       firstMessageAt: "2026-03-27T00:15:00.000Z",
@@ -94,7 +94,7 @@ describe("SessionsSection", () => {
     expect(markup).toContain("Started");
     expect(markup).toContain("Claude Code");
     expect(markup).toContain("claude-sonnet-4-20250514");
-    expect(markup).toContain("tokens-burned");
+    expect(markup).toContain("tokenarena");
     expect(markup).toContain("mac-mini");
     expect(markup).toContain("15K");
     expect(markup).toContain("Tokens");

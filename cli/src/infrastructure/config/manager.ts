@@ -11,8 +11,8 @@ export interface Config {
   logLevel?: "debug" | "info" | "warn" | "error";
 }
 
-const CONFIG_DIR = join(homedir(), ".tokens-burned");
-const isDev = process.env.TOKENS_BURNED_DEV === "1";
+const CONFIG_DIR = join(homedir(), ".tokenarena");
+const isDev = process.env.TOKEN_ARENA_DEV === "1";
 const CONFIG_FILE = join(CONFIG_DIR, isDev ? "config.dev.json" : "config.json");
 
 const DEFAULT_API_URL = "http://localhost:3000";
@@ -77,5 +77,5 @@ export function isValidConfigKey(key: string): boolean {
 }
 
 export function getDefaultApiUrl(): string {
-  return process.env.TOKENS_BURNED_API_URL || DEFAULT_API_URL;
+  return process.env.TOKEN_ARENA_API_URL || DEFAULT_API_URL;
 }

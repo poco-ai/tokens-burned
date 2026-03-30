@@ -20,7 +20,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: "usage" });
 
   return {
-    title: `${t("settings.title")} | Tokens Burned`,
+    title: `${t("settings.title")} | Token Arena`,
   };
 }
 

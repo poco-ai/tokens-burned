@@ -14,7 +14,7 @@ import { isMainModule } from "./main-module";
 const tempDirs: string[] = [];
 
 function createTempDir() {
-  const dir = mkdtempSync(join(tmpdir(), "tokens-burned-main-module-"));
+  const dir = mkdtempSync(join(tmpdir(), "tokenarena-main-module-"));
   tempDirs.push(dir);
   return dir;
 }

@@ -5,7 +5,7 @@ import { toProjectIdentity } from "./project-identity";
 describe("toProjectIdentity", () => {
   it("hashes projects in hashed mode", () => {
     const result = toProjectIdentity({
-      project: "tokens-burned",
+      project: "tokenarena",
       mode: "hashed",
       salt: "secret-salt",
     });

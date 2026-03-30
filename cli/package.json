@@ -1,19 +1,19 @@
 {
-  "name": "@poco-ai/tokens-burned",
+  "name": "@poco-ai/tokenarena",
   "version": "0.1.2",
   "type": "module",
   "description": "Collect and sync local AI coding CLI usage data",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/poco-ai/tokens-burned.git"
+    "url": "git+https://github.com/poco-ai/tokenarena.git"
   },
-  "homepage": "https://github.com/poco-ai/tokens-burned",
+  "homepage": "https://github.com/poco-ai/tokenarena",
   "publishConfig": {
     "access": "public"
   },
   "bin": {
-    "tokens-burned": "dist/index.js"
+    "tokenarena": "dist/index.js"
   },
   "files": [
     "dist"

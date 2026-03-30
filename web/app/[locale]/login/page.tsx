@@ -25,7 +25,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: "auth.login" });
 
   return {
-    title: `${t("title")} | Tokens Burned`,
+    title: `${t("title")} | Token Arena`,
     description: t("description"),
   };
 }

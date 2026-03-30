@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-`tokens-burned` is a pnpm monorepo with two workspaces. `cli/` contains the TypeScript Commander CLI: keep command entry points in `cli/src/commands`, sync and aggregation logic in `cli/src/services` and `cli/src/domain`, tool-specific ingestion in `cli/src/parsers`, and config/API/filesystem code in `cli/src/infrastructure`. Built files land in `cli/dist/`. `web/` is a Next.js App Router app: routes live in `web/app`, shared UI in `web/components/ui`, hooks in `web/hooks`, helpers in `web/lib`, and static assets in `web/public`. Do not edit generated output such as `.next/` or `dist/`.
+`tokenarena` is a pnpm monorepo with two workspaces. `cli/` contains the TypeScript Commander CLI: keep command entry points in `cli/src/commands`, sync and aggregation logic in `cli/src/services` and `cli/src/domain`, tool-specific ingestion in `cli/src/parsers`, and config/API/filesystem code in `cli/src/infrastructure`. Built files land in `cli/dist/`. `web/` is a Next.js App Router app: routes live in `web/app`, shared UI in `web/components/ui`, hooks in `web/hooks`, helpers in `web/lib`, and static assets in `web/public`. Do not edit generated output such as `.next/` or `dist/`.
 
 ## Build, Test, and Development Commands
 
@@ -28,4 +28,4 @@ Follow the Conventional Commit style used in history: `feat: ...`, `feat(cli): .
 
 ## Security & Configuration Tips
 
-Never commit API keys, `.env*`, or user config. The CLI stores local config in `~/.tokens-burned/`; set `TOKENS_BURNED_DEV=1` for a separate dev config. Read `web/AGENTS.md` before making significant Next.js changes.
+Never commit API keys, `.env*`, or user config. The CLI stores local config in `~/.tokenarena/`; set `TOKEN_ARENA_DEV=1` for a separate dev config. Read `web/AGENTS.md` before making significant Next.js changes.

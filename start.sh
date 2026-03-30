@@ -2,7 +2,7 @@
 
 set -e
 
-echo "🚀 tokens-burned Quick Start"
+echo "🚀 tokenarena Quick Start"
 echo ""
 
 # Check if .env exists

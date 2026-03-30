@@ -29,7 +29,7 @@ export async function EmptyState({
       <CardContent className="flex flex-col gap-4 text-sm text-muted-foreground">
         <ol className="list-decimal space-y-2 pl-5">
           <li>{t("step1")}</li>
-          <li>{t("step2", { command: "tokens-burned init" })}</li>
+          <li>{t("step2", { command: "tokenarena init" })}</li>
           <li>{t("step3")}</li>
         </ol>
 

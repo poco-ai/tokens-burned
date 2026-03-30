@@ -1,4 +1,4 @@
-# tokens-burned web
+# tokenarena web
 
 Next.js 16 App Router Web 应用，负责：
 
@@ -13,7 +13,7 @@ Next.js 16 App Router Web 应用，负责：
 在 `web/.env` 中配置：
 
 ```bash
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tokens_burned
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/token_arena
 BETTER_AUTH_SECRET=your-secret
 BETTER_AUTH_URL=http://localhost:3000
 ```
@@ -21,7 +21,7 @@ BETTER_AUTH_URL=http://localhost:3000
 可选：
 
 ```bash
-SHADOW_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tokens_burned_shadow
+SHADOW_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/token_arena_shadow
 ```
 
 ## 本地运行

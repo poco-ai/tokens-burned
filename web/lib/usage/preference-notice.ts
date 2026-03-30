@@ -2,7 +2,7 @@
 
 import type { ProjectMode } from "@/lib/usage/types";
 
-export const preferenceNoticeEventName = "tokens-burned:preference-notice";
+export const preferenceNoticeEventName = "tokenarena:preference-notice";
 
 export type PreferenceNoticeSnapshot = {
   timezone: string;

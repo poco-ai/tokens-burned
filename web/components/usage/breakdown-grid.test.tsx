@@ -192,7 +192,7 @@ describe("BreakdownGrid", () => {
     projects: [
       {
         key: "proj_1",
-        name: "tokens-burned",
+        name: "tokenarena",
         totalTokens: 120,
         inputTokens: 55,
         outputTokens: 50,

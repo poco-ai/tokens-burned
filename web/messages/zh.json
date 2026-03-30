@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Tokens Burned",
+    "appName": "Token Arena",
     "language": "语言",
     "theme": "主题",
     "settings": "设置",
@@ -362,7 +362,7 @@
         }
       },
       "card": {
-        "footer": "Made with Tokens Burned",
+        "footer": "Made with Token Arena",
         "range": {
           "day": "今天",
           "week": "最近 7 天",
@@ -400,8 +400,8 @@
         }
       },
       "captions": {
-        "summary": "{user} 在 {period} 烧了 {totalTokens}。{insight} via Tokens Burned。",
-        "persona": "{user} 的 AI Coding Persona 是“{persona}”。{insight} via Tokens Burned。"
+        "summary": "{user} 在 {period} 烧了 {totalTokens}。{insight} via Token Arena。",
+        "persona": "{user} 的 AI Coding Persona 是“{persona}”。{insight} via Token Arena。"
       },
       "personas": {
         "reasoning_master": {

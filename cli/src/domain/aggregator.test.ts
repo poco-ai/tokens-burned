@@ -8,7 +8,7 @@ describe("aggregateToBuckets", () => {
       {
         source: "codex",
         model: "gpt-5.4",
-        project: "tokens-burned",
+        project: "tokenarena",
         timestamp: new Date("2026-03-26T10:00:00.000Z"),
         inputTokens: 100,
         outputTokens: 60,

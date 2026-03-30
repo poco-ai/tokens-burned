@@ -196,7 +196,7 @@ export function UsageShareDialog({ data }: UsageShareDialogProps) {
       const link = document.createElement("a");
       const safeRange =
         data.range.preset === "custom" ? "custom" : data.range.preset;
-      link.download = `tokens-burned-${template}-${safeRange}.png`;
+      link.download = `tokenarena-${template}-${safeRange}.png`;
       link.href = dataUrl;
       link.click();
       setStatus("downloaded");

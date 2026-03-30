@@ -10,7 +10,7 @@ export function handleConfig(args: string[]): void {
     case "get": {
       const key = args[1];
       if (!key) {
-        logger.error("Usage: tokens-burned config get <key>");
+        logger.error("Usage: tokenarena config get <key>");
         process.exit(1);
       }
       const config = loadConfig();
@@ -26,7 +26,7 @@ export function handleConfig(args: string[]): void {
       const key = args[1];
       let value: string | number = args[2];
       if (!key || value === undefined) {
-        logger.error("Usage: tokens-burned config set <key> <value>");
+        logger.error("Usage: tokenarena config set <key> <value>");
         process.exit(1);
       }
       if (!VALID_KEYS.includes(key)) {
@@ -64,7 +64,7 @@ export function handleConfig(args: string[]): void {
     }
     default:
       logger.error(`Unknown config subcommand: ${sub || "(none)"}`);
-      logger.error("Usage: tokens-burned config <get|set|show>");
+      logger.error("Usage: tokenarena config <get|set|show>");
       process.exit(1);
   }
 }

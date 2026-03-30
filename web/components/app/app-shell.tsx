@@ -46,7 +46,7 @@ export async function AppShell({
               href={viewer ? "/usage" : "/"}
               className="inline-flex shrink-0 items-center text-lg font-semibold tracking-tight text-foreground sm:text-xl"
             >
-              Tokens Burned
+              Token Arena
             </Link>
             <AppHeaderNav items={navItems} />
           </div>

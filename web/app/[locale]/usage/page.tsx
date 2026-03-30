@@ -42,7 +42,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: "usage" });
 
   return {
-    title: `${t("overviewTitle")} | Tokens Burned`,
+    title: `${t("overviewTitle")} | Token Arena`,
   };
 }
 

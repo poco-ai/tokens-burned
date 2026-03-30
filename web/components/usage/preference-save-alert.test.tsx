@@ -50,7 +50,7 @@ describe("PreferenceSaveAlert", () => {
 
     act(() => {
       window.dispatchEvent(
-        new CustomEvent("tokens-burned:preference-notice", {
+        new CustomEvent("tokenarena:preference-notice", {
           detail: {
             type: "saved",
             preference: {
@@ -74,7 +74,7 @@ describe("PreferenceSaveAlert", () => {
 
     act(() => {
       window.dispatchEvent(
-        new CustomEvent("tokens-burned:preference-notice", {
+        new CustomEvent("tokenarena:preference-notice", {
           detail: {
             type: "saved",
             preference: {

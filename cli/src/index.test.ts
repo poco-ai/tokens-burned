@@ -4,9 +4,9 @@ import { normalizeArgv } from "./index";
 
 describe("normalizeArgv", () => {
   it("removes standalone pnpm separators before commander parsing", () => {
-    expect(normalizeArgv(["node", "tokens-burned", "--", "--help"])).toEqual([
+    expect(normalizeArgv(["node", "tokenarena", "--", "--help"])).toEqual([
       "node",
-      "tokens-burned",
+      "tokenarena",
       "--help",
     ]);
   });

@@ -1,6 +1,6 @@
 services:
   web:
-    image: ghcr.io/poco-ai/tokens-burned:latest
+    image: ghcr.io/poco-ai/tokenarena:latest
     ports:
       - "3000:3000"
     environment:
@@ -18,7 +18,7 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-tokens_burned}
+      - POSTGRES_DB=${POSTGRES_DB:-token_arena}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

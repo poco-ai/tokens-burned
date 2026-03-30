@@ -821,7 +821,7 @@ export function UsageShareCardPreview({
                 sizePresets[size].micro,
               )}
             >
-              Tokens Burned
+              Token Arena
             </div>
             <div className={cn("mt-2 text-white/62", sizePresets[size].micro)}>
               {t("card.footer")}

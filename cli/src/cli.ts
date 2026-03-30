@@ -14,7 +14,7 @@ export function createCli(): Command {
   const program = new Command();
 
   program
-    .name("tokens-burned")
+    .name("tokenarena")
     .description("Track token burn across AI coding tools")
     .version(CLI_VERSION)
     .showHelpAfterError()

@@ -20,7 +20,7 @@ export interface DaemonOptions {
 export async function runDaemon(opts: DaemonOptions = {}): Promise<void> {
   const config = loadConfig();
   if (!config?.apiKey) {
-    logger.error("Not configured. Run `tokens-burned init` first.");
+    logger.error("Not configured. Run `tokenarena init` first.");
     process.exit(1);
   }
 

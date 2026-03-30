@@ -1,4 +1,4 @@
-# CLI package (@poco-ai/tokens-burned): test + build on cli changes, PRs, and manual runs.
+# CLI package (@poco-ai/tokenarena): test + build on cli changes, PRs, and manual runs.
 # Publishes to npm when a v* tag is pushed, or when workflow_dispatch has publish_to_npm enabled.
 
 name: Publish CLI to npm

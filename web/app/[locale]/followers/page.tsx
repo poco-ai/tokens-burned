@@ -14,7 +14,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: "social.network" });
 
   return {
-    title: `${t("followersTitle")} | Tokens Burned`,
+    title: `${t("followersTitle")} | Token Arena`,
     description: t("followersDescription"),
   };
 }

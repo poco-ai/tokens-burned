@@ -10,11 +10,11 @@ function formatMaybe(value?: string): string {
 
 export async function runStatus(): Promise<void> {
   const config = loadConfig();
-  logger.info("\ntokens-burned status\n");
+  logger.info("\ntokenarena status\n");
 
   if (!config?.apiKey) {
     logger.info("  Config: not configured");
-    logger.info(`  Run \`tokens-burned init\` to set up.\n`);
+    logger.info(`  Run \`tokenarena init\` to set up.\n`);
   } else {
     logger.info(`  Config: ${getConfigPath()}`);
     logger.info(`  API key: ${config.apiKey.slice(0, 8)}...`);

@@ -41,7 +41,7 @@ export async function generateMetadata({
   const { username } = await params;
 
   return {
-    title: `@${username} | Tokens Burned`,
+    title: `@${username} | Token Arena`,
   };
 }
 

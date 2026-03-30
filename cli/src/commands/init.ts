@@ -39,7 +39,7 @@ export interface InitOptions {
 }
 
 export async function runInit(opts: InitOptions = {}): Promise<void> {
-  logger.info("\n  tokens-burned - Token Usage Tracker\n");
+  logger.info("\n  tokenarena - Token Usage Tracker\n");
 
   const existing = loadConfig();
   if (existing?.apiKey) {

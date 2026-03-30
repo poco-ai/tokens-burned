@@ -218,7 +218,7 @@ export async function runSync(
     } catch (error) {
       if ((error as Error).message === "UNAUTHORIZED") {
         throw new SyncFailure(
-          "Invalid API key. Run `tokens-burned init` to reconfigure.",
+          "Invalid API key. Run `tokenarena init` to reconfigure.",
           "auth_error",
           error as Error,
         );
@@ -344,7 +344,7 @@ export async function runSync(
 
     if (httpErr.message === "UNAUTHORIZED") {
       caughtError = new SyncFailure(
-        "Invalid API key. Run `tokens-burned init` to reconfigure.",
+        "Invalid API key. Run `tokenarena init` to reconfigure.",
         "auth_error",
         error as Error,
       );
