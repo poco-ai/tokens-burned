@@ -25,6 +25,16 @@ if [ ! -f .env ]; then
     echo ""
 fi
 
+if grep -q "postgresql://postgres:postgres@localhost:5432/tokens_burned" .env; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s|postgresql://postgres:postgres@localhost:5432/tokens_burned|postgresql://postgres:postgres@db:5432/tokens_burned|g" .env
+    else
+        sed -i "s|postgresql://postgres:postgres@localhost:5432/tokens_burned|postgresql://postgres:postgres@db:5432/tokens_burned|g" .env
+    fi
+    echo "鉁?Updated DATABASE_URL to use the docker-compose db service"
+    echo ""
+fi
+
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
     echo "❌ Docker is not installed. Please install Docker first."
