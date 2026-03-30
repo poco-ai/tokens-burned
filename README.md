@@ -69,6 +69,13 @@ chmod +x start.sh
 ./start.sh
 ```
 
+```powershell
+git clone https://github.com/poco-ai/tokenarena.git
+cd tokenarena
+.\start.ps1
+# or: .\start.cmd
+```
+
 启动脚本会自动创建配置文件、生成安全密钥并启动所有服务。
 
 > 使用 `docker compose` / `./start.sh` 时，请修改仓库根目录的 `.env`。
@@ -92,6 +99,34 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/token_arena
 BETTER_AUTH_SECRET=your-secret
 BETTER_AUTH_URL=http://localhost:3000
 AUTH_MODE=self-hosted
+```
+
+Docker Compose 启动时，根目录 `.env` 里的 `DATABASE_URL` 应使用 `db` 作为主机名，例如：
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@db:5432/tokens_burned
+```
+
+### Windows 换行与提交说明
+
+仓库根目录的 `.gitattributes` 已统一约束换行符，避免 Windows 下因为 `CRLF` / `LF` 差异导致 `Biome`、`Husky` 或 Git diff 异常：
+
+- `*.ts`、`*.tsx`、`*.js`、`*.json`、`*.yml`、`*.md`、`*.css`、`*.sh` 等源码与配置文件统一使用 `LF`
+- `*.ps1`、`*.cmd`、`*.bat` 保持 Windows 友好的 `CRLF`
+
+如果你在 Windows 上提交代码时看到类似 `Formatter would have printed...`、`Found X errors`、`husky - pre-commit script failed` 之类的提示，通常先运行下面的命令即可：
+
+```bash
+pnpm run format:cli
+pnpm run format:web
+pnpm run lint:cli
+pnpm run lint:web
+```
+
+如果是旧工作区在 `.gitattributes` 生效前检出的文件导致换行不一致，可以额外执行一次：
+
+```bash
+git add --renormalize .
 ```
 
 ### 环境变量

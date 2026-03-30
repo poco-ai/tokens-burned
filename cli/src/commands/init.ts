@@ -1,7 +1,8 @@
-import { execFile } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { appendFile, readFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { homedir, platform } from "node:os";
+import { dirname, join } from "node:path";
 import { createInterface } from "node:readline";
 import { ApiClient } from "../infrastructure/api/client";
 import {
@@ -16,6 +17,27 @@ import { getDetectedTools } from "../services/parser-service";
 import { runSync } from "../services/sync-service";
 import { logger } from "../utils/logger";
 
+interface BrowserLaunchCommand {
+  command: string;
+  args: string[];
+}
+
+export interface ShellAliasSetup {
+  aliasLine: string;
+  aliasPatterns: string[];
+  configFile: string;
+  shellLabel: string;
+  sourceHint: string;
+}
+
+interface ResolveShellAliasSetupOptions {
+  currentPlatform?: NodeJS.Platform;
+  env?: NodeJS.ProcessEnv;
+  exists?: (path: string) => boolean;
+  homeDir?: string;
+  resolvePowerShellProfilePath?: () => string | null;
+}
+
 function prompt(question: string): Promise<string> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   return new Promise((resolve) => {
@@ -26,14 +48,164 @@ function prompt(question: string): Promise<string> {
   });
 }
 
+function basenameLikeShell(input: string): string {
+  return (
+    input
+      .split(/[\\/]+/)
+      .pop()
+      ?.replace(/\.exe$/i, "") ?? input
+  );
+}
+
+export function getBrowserLaunchCommand(
+  url: string,
+  currentPlatform: NodeJS.Platform = platform(),
+): BrowserLaunchCommand {
+  switch (currentPlatform) {
+    case "darwin":
+      return {
+        command: "open",
+        args: [url],
+      };
+    case "win32":
+      return {
+        command: "cmd.exe",
+        args: ["/d", "/s", "/c", "start", "", url],
+      };
+    default:
+      return {
+        command: "xdg-open",
+        args: [url],
+      };
+  }
+}
+
 function openBrowser(url: string): void {
-  const cmds: Record<string, string> = {
-    darwin: "open",
-    linux: "xdg-open",
-    win32: "start",
-  };
-  const cmd = cmds[platform()] || cmds.linux;
-  execFile(cmd, [url], () => {});
+  const { command, args } = getBrowserLaunchCommand(url);
+
+  try {
+    const child = spawn(command, args, {
+      detached: true,
+      stdio: "ignore",
+      windowsHide: true,
+    });
+
+    child.on("error", () => {});
+    child.unref();
+  } catch {
+    // Best-effort only. We still print the URL for manual use.
+  }
+}
+
+function resolvePowerShellProfilePath(): string | null {
+  const systemRoot = process.env.SYSTEMROOT || "C:\\Windows";
+  const candidates = [
+    "pwsh.exe",
+    join(systemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe"),
+  ];
+
+  for (const command of candidates) {
+    try {
+      const output = execFileSync(
+        command,
+        [
+          "-NoLogo",
+          "-NoProfile",
+          "-Command",
+          "$PROFILE.CurrentUserCurrentHost",
+        ],
+        {
+          encoding: "utf-8",
+          timeout: 3000,
+          windowsHide: true,
+        },
+      ).trim();
+
+      if (output) {
+        return output;
+      }
+    } catch {
+      // Try the next PowerShell executable.
+    }
+  }
+
+  return null;
+}
+
+export function resolveShellAliasSetup(
+  options: ResolveShellAliasSetupOptions = {},
+): ShellAliasSetup | null {
+  const currentPlatform = options.currentPlatform ?? platform();
+  const env = options.env ?? process.env;
+  const homeDir = options.homeDir ?? homedir();
+  const pathExists = options.exists ?? existsSync;
+
+  const shellFromEnv = env.SHELL
+    ? basenameLikeShell(env.SHELL).toLowerCase()
+    : "";
+  const shellName =
+    shellFromEnv || (currentPlatform === "win32" ? "powershell" : "");
+  const aliasName = "ta";
+
+  switch (shellName) {
+    case "zsh":
+      return {
+        aliasLine: `alias ${aliasName}="tokenarena"`,
+        aliasPatterns: [`alias ${aliasName}=`, `function ${aliasName}`],
+        configFile: join(homeDir, ".zshrc"),
+        shellLabel: "zsh",
+        sourceHint: "source ~/.zshrc",
+      };
+    case "bash": {
+      const bashProfile = join(homeDir, ".bash_profile");
+      const useBashProfile =
+        currentPlatform === "darwin" && pathExists(bashProfile);
+
+      return {
+        aliasLine: `alias ${aliasName}="tokenarena"`,
+        aliasPatterns: [`alias ${aliasName}=`, `function ${aliasName}`],
+        configFile: useBashProfile ? bashProfile : join(homeDir, ".bashrc"),
+        shellLabel: "bash",
+        sourceHint: useBashProfile
+          ? "source ~/.bash_profile"
+          : "source ~/.bashrc",
+      };
+    }
+    case "fish":
+      return {
+        aliasLine: `alias ${aliasName} "tokenarena"`,
+        aliasPatterns: [`alias ${aliasName}`, `function ${aliasName}`],
+        configFile: join(homeDir, ".config", "fish", "config.fish"),
+        shellLabel: "fish",
+        sourceHint: "source ~/.config/fish/config.fish",
+      };
+    case "powershell": {
+      const configFile =
+        options.resolvePowerShellProfilePath?.() ||
+        resolvePowerShellProfilePath() ||
+        join(
+          homeDir,
+          "Documents",
+          "PowerShell",
+          "Microsoft.PowerShell_profile.ps1",
+        );
+
+      return {
+        aliasLine: `Set-Alias -Name ${aliasName} -Value tokenarena`,
+        aliasPatterns: [
+          `set-alias -name ${aliasName}`,
+          `set-alias ${aliasName}`,
+          `new-alias ${aliasName}`,
+          `function ${aliasName}`,
+        ],
+        configFile,
+        shellLabel: "PowerShell",
+        sourceHint: ". $PROFILE",
+      };
+    }
+    default:
+      return null;
+  }
 }
 
 export interface InitOptions {
@@ -60,7 +232,7 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   while (true) {
     apiKey = await prompt("Paste your API key: ");
     if (validateApiKey(apiKey)) break;
-    logger.info('Invalid key — must start with "vbu_". Try again.');
+    logger.info('Invalid key - must start with "vbu_". Try again.');
   }
 
   logger.info(`\nVerifying key ${apiKey.slice(0, 8)}...`);
@@ -95,7 +267,7 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
 
   const tools = getDetectedTools();
   if (tools.length > 0) {
-    logger.info(`Detected tools: ${tools.map((t) => t.name).join(", ")}`);
+    logger.info(`Detected tools: ${tools.map((tool) => tool.name).join(", ")}`);
   } else {
     logger.info("No AI coding tools detected. Install one and re-run init.");
   }
@@ -105,92 +277,54 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
 
   logger.info(`\nSetup complete! View your dashboard at: ${apiUrl}/usage`);
 
-  // Offer to set up shell alias
   await setupShellAlias();
 }
 
 async function setupShellAlias(): Promise<void> {
-  const shell = process.env.SHELL;
-  if (!shell) {
+  const setup = resolveShellAliasSetup();
+  if (!setup) {
     return;
   }
 
-  const shellName = shell.split("/").pop() ?? "";
-  const aliasName = "ta";
-
-  let configFile: string;
-  let aliasLine: string;
-  let sourceHint: string;
-
-  switch (shellName) {
-    case "zsh":
-      configFile = `${homedir()}/.zshrc`;
-      aliasLine = `alias ${aliasName}="tokenarena"`;
-      sourceHint = "source ~/.zshrc";
-      break;
-    case "bash":
-      // Check for bash_profile on macOS, bashrc on Linux
-      if (platform() === "darwin" && existsSync(`${homedir()}/.bash_profile`)) {
-        configFile = `${homedir()}/.bash_profile`;
-      } else {
-        configFile = `${homedir()}/.bashrc`;
-      }
-      aliasLine = `alias ${aliasName}="tokenarena"`;
-      sourceHint = `source ${configFile}`;
-      break;
-    case "fish":
-      configFile = `${homedir()}/.config/fish/config.fish`;
-      aliasLine = `alias ${aliasName} "tokenarena"`;
-      sourceHint = "source ~/.config/fish/config.fish";
-      break;
-    default:
-      // Unknown shell, skip
-      return;
-  }
-
   const answer = await prompt(
-    `\nSet up shell alias '${aliasName}' for 'tokenarena'? (Y/n) `,
+    `\nSet up ${setup.shellLabel} alias 'ta' for 'tokenarena'? (Y/n) `,
   );
   if (answer.toLowerCase() === "n") {
     return;
   }
 
   try {
-    // Check if alias already exists
+    await mkdir(dirname(setup.configFile), { recursive: true });
+
     let existingContent = "";
-    if (existsSync(configFile)) {
-      existingContent = await readFile(configFile, "utf-8");
+    if (existsSync(setup.configFile)) {
+      existingContent = await readFile(setup.configFile, "utf-8");
     }
 
-    // Check for various alias formats
-    const aliasPatterns = [
-      `alias ${aliasName}=`,
-      `alias ${aliasName} "`,
-      `alias ${aliasName}=`,
-    ];
-
-    const aliasExists = aliasPatterns.some((pattern) =>
-      existingContent.includes(pattern),
+    const normalizedContent = existingContent.toLowerCase();
+    const aliasExists = setup.aliasPatterns.some((pattern) =>
+      normalizedContent.includes(pattern.toLowerCase()),
     );
 
     if (aliasExists) {
       logger.info(
-        `\nAlias '${aliasName}' already exists in ${configFile}. Skipping.`,
+        `\nAlias 'ta' already exists in ${setup.configFile}. Skipping.`,
       );
       return;
     }
 
-    // Append the alias
-    const aliasWithComment = `\n# TokenArena alias\n${aliasLine}\n`;
-    await appendFile(configFile, aliasWithComment);
+    const aliasWithComment = `\n# TokenArena alias\n${setup.aliasLine}\n`;
+    await appendFile(setup.configFile, aliasWithComment, "utf-8");
 
-    logger.info(`\nAdded alias to ${configFile}`);
-    logger.info(`  Run '${sourceHint}' or restart your terminal to use it.`);
-    logger.info(`  Then you can use: ${aliasName} sync`);
+    logger.info(`\nAdded alias to ${setup.configFile}`);
+    logger.info(
+      `  Run '${setup.sourceHint}' or restart your terminal to use it.`,
+    );
+    logger.info("  Then you can use: ta sync");
   } catch (err) {
     logger.info(
-      `\nCould not write to ${configFile}: ${(err as Error).message}`,
+      `\nCould not write to ${setup.configFile}: ${(err as Error).message}`,
     );
-    logger.info(`  Add this line manually: ${aliasLine}`);
+    logger.info(`  Add this line manually: ${setup.aliasLine}`);
   }
 }

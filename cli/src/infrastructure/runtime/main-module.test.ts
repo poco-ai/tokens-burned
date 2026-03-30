@@ -60,7 +60,14 @@ describe("isMainModule", () => {
     });
     mkdirSync(join(dir, "node_modules", ".bin"), { recursive: true });
     writeFileSync(scriptPath, "#!/usr/bin/env node\n", "utf-8");
-    symlinkSync(scriptPath, binPath);
+    try {
+      symlinkSync(scriptPath, binPath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EPERM") {
+        return;
+      }
+      throw error;
+    }
 
     expect(isMainModule(binPath, pathToFileURL(scriptPath).href)).toBe(true);
   });
