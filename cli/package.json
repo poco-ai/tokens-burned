@@ -1,6 +1,6 @@
 {
   "name": "@poco-ai/tokens-burned",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Collect and sync local AI coding CLI usage data",
   "license": "MIT",
@@ -21,6 +21,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsup",
+    "prepack": "pnpm run build",
     "test": "vitest run",
     "lint": "biome check",
     "format": "biome format --write"

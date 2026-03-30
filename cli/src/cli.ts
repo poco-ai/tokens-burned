@@ -14,9 +14,10 @@ import {
 import { runStatus } from "./commands/status";
 import { runSyncCommand } from "./commands/sync";
 import { loadConfig } from "./infrastructure/config/manager";
+import { getCliVersion } from "./infrastructure/runtime/cli-version";
 import { runSync } from "./services/sync-service";
 
-const CLI_VERSION = "0.2.0";
+const CLI_VERSION = getCliVersion();
 
 export function createCli(): Command {
   const program = new Command();
