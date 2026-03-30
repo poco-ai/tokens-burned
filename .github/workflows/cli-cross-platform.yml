@@ -1,0 +1,51 @@
+name: CLI Cross-Platform
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/cli-cross-platform.yml"
+      - "cli/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/cli-cross-platform.yml"
+      - "cli/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+
+jobs:
+  cli:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test CLI
+        run: pnpm --filter ./cli test
+
+      - name: Build CLI
+        run: pnpm --filter ./cli build
+
+      - name: Smoke test CLI status
+        run: pnpm --filter ./cli exec node dist/index.js status
