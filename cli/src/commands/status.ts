@@ -1,7 +1,10 @@
-import { existsSync } from "node:fs";
 import { getConfigPath, loadConfig } from "../infrastructure/config/manager";
 import { loadSyncState } from "../infrastructure/runtime/state";
-import { detectInstalledTools, getAllTools } from "../parsers/registry";
+import {
+  detectInstalledTools,
+  getAllTools,
+  isToolInstalled,
+} from "../parsers/registry";
 import { logger } from "../utils/logger";
 
 function formatMaybe(value?: string): string {
@@ -14,7 +17,7 @@ export async function runStatus(): Promise<void> {
 
   if (!config?.apiKey) {
     logger.info("  Config: not configured");
-    logger.info(`  Run \`tokenarena init\` to set up.\n`);
+    logger.info("  Run `tokenarena init` to set up.\n");
   } else {
     logger.info(`  Config: ${getConfigPath()}`);
     logger.info(`  API key: ${config.apiKey.slice(0, 8)}...`);
@@ -39,7 +42,7 @@ export async function runStatus(): Promise<void> {
 
   logger.info("  All supported tools:");
   for (const tool of getAllTools()) {
-    const installed = existsSync(tool.dataDir) ? "installed" : "not found";
+    const installed = isToolInstalled(tool.id) ? "installed" : "not found";
     logger.info(`    ${tool.name}: ${installed}`);
   }
 

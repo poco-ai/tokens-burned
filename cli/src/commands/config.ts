@@ -19,7 +19,8 @@ export function handleConfig(args: string[]): void {
         process.exit(0);
       }
       // Output raw value (no formatting) for machine parsing
-      console.log((config as Record<string, unknown>)[key] ?? "");
+      const record = config as unknown as Record<string, unknown>;
+      console.log(record[key] ?? "");
       break;
     }
     case "set": {
@@ -48,7 +49,8 @@ export function handleConfig(args: string[]): void {
         }
       }
 
-      (config as Record<string, unknown>)[key] = value;
+      const record = config as unknown as Record<string, unknown>;
+      record[key] = value;
       saveConfig(config);
       logger.info(`Set ${key} = ${value}`);
       break;

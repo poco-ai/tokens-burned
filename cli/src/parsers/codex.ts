@@ -45,6 +45,32 @@ interface CodexEvent {
   };
 }
 
+function getPathLeaf(value: string): string {
+  const normalized = value.replace(/\\/g, "/").replace(/\/+$/, "");
+  const leaf = normalized.split("/").filter(Boolean).pop();
+  return leaf || "unknown";
+}
+
+export function resolveCodexProject(payload?: CodexEvent["payload"]): string {
+  if (!payload) {
+    return "unknown";
+  }
+
+  const repositoryUrl = payload.git?.repository_url;
+  if (repositoryUrl) {
+    const match = repositoryUrl.match(/([^/]+\/[^/]+?)(?:\.git)?$/);
+    if (match) {
+      return match[1];
+    }
+  }
+
+  if (payload.cwd) {
+    return getPathLeaf(payload.cwd);
+  }
+
+  return "unknown";
+}
+
 class CodexParser implements IParser {
   readonly tool = TOOL;
 
@@ -61,24 +87,14 @@ class CodexParser implements IParser {
       const content = readFileSafe(filePath);
       if (!content) continue;
 
-      // Extract project name and model from session_meta line
       let sessionProject = "unknown";
       const sessionModel = "unknown";
       for (const line of content.split("\n")) {
         if (!line.trim()) continue;
         try {
           const obj = JSON.parse(line) as CodexEvent;
-          if (obj.type === "session_meta" && obj.payload) {
-            const meta = obj.payload;
-            if (meta.cwd) {
-              sessionProject = meta.cwd.split("/").pop() || "unknown";
-            }
-            if (meta.git?.repository_url) {
-              const match = meta.git.repository_url.match(
-                /([^/]+\/[^/]+?)(?:\.git)?$/,
-              );
-              if (match) sessionProject = match[1];
-            }
+          if (obj.type === "session_meta") {
+            sessionProject = resolveCodexProject(obj.payload);
             break;
           }
         } catch {
@@ -101,13 +117,13 @@ class CodexParser implements IParser {
           const obj = JSON.parse(line) as CodexEvent;
 
           if (obj.type === "turn_context" && obj.timestamp) {
-            const evTs = new Date(obj.timestamp);
-            if (!Number.isNaN(evTs.getTime())) {
+            const eventTimestamp = new Date(obj.timestamp);
+            if (!Number.isNaN(eventTimestamp.getTime())) {
               sessionEvents.push({
                 sessionId: filePath,
                 source: "codex",
                 project: sessionProject,
-                timestamp: evTs,
+                timestamp: eventTimestamp,
                 role: "user",
               });
             }
@@ -121,9 +137,7 @@ class CodexParser implements IParser {
           if (obj.type !== "event_msg") continue;
 
           const payload = obj.payload;
-          if (!payload) continue;
-
-          if (payload.type !== "token_count") continue;
+          if (!payload || payload.type !== "token_count") continue;
 
           const info = payload.info;
           if (!info) continue;
@@ -139,7 +153,6 @@ class CodexParser implements IParser {
             role: "assistant",
           });
 
-          // Prefer incremental per-request usage; compute delta from cumulative total as fallback
           let usage = info.last_token_usage;
           if (!usage && info.total_token_usage) {
             const totalKey = `${info.model || payload.model || turnContextModel || ""}`;
@@ -167,7 +180,6 @@ class CodexParser implements IParser {
 
           const model =
             info.model || payload.model || turnContextModel || sessionModel;
-
           const cachedInput = usage.cached_input_tokens || 0;
           const reasoningTokens = usage.reasoning_output_tokens || 0;
 
@@ -182,7 +194,9 @@ class CodexParser implements IParser {
             reasoningTokens,
             cachedTokens: cachedInput,
           });
-        } catch {}
+        } catch {
+          // Ignore malformed lines and continue scanning the session log.
+        }
       }
     }
 

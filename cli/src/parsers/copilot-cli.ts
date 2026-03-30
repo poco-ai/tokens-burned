@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { aggregateToBuckets } from "../domain/aggregator";
 import { extractSessions } from "../domain/session-extractor";
 import type {
@@ -11,10 +11,12 @@ import type {
 import { registerParser } from "./registry";
 import type { IParser, ToolDefinition } from "./types";
 
+const ROOT_DIR = join(homedir(), ".copilot");
+
 const TOOL: ToolDefinition = {
   id: "copilot-cli",
   name: "GitHub Copilot CLI",
-  dataDir: join(homedir(), ".copilot", "session-state"),
+  dataDir: ROOT_DIR,
 };
 
 interface CopilotEvent {
@@ -39,25 +41,43 @@ interface CopilotEvent {
   };
 }
 
+function collectEventFiles(
+  dir: string,
+  results: { filePath: string; sessionId: string }[],
+  visited: Set<string>,
+): void {
+  if (!existsSync(dir) || visited.has(dir)) {
+    return;
+  }
+
+  visited.add(dir);
+
+  try {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const fullPath = join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        collectEventFiles(fullPath, results, visited);
+        continue;
+      }
+
+      if (entry.isFile() && entry.name === "events.jsonl") {
+        results.push({
+          filePath: fullPath,
+          sessionId: basename(dirname(fullPath)),
+        });
+      }
+    }
+  } catch {
+    // Ignore unreadable directories and keep scanning.
+  }
+}
+
 function findEventFiles(
   baseDir: string,
 ): { filePath: string; sessionId: string }[] {
   const results: { filePath: string; sessionId: string }[] = [];
-  if (!existsSync(baseDir)) return results;
-
-  try {
-    for (const entry of readdirSync(baseDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-
-      const eventsFile = join(baseDir, entry.name, "events.jsonl");
-      if (existsSync(eventsFile)) {
-        results.push({ filePath: eventsFile, sessionId: entry.name });
-      }
-    }
-  } catch {
-    return results;
-  }
-
+  collectEventFiles(baseDir, results, new Set<string>());
   return results;
 }
 
@@ -66,14 +86,14 @@ function getProjectFromContext(
 ): string {
   const projectPath = context?.gitRoot || context?.cwd;
   if (!projectPath) return "unknown";
-  return basename(projectPath) || "unknown";
+  return basename(projectPath.replace(/[\\/]+$/, "")) || "unknown";
 }
 
 class CopilotCliParser implements IParser {
   readonly tool = TOOL;
 
   async parse(): Promise<ParseResult> {
-    const eventFiles = findEventFiles(TOOL.dataDir);
+    const eventFiles = findEventFiles(ROOT_DIR);
     if (eventFiles.length === 0) {
       return { buckets: [], sessions: [] };
     }
@@ -123,8 +143,9 @@ class CopilotCliParser implements IParser {
             });
           }
 
-          if (obj.type !== "session.shutdown" || !hasTimestamp || !timestamp)
+          if (obj.type !== "session.shutdown" || !hasTimestamp || !timestamp) {
             continue;
+          }
 
           const modelMetrics = obj.data?.modelMetrics || {};
           for (const [model, metrics] of Object.entries(modelMetrics)) {
@@ -151,7 +172,9 @@ class CopilotCliParser implements IParser {
               cachedTokens: cachedRead,
             });
           }
-        } catch {}
+        } catch {
+          // Ignore malformed lines and continue scanning the event log.
+        }
       }
     }
 
@@ -159,6 +182,10 @@ class CopilotCliParser implements IParser {
       buckets: aggregateToBuckets(entries),
       sessions: extractSessions(sessionEvents, entries),
     };
+  }
+
+  isInstalled(): boolean {
+    return existsSync(ROOT_DIR);
   }
 }
 

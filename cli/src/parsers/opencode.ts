@@ -12,14 +12,13 @@ import type {
 import { registerParser } from "./registry";
 import type { IParser, ToolDefinition } from "./types";
 
+const DEFAULT_DATA_DIR = join(homedir(), ".local", "share", "opencode");
+
 const TOOL: ToolDefinition = {
   id: "opencode",
   name: "OpenCode",
-  dataDir: join(homedir(), ".local", "share", "opencode"),
+  dataDir: DEFAULT_DATA_DIR,
 };
-
-const DB_PATH = join(TOOL.dataDir, "opencode.db");
-const MESSAGES_DIR = join(TOOL.dataDir, "storage", "message");
 
 interface OpenCodeMessage {
   sessionID?: string;
@@ -51,25 +50,178 @@ interface SqliteRow {
   rootPath: string | null;
 }
 
+function getOpenCodeDataDirs(env: NodeJS.ProcessEnv = process.env): string[] {
+  const dirs = [
+    env.TOKEN_ARENA_OPENCODE_DIR,
+    env.XDG_DATA_HOME ? join(env.XDG_DATA_HOME, "opencode") : undefined,
+    DEFAULT_DATA_DIR,
+    env.LOCALAPPDATA ? join(env.LOCALAPPDATA, "opencode") : undefined,
+    env.APPDATA ? join(env.APPDATA, "opencode") : undefined,
+  ].filter((value): value is string => Boolean(value));
+
+  return Array.from(new Set(dirs));
+}
+
+async function withSuppressedSqliteWarning<T>(
+  fn: () => Promise<T>,
+): Promise<T> {
+  const originalEmitWarning = process.emitWarning;
+
+  process.emitWarning = ((
+    warning: string | Error,
+    ...args: unknown[]
+  ): void => {
+    const warningName =
+      typeof warning === "string"
+        ? typeof args[0] === "string"
+          ? args[0]
+          : ""
+        : warning.name;
+    const warningMessage =
+      typeof warning === "string" ? warning : warning.message;
+
+    if (
+      warningName === "ExperimentalWarning" &&
+      warningMessage.includes("SQLite")
+    ) {
+      return;
+    }
+
+    (
+      originalEmitWarning as (
+        warning: string | Error,
+        ...warningArgs: unknown[]
+      ) => void
+    ).call(process, warning, ...args);
+  }) as typeof process.emitWarning;
+
+  try {
+    return await fn();
+  } finally {
+    process.emitWarning = originalEmitWarning;
+  }
+}
+
+async function readSqliteRowsWithBuiltin(
+  dbPath: string,
+  query: string,
+): Promise<SqliteRow[] | null> {
+  try {
+    return await withSuppressedSqliteWarning(async () => {
+      const sqliteModuleId = "node:sqlite";
+      const sqlite = (await import(sqliteModuleId)) as {
+        DatabaseSync: new (
+          location: string,
+        ) => {
+          close(): void;
+          prepare(sql: string): {
+            all(): SqliteRow[];
+          };
+        };
+      };
+      const db = new sqlite.DatabaseSync(dbPath);
+
+      try {
+        return db.prepare(query).all() as SqliteRow[];
+      } finally {
+        db.close();
+      }
+    });
+  } catch (err) {
+    const error = err as NodeJS.ErrnoException;
+    const message = (err as Error).message;
+    if (
+      error.code === "ERR_UNKNOWN_BUILTIN_MODULE" ||
+      message.includes("node:sqlite")
+    ) {
+      return null;
+    }
+
+    throw err;
+  }
+}
+
+function readSqliteRowsWithCli(dbPath: string, query: string): SqliteRow[] {
+  const candidates = [
+    process.env.TOKEN_ARENA_SQLITE3,
+    "sqlite3",
+    "sqlite3.exe",
+  ].filter((value): value is string => Boolean(value));
+
+  let lastError: Error | null = null;
+
+  for (const command of candidates) {
+    try {
+      const output = execFileSync(command, ["-json", dbPath, query], {
+        encoding: "utf-8",
+        maxBuffer: 100 * 1024 * 1024,
+        timeout: 30000,
+        windowsHide: true,
+      }).trim();
+
+      if (!output || output === "[]") {
+        return [];
+      }
+
+      return JSON.parse(output) as SqliteRow[];
+    } catch (err) {
+      lastError = err as Error;
+      const nodeError = err as NodeJS.ErrnoException & { status?: number };
+      if (nodeError.status === 127 || nodeError.message?.includes("ENOENT")) {
+        continue;
+      }
+
+      throw err;
+    }
+  }
+
+  throw new Error(
+    `sqlite3 CLI not found. Install sqlite3 or set TOKEN_ARENA_SQLITE3 to its full path. Last error: ${lastError?.message || "not found"}`,
+  );
+}
+
 class OpenCodeParser implements IParser {
   readonly tool = TOOL;
 
   async parse(): Promise<ParseResult> {
-    // Try SQLite database first (opencode >= v0.2)
-    if (existsSync(DB_PATH)) {
+    const buckets: ParseResult["buckets"] = [];
+    const sessions: ParseResult["sessions"] = [];
+
+    for (const rootDir of getOpenCodeDataDirs()) {
+      const result = await this.parseRoot(rootDir);
+      if (result.buckets.length > 0) {
+        buckets.push(...result.buckets);
+      }
+      if (result.sessions.length > 0) {
+        sessions.push(...result.sessions);
+      }
+    }
+
+    return { buckets, sessions };
+  }
+
+  isInstalled(): boolean {
+    return getOpenCodeDataDirs().some((dir) => existsSync(dir));
+  }
+
+  private async parseRoot(rootDir: string): Promise<ParseResult> {
+    const dbPath = join(rootDir, "opencode.db");
+    const messagesDir = join(rootDir, "storage", "message");
+
+    if (existsSync(dbPath)) {
       try {
-        return this.parseFromSqlite();
+        return await this.parseFromSqlite(dbPath);
       } catch (err) {
         process.stderr.write(
           `warn: opencode sqlite parse failed (${(err as Error).message}), trying legacy json...\n`,
         );
       }
     }
-    // Fall back to legacy JSON files
-    return this.parseFromJson();
+
+    return this.parseFromJson(messagesDir);
   }
 
-  private parseFromSqlite(): ParseResult {
+  private async parseFromSqlite(dbPath: string): Promise<ParseResult> {
     const query = `SELECT
       session_id as sessionID,
       json_extract(data, '$.role') as role,
@@ -79,31 +231,11 @@ class OpenCodeParser implements IParser {
       json_extract(data, '$.path.root') as rootPath
       FROM message`;
 
-    let output: string;
-    try {
-      output = execFileSync("sqlite3", ["-json", DB_PATH, query], {
-        encoding: "utf-8",
-        maxBuffer: 100 * 1024 * 1024,
-        timeout: 30000,
-      });
-    } catch (err) {
-      const nodeErr = err as NodeJS.ErrnoException & { status?: number };
-      if (nodeErr.status === 127 || nodeErr.message?.includes("ENOENT")) {
-        throw new Error(
-          "sqlite3 CLI not found. Install sqlite3 to sync opencode data.",
-        );
-      }
-      throw err;
-    }
+    const builtinRows = await readSqliteRowsWithBuiltin(dbPath, query);
+    const rows = builtinRows ?? readSqliteRowsWithCli(dbPath, query);
 
-    output = output.trim();
-    if (!output || output === "[]") return { buckets: [], sessions: [] };
-
-    let rows: SqliteRow[];
-    try {
-      rows = JSON.parse(output);
-    } catch {
-      throw new Error("Failed to parse sqlite3 JSON output");
+    if (rows.length === 0) {
+      return { buckets: [], sessions: [] };
     }
 
     const entries: TokenUsageEntry[] = [];
@@ -155,31 +287,33 @@ class OpenCodeParser implements IParser {
     };
   }
 
-  private parseFromJson(): ParseResult {
-    if (!existsSync(MESSAGES_DIR)) return { buckets: [], sessions: [] };
+  private parseFromJson(messagesDir: string): ParseResult {
+    if (!existsSync(messagesDir)) return { buckets: [], sessions: [] };
 
     const entries: TokenUsageEntry[] = [];
     const sessionEvents: SessionEvent[] = [];
 
     let sessionDirs: Dirent[];
     try {
-      sessionDirs = readdirSync(MESSAGES_DIR, { withFileTypes: true }).filter(
-        (d) => d.isDirectory() && d.name.startsWith("ses_"),
+      sessionDirs = readdirSync(messagesDir, { withFileTypes: true }).filter(
+        (dirent) => dirent.isDirectory() && dirent.name.startsWith("ses_"),
       );
     } catch {
       return { buckets: [], sessions: [] };
     }
 
     for (const sessionDir of sessionDirs) {
-      const sessionPath = join(MESSAGES_DIR, sessionDir.name);
-      let msgFiles: string[];
+      const sessionPath = join(messagesDir, sessionDir.name);
+      let messageFiles: string[];
       try {
-        msgFiles = readdirSync(sessionPath).filter((f) => f.endsWith(".json"));
+        messageFiles = readdirSync(sessionPath).filter((file) =>
+          file.endsWith(".json"),
+        );
       } catch {
         continue;
       }
 
-      for (const file of msgFiles) {
+      for (const file of messageFiles) {
         const filePath = join(sessionPath, file);
 
         let data: OpenCodeMessage;
