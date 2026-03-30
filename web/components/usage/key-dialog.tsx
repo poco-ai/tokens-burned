@@ -63,12 +63,15 @@ export function KeyDialog({
           }}
         >
           <div className="space-y-2">
-            <Label htmlFor="key-name">{t("name")}</Label>
+            {mode === "rename" ? (
+              <Label htmlFor="key-name">{t("name")}</Label>
+            ) : null}
             <Input
               id="key-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder={t("placeholder")}
+              aria-label={mode === "create" ? t("name") : undefined}
               className="border-border/60 bg-background hover:bg-muted/40"
             />
           </div>

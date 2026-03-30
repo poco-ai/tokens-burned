@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -53,14 +52,12 @@ type SettingsPreferencesProps = {
   initialTimezone: string;
   initialProjectMode: ProjectMode;
   initialPublicProfileEnabled: boolean;
-  initialBio: string | null;
 };
 
 export function SettingsPreferences({
   initialTimezone,
   initialProjectMode,
   initialPublicProfileEnabled,
-  initialBio,
 }: SettingsPreferencesProps) {
   const t = useTranslations("usage.settings");
   const [timezone, setTimezone] = useState(initialTimezone);
@@ -69,32 +66,38 @@ export function SettingsPreferences({
   const [publicProfileEnabled, setPublicProfileEnabled] = useState(
     initialPublicProfileEnabled,
   );
-  const [bio, setBio] = useState(initialBio ?? "");
   const [savedTimezone, setSavedTimezone] = useState(initialTimezone);
   const [savedProjectMode, setSavedProjectMode] =
     useState<ProjectMode>(initialProjectMode);
   const [savedPublicProfileEnabled, setSavedPublicProfileEnabled] = useState(
     initialPublicProfileEnabled,
   );
-  const [savedBio, setSavedBio] = useState(initialBio ?? "");
   const [error, setError] = useState<string | null>(null);
   const hasChanges = hasPreferenceChanges(
     {
       timezone: savedTimezone,
       projectMode: savedProjectMode,
       publicProfileEnabled: savedPublicProfileEnabled,
-      bio: savedBio,
+      bio: "",
     },
-    { timezone, projectMode, publicProfileEnabled, bio },
+    { timezone, projectMode, publicProfileEnabled, bio: "" },
   );
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setTimezone(initialTimezone);
+    setSavedTimezone(initialTimezone);
+    setProjectMode(initialProjectMode);
+    setSavedProjectMode(initialProjectMode);
+    setPublicProfileEnabled(initialPublicProfileEnabled);
+    setSavedPublicProfileEnabled(initialPublicProfileEnabled);
+  }, [initialTimezone, initialProjectMode, initialPublicProfileEnabled]);
 
   const savePreferences = useCallback(
     async (
       nextTimezone: string,
       nextProjectMode: ProjectMode,
       nextPublicProfileEnabled: boolean,
-      nextBio: string,
     ) => {
       setError(null);
 
@@ -108,7 +111,6 @@ export function SettingsPreferences({
             timezone: nextTimezone,
             projectMode: nextProjectMode,
             publicProfileEnabled: nextPublicProfileEnabled,
-            bio: nextBio.trim() ? nextBio.trim() : null,
           }),
         });
         const payload = await response.json();
@@ -120,7 +122,6 @@ export function SettingsPreferences({
         setSavedTimezone(payload.timezone);
         setSavedProjectMode(payload.projectMode);
         setSavedPublicProfileEnabled(payload.publicProfileEnabled);
-        setSavedBio(payload.bio ?? "");
         emitPreferenceSavedNotice({
           timezone: payload.timezone,
           projectMode: payload.projectMode,
@@ -155,7 +156,7 @@ export function SettingsPreferences({
     }
 
     saveTimeoutRef.current = setTimeout(() => {
-      void savePreferences(timezone, projectMode, publicProfileEnabled, bio);
+      void savePreferences(timezone, projectMode, publicProfileEnabled);
       saveTimeoutRef.current = null;
     }, 500);
 
@@ -166,7 +167,6 @@ export function SettingsPreferences({
       }
     };
   }, [
-    bio,
     hasChanges,
     projectMode,
     publicProfileEnabled,
@@ -190,105 +190,72 @@ export function SettingsPreferences({
         </Alert>
       ) : null}
 
-      <Card size="sm" className="gap-0 bg-card shadow-sm ring-1 ring-border/60">
-        <CardHeader className="border-b border-border/50 bg-card pb-2">
-          <CardTitle>{t("profileSectionTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 pt-3">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="timezone">{t("timezone")}</Label>
-              <Select value={timezone} onValueChange={setTimezone}>
-                <SelectTrigger
-                  id="timezone"
-                  className={settingsControlClassName}
-                >
-                  <SelectValue placeholder={t("selectTimezone")} />
-                </SelectTrigger>
-                <SelectContent className={settingsSelectContentClassName}>
-                  {timezoneOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="public-profile">{t("publicProfile")}</Label>
-              <Select
-                value={publicProfileEnabled ? "enabled" : "disabled"}
-                onValueChange={(value) =>
-                  setPublicProfileEnabled(value === "enabled")
-                }
-              >
-                <SelectTrigger
-                  id="public-profile"
-                  className={settingsControlClassName}
-                >
-                  <SelectValue placeholder={t("selectPublicProfile")} />
-                </SelectTrigger>
-                <SelectContent className={settingsSelectContentClassName}>
-                  <SelectItem value="disabled">
-                    {t("publicProfileOptions.disabled")}
+      <div className="space-y-3">
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="timezone">{t("timezone")}</Label>
+            <Select value={timezone} onValueChange={setTimezone}>
+              <SelectTrigger id="timezone" className={settingsControlClassName}>
+                <SelectValue placeholder={t("selectTimezone")} />
+              </SelectTrigger>
+              <SelectContent className={settingsSelectContentClassName}>
+                {timezoneOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
-                  <SelectItem value="enabled">
-                    {t("publicProfileOptions.enabled")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5 md:col-span-2">
-              <Label htmlFor="profile-bio">{t("bio")}</Label>
-              <textarea
-                id="profile-bio"
-                value={bio}
-                onChange={(event) => setBio(event.target.value.slice(0, 160))}
-                placeholder={t("bioPlaceholder")}
-                maxLength={160}
-                rows={3}
-                className="w-full rounded-lg border border-border/60 bg-background px-2.5 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
-              />
-              <div className="text-xs text-muted-foreground">
-                {bio.length}/160
-              </div>
-            </div>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
 
-      <Card size="sm" className="gap-0 bg-card shadow-sm ring-1 ring-border/60">
-        <CardHeader className="border-b border-border/50 bg-card pb-2">
-          <CardTitle>{t("preferencesTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 pt-3">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="project-mode">{t("projectMode")}</Label>
-              <Select
-                value={projectMode}
-                onValueChange={(value) => setProjectMode(value as ProjectMode)}
+          <div className="space-y-1.5">
+            <Label htmlFor="public-profile">{t("publicProfile")}</Label>
+            <Select
+              value={publicProfileEnabled ? "enabled" : "disabled"}
+              onValueChange={(value) =>
+                setPublicProfileEnabled(value === "enabled")
+              }
+            >
+              <SelectTrigger
+                id="public-profile"
+                className={settingsControlClassName}
               >
-                <SelectTrigger
-                  id="project-mode"
-                  className={settingsControlClassName}
-                >
-                  <SelectValue placeholder={t("selectProjectMode")} />
-                </SelectTrigger>
-                <SelectContent className={settingsSelectContentClassName}>
-                  {projectModeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {t(`projectModes.${option.value}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <SelectValue placeholder={t("selectPublicProfile")} />
+              </SelectTrigger>
+              <SelectContent className={settingsSelectContentClassName}>
+                <SelectItem value="disabled">
+                  {t("publicProfileOptions.disabled")}
+                </SelectItem>
+                <SelectItem value="enabled">
+                  {t("publicProfileOptions.enabled")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="space-y-1.5 md:col-span-2">
+            <Label htmlFor="project-mode">{t("projectMode")}</Label>
+            <Select
+              value={projectMode}
+              onValueChange={(value) => setProjectMode(value as ProjectMode)}
+            >
+              <SelectTrigger
+                id="project-mode"
+                className={settingsControlClassName}
+              >
+                <SelectValue placeholder={t("selectProjectMode")} />
+              </SelectTrigger>
+              <SelectContent className={settingsSelectContentClassName}>
+                {projectModeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {t(`projectModes.${option.value}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

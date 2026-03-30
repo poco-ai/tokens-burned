@@ -95,13 +95,13 @@ export function SettingsDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] max-w-[calc(100vw-2rem)] gap-0 overflow-hidden border border-border/70 bg-card p-0 shadow-2xl sm:max-w-4xl">
+      <DialogContent className="flex max-h-[90vh] max-w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden border border-border/70 bg-card p-0 shadow-2xl sm:max-w-4xl">
         <DialogHeader className="border-b border-border/60 bg-card px-6 py-5">
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="overflow-y-auto bg-muted p-4 sm:p-5">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-muted/40">
           <SettingsBody
             initialName={initialName}
             initialUsername={initialUsername}
@@ -114,6 +114,7 @@ export function SettingsDialog({
             connectedAccounts={connectedAccounts}
             availableProviders={availableProviders}
             keyManagerVariant="dialog"
+            className="min-h-min"
           />
         </div>
       </DialogContent>

@@ -75,7 +75,16 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
         username: session.user.username,
       }}
     >
-      <SettingsBody {...settingsProps} keyManagerVariant="page" />
+      <SettingsBody
+        {...settingsProps}
+        keyManagerVariant="page"
+        viewer={{
+          name: session.user.name,
+          email: session.user.email,
+          image: session.user.image,
+          username: session.user.username,
+        }}
+      />
     </AppShell>
   );
 }

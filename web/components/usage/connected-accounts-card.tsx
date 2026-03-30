@@ -1,11 +1,13 @@
 "use client";
 
+import { Mail } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
+import { SiGithub, SiGoogle } from "react-icons/si";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "@/i18n/navigation";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 import type { LoginProvider } from "@/lib/auth-providers";
@@ -23,30 +25,6 @@ type ConnectedAccountsCardProps = {
   accounts?: ConnectedAccountRecord[];
   availableProviders?: LoginProvider[];
 };
-
-const providerLabels: Record<string, string> = {
-  credential: "Email & Password",
-  github: "GitHub",
-  google: "Google",
-  linuxdo: "Linux.do",
-  watcha: "Watcha",
-};
-
-function getProviderLabel(
-  providerId: string,
-  providers: LoginProvider[],
-  tCredential: string,
-) {
-  if (providerId === "credential") {
-    return tCredential;
-  }
-
-  return (
-    providers.find((provider) => provider.id === providerId)?.label ??
-    providerLabels[providerId] ??
-    providerId
-  );
-}
 
 function formatAccountId(accountId: string) {
   if (accountId.length <= 12) {
@@ -79,23 +57,77 @@ async function postAuthAction(
   return payload ?? {};
 }
 
+function ProviderIcon({
+  providerId,
+}: {
+  providerId: "credential" | LoginProvider["id"];
+}): ReactNode {
+  if (providerId === "credential") {
+    return <Mail className="h-5 w-5" aria-hidden />;
+  }
+
+  switch (providerId) {
+    case "github":
+      return <SiGithub className="h-5 w-5 shrink-0" aria-hidden />;
+    case "google":
+      return <SiGoogle className="h-5 w-5 shrink-0" aria-hidden />;
+    case "linuxdo":
+      return (
+        <Image
+          src="https://linux.do/logo-128.svg"
+          alt=""
+          width={20}
+          height={20}
+          className="shrink-0"
+        />
+      );
+    case "watcha":
+      return (
+        <Image
+          src="https://watcha.tos-cn-beijing.volces.com/products/logo/1752064513_guan-cha-insights.png?x-tos-process=image/resize,w_72/format,webp"
+          alt=""
+          width={20}
+          height={20}
+          className="shrink-0"
+        />
+      );
+    default:
+      return <Mail className="h-5 w-5" aria-hidden />;
+  }
+}
+
 export function ConnectedAccountsCard({
   accounts = [],
   availableProviders = [],
 }: ConnectedAccountsCardProps) {
   const router = useRouter();
-  const t = useTranslations("usage.settings");
+  const t = useTranslations("usage.settings.connectedAccounts");
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
-  const linkedProviderIds = useMemo(
-    () => new Set(accounts.map((account) => account.providerId)),
-    [accounts],
-  );
+  const rows = useMemo(() => {
+    const credentialAccounts = accounts.filter(
+      (a) => a.providerId === "credential",
+    );
 
-  const connectableProviders = availableProviders.filter(
-    (provider) => !linkedProviderIds.has(provider.id),
-  );
+    const credentialRows = credentialAccounts.map((account) => ({
+      kind: "credential" as const,
+      key: account.id,
+      account,
+    }));
+
+    const oauthRows = availableProviders.map((provider) => {
+      const account = accounts.find((a) => a.providerId === provider.id);
+      return {
+        kind: "oauth" as const,
+        key: `oauth:${provider.id}`,
+        provider,
+        account,
+      };
+    });
+
+    return [...credentialRows, ...oauthRows];
+  }, [accounts, availableProviders]);
 
   const handleConnect = async (provider: LoginProvider) => {
     const actionKey = `connect:${provider.id}`;
@@ -121,12 +153,7 @@ export function ConnectedAccountsCard({
         return;
       }
     } catch (requestError) {
-      setError(
-        getAuthErrorMessage(
-          requestError,
-          t("connectedAccounts.errors.connect"),
-        ),
-      );
+      setError(getAuthErrorMessage(requestError, t("errors.connect")));
       setBusyKey(null);
     }
   };
@@ -148,118 +175,141 @@ export function ConnectedAccountsCard({
 
       router.refresh();
     } catch (requestError) {
-      setError(
-        getAuthErrorMessage(
-          requestError,
-          t("connectedAccounts.errors.disconnect"),
-        ),
-      );
+      setError(getAuthErrorMessage(requestError, t("errors.disconnect")));
     } finally {
       setBusyKey(null);
     }
   };
 
-  return (
-    <Card size="sm" className="gap-0 bg-card shadow-sm ring-1 ring-border/60">
-      <CardHeader className="border-b border-border/50 bg-card pb-2">
-        <CardTitle>{t("connectedAccounts.title")}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 pt-3">
-        <p className="text-sm text-muted-foreground">
-          {t("connectedAccounts.description")}
-        </p>
-
+  if (rows.length === 0) {
+    return (
+      <div className="space-y-3">
         {error ? (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : null}
+        <div className="rounded-lg border border-dashed border-border/60 px-4 py-6 text-center text-sm text-muted-foreground">
+          {t("empty")}
+        </div>
+      </div>
+    );
+  }
 
-        <div className="space-y-2">
-          {accounts.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border/60 px-3 py-4 text-sm text-muted-foreground">
-              {t("connectedAccounts.empty")}
-            </div>
-          ) : (
-            accounts.map((account) => {
-              const canDisconnect =
-                account.providerId !== "credential" && accounts.length > 1;
-              const disconnectKey = `disconnect:${account.id}`;
+  return (
+    <div className="space-y-3">
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
-              return (
-                <div
-                  key={account.id}
-                  className="flex flex-col gap-3 rounded-lg border border-border/60 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground">
-                        {getProviderLabel(
-                          account.providerId,
-                          availableProviders,
-                          t("connectedAccounts.credentialLabel"),
-                        )}
-                      </span>
-                      <Badge variant="secondary">
-                        {t("connectedAccounts.connected")}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {t("connectedAccounts.accountId", {
-                        value: formatAccountId(account.accountId),
-                      })}
-                    </div>
+      <div className="divide-y divide-border/50 overflow-hidden rounded-xl border border-border/50">
+        {rows.map((row) => {
+          if (row.kind === "credential") {
+            const { account } = row;
+
+            return (
+              <div
+                key={row.key}
+                className="flex flex-wrap items-center gap-4 px-4 py-4 sm:flex-nowrap"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/50 text-foreground">
+                  <ProviderIcon providerId="credential" />
+                </div>
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <div className="font-medium text-foreground">
+                    {t("credentialLabel")}
                   </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t("accountId", {
+                      value: formatAccountId(account.accountId),
+                    })}
+                  </p>
+                </div>
+              </div>
+            );
+          }
 
+          const { provider, account } = row;
+          const connectKey = `connect:${provider.id}`;
+          const disconnectKey = account ? `disconnect:${account.id}` : null;
+          const canDisconnect =
+            account &&
+            account.providerId !== "credential" &&
+            accounts.length > 1;
+
+          if (account) {
+            return (
+              <div
+                key={row.key}
+                className="flex flex-wrap items-center gap-4 px-4 py-4 sm:flex-nowrap"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/50 text-foreground">
+                  <ProviderIcon providerId={provider.id} />
+                </div>
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <div className="font-medium text-foreground">
+                    {provider.label}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t("accountId", {
+                      value: formatAccountId(account.accountId),
+                    })}
+                  </p>
+                </div>
+                <div className="flex shrink-0 justify-end sm:ml-auto">
                   {canDisconnect ? (
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => handleDisconnect(account)}
                       disabled={busyKey === disconnectKey}
                     >
                       {busyKey === disconnectKey
-                        ? t("connectedAccounts.disconnecting")
-                        : t("connectedAccounts.disconnect")}
+                        ? t("disconnecting")
+                        : t("disconnect")}
                     </Button>
                   ) : null}
                 </div>
-              );
-            })
-          )}
-        </div>
+              </div>
+            );
+          }
 
-        {connectableProviders.length > 0 ? (
-          <div className="space-y-2 border-t border-border/60 pt-3">
-            <p className="text-sm font-medium text-foreground">
-              {t("connectedAccounts.available")}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {connectableProviders.map((provider) => {
-                const connectKey = `connect:${provider.id}`;
-
-                return (
-                  <Button
-                    key={provider.id}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleConnect(provider)}
-                    disabled={busyKey === connectKey}
-                  >
-                    {busyKey === connectKey
-                      ? t("connectedAccounts.connecting")
-                      : t("connectedAccounts.connectAction", {
-                          provider: provider.label,
-                        })}
-                  </Button>
-                );
-              })}
+          return (
+            <div
+              key={row.key}
+              className="flex flex-wrap items-center gap-4 px-4 py-4 sm:flex-nowrap"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/50 text-foreground">
+                <ProviderIcon providerId={provider.id} />
+              </div>
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <div className="font-medium text-foreground">
+                  {provider.label}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t("signInWithProvider", {
+                    provider: provider.label,
+                  })}
+                </p>
+              </div>
+              <div className="flex shrink-0 justify-end sm:ml-auto">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleConnect(provider)}
+                  disabled={busyKey === connectKey}
+                >
+                  {busyKey === connectKey ? t("connecting") : t("connect")}
+                </Button>
+              </div>
             </div>
-          </div>
-        ) : null}
-      </CardContent>
-    </Card>
+          );
+        })}
+      </div>
+    </div>
   );
 }
