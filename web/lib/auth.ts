@@ -1,6 +1,12 @@
 import { APIError, betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { genericOAuth } from "better-auth/plugins/generic-oauth";
+import { isProduction, isSelfHosted } from "./auth-config";
+import {
+  getEnabledOAuth2ProviderConfigs,
+  isSocialProviderEnabled,
+} from "./auth-providers";
 import {
   normalizeUsername,
   USERNAME_TAKEN_ERROR_MESSAGE,
@@ -8,7 +14,9 @@ import {
 import { prisma } from "./prisma";
 import { usernameSchema } from "./validators/auth";
 
-function getRequiredEnv(name: "BETTER_AUTH_SECRET" | "BETTER_AUTH_URL") {
+function getRequiredEnv(
+  name: "BETTER_AUTH_SECRET" | "BETTER_AUTH_URL",
+): string {
   const value = process.env[name];
 
   if (!value) {
@@ -99,7 +107,24 @@ export const auth = betterAuth({
     },
   },
   emailAndPassword: {
-    enabled: true,
+    enabled: isSelfHosted,
   },
-  plugins: [nextCookies()],
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID || "",
+      clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+      enabled: isProduction && isSocialProviderEnabled("github"),
+    },
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      enabled: isProduction && isSocialProviderEnabled("google"),
+    },
+  },
+  plugins: [
+    nextCookies(),
+    genericOAuth({
+      config: isProduction ? getEnabledOAuth2ProviderConfigs() : [],
+    }),
+  ],
 });

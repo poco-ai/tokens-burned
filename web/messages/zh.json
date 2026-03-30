@@ -28,11 +28,14 @@
     "login": {
       "title": "欢迎回来",
       "description": "使用邮箱和密码登录。",
+      "oauthDescription": "使用已配置的第三方账号登录。",
       "submit": "登录",
       "submitting": "登录中...",
       "invalidSession": "当前会话已失效或过期，请重新登录。",
       "noAccount": "还没有账号？",
+      "noProviders": "当前还没有配置可用的登录方式。",
       "registerLink": "注册",
+      "orContinueWith": "或使用以下方式登录",
       "errors": {
         "default": "无法登录，请稍后再试。",
         "emailRequired": "请输入邮箱。",

@@ -28,11 +28,14 @@
     "login": {
       "title": "Welcome back",
       "description": "Sign in with your email and password.",
+      "oauthDescription": "Sign in with one of the supported providers.",
       "submit": "Sign in",
       "submitting": "Signing in...",
       "invalidSession": "Your session is invalid or expired. Please sign in again.",
       "noAccount": "Don't have an account?",
+      "noProviders": "No sign-in providers are configured yet.",
       "registerLink": "Register",
+      "orContinueWith": "or continue with",
       "errors": {
         "default": "Unable to sign in. Please try again.",
         "emailRequired": "Email is required.",

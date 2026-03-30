@@ -5,6 +5,8 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginForm } from "@/components/auth/login-form";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
+import { authMode, isSelfHosted } from "@/lib/auth-config";
+import { getEnabledLoginProviders } from "@/lib/auth-providers";
 import { getOptionalSession } from "@/lib/session";
 
 type LoginPageProps = {
@@ -23,10 +25,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "auth.login" });
+  const description = isSelfHosted ? t("description") : t("oauthDescription");
 
   return {
     title: `${t("title")} | Token Arena`,
-    description: t("description"),
+    description,
   };
 }
 
@@ -44,11 +47,12 @@ export default async function LoginPage({
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const showInvalidSessionMessage = resolvedSearchParams?.invalid === "1";
+  const description = isSelfHosted ? t("description") : t("oauthDescription");
 
   return (
     <AuthShell
       title={t("title")}
-      description={t("description")}
+      description={description}
       headerActions={
         <>
           <LanguageSwitcher />
@@ -56,7 +60,11 @@ export default async function LoginPage({
         </>
       }
     >
-      <LoginForm showInvalidSessionMessage={showInvalidSessionMessage} />
+      <LoginForm
+        mode={authMode}
+        showInvalidSessionMessage={showInvalidSessionMessage}
+        providers={getEnabledLoginProviders()}
+      />
     </AuthShell>
   );
 }

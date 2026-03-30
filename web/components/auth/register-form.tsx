@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
+import { authConfig } from "@/lib/auth-config";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 import {
   isValidUsername,
   normalizeUsername,
@@ -16,27 +18,9 @@ import {
   USERNAME_TAKEN_ERROR_MESSAGE,
 } from "@/lib/auth-username";
 
-function getAuthErrorMessage(error: unknown, fallbackMessage: string) {
-  if (typeof error === "string") {
-    return error;
-  }
-
-  if (error && typeof error === "object") {
-    const withMessage = error as {
-      message?: unknown;
-      error?: { message?: unknown };
-    };
-
-    if (typeof withMessage.message === "string") {
-      return withMessage.message;
-    }
-
-    if (typeof withMessage.error?.message === "string") {
-      return withMessage.error.message;
-    }
-  }
-
-  return fallbackMessage;
+// Registration is only available in self-hosted mode
+if (!authConfig.isSelfHosted) {
+  throw new Error("Registration is not available in production mode");
 }
 
 export function RegisterForm() {

@@ -5,6 +5,7 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { RegisterForm } from "@/components/auth/register-form";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
+import { isProduction } from "@/lib/auth-config";
 import { getOptionalSession } from "@/lib/session";
 
 export async function generateMetadata({
@@ -29,6 +30,11 @@ export default async function RegisterPage({
   const { locale } = await params;
   const session = await getOptionalSession();
   const t = await getTranslations("auth.register");
+
+  // Registration is not available in production mode
+  if (isProduction) {
+    redirect(`/${locale}/login`);
+  }
 
   if (session) {
     redirect(`/${locale}/usage`);
