@@ -48,9 +48,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy standalone output (includes public and .next/static)
+# Copy standalone server output
 COPY --from=builder --chown=nextjs:nodejs /app/web/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/web/.next/static ./.next/static
+# Next serves static assets relative to /app/web/server.js inside standalone
+COPY --from=builder --chown=nextjs:nodejs /app/web/.next/static ./web/.next/static
 
 # Copy Prisma generated client
 COPY --from=builder --chown=nextjs:nodejs /app/web/generated ./generated
