@@ -8,7 +8,7 @@ import type {
   UploadSessionMetadata,
   UploadTokenBucket,
 } from "../domain/types";
-import { ApiClient } from "../infrastructure/api/client";
+import { ApiClient, getIngestPayloadSize } from "../infrastructure/api/client";
 import {
   type Config,
   getOrCreateDeviceId,
@@ -28,6 +28,7 @@ import { runAllParsers } from "./parser-service";
 
 const BATCH_SIZE = 100;
 const SESSION_BATCH_SIZE = 500;
+const PROGRESS_BAR_WIDTH = 28;
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes}B`;
@@ -35,11 +36,26 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
 
-function formatTime(secs: number): string {
-  if (secs < 60) return `${secs}s`;
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  return h > 0 ? (m > 0 ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+function renderProgressBar(progress: number): string {
+  const safeProgress = Math.max(0, Math.min(progress, 1));
+  const filled = Math.round(safeProgress * PROGRESS_BAR_WIDTH);
+  return `${"█".repeat(filled)}${"░".repeat(PROGRESS_BAR_WIDTH - filled)}`;
+}
+
+function writeUploadProgress(
+  sent: number,
+  total: number,
+  batchNum: number,
+  totalBatches: number,
+): void {
+  const pct = total > 0 ? Math.round((sent / total) * 100) : 100;
+  const progressBar = renderProgressBar(total > 0 ? sent / total : 1);
+  const batchLabel =
+    totalBatches > 1 ? ` · batch ${batchNum}/${totalBatches}` : "";
+
+  process.stdout.write(
+    `\r  Uploading ${progressBar} ${String(pct).padStart(3, " ")}% · ${formatBytes(sent)}/${formatBytes(total)}${batchLabel}\x1b[K`,
+  );
 }
 
 export interface SyncOptions {
@@ -238,20 +254,31 @@ export async function runSync(
     const uploadBuckets = toUploadBuckets(allBuckets, settings, device);
     const uploadSessions = toUploadSessions(allSessions, settings, device);
 
-    // if (!quiet) {
-      // const projectModeLabel: Record<ApiSettings["projectMode"], string> = {
-      //   hashed: "哈希化",
-      //   raw: "原始名称",
-      //   disabled: "已隐藏",
-      // };
-      // logger.info(`📂 项目模式: ${projectModeLabel[settings.projectMode]}`);
-    // }
-
     const bucketBatches = Math.ceil(uploadBuckets.length / BATCH_SIZE);
     const sessionBatches = Math.ceil(
       uploadSessions.length / SESSION_BATCH_SIZE,
     );
     const totalBatches = Math.max(bucketBatches, sessionBatches, 1);
+    const batchPayloadSizes = Array.from(
+      { length: totalBatches },
+      (_, batchIdx) =>
+        getIngestPayloadSize(
+          device,
+          uploadBuckets.slice(
+            batchIdx * BATCH_SIZE,
+            (batchIdx + 1) * BATCH_SIZE,
+          ),
+          uploadSessions.slice(
+            batchIdx * SESSION_BATCH_SIZE,
+            (batchIdx + 1) * SESSION_BATCH_SIZE,
+          ),
+        ),
+    );
+    const totalPayloadBytes = batchPayloadSizes.reduce(
+      (sum, size) => sum + size,
+      0,
+    );
+    let uploadedBytesBeforeBatch = 0;
 
     if (!quiet) {
       const parts: string[] = [];
@@ -276,8 +303,6 @@ export async function runSync(
         (batchIdx + 1) * SESSION_BATCH_SIZE,
       );
       const batchNum = batchIdx + 1;
-      const prefix =
-        totalBatches > 1 ? `  [${batchNum}/${totalBatches}] ` : "  ";
 
       const result = await apiClient.ingest(
         device,
@@ -286,18 +311,27 @@ export async function runSync(
         quiet
           ? undefined
           : (sent, total) => {
-              const pct = Math.round((sent / total) * 100);
-              process.stdout.write(
-                `\r${prefix}${formatBytes(sent)}/${formatBytes(total)} (${pct}%)\x1b[K`,
+              writeUploadProgress(
+                uploadedBytesBeforeBatch + sent,
+                totalPayloadBytes || total,
+                batchNum,
+                totalBatches,
               );
             },
       );
 
       totalIngested += result.ingested ?? batch.length;
       totalSessionsSynced += result.sessions ?? batchSessions.length;
+      uploadedBytesBeforeBatch += batchPayloadSizes[batchIdx] ?? 0;
     }
 
     if (!quiet && (totalBatches > 1 || uploadBuckets.length > 0)) {
+      writeUploadProgress(
+        totalPayloadBytes,
+        totalPayloadBytes,
+        totalBatches,
+        totalBatches,
+      );
       process.stdout.write("\n");
     }
 
@@ -305,26 +339,7 @@ export async function runSync(
     if (totalSessionsSynced > 0) {
       syncParts.push(`${totalSessionsSynced} sessions`);
     }
-
-    // logger.info(`Synced ${syncParts.join(" + ")}.`);
-
-    // if (!quiet && totalSessionsSynced > 0) {
-    //   const totalActive = uploadSessions.reduce(
-    //     (sum, session) => sum + session.activeSeconds,
-    //     0,
-    //   );
-    //   const totalDuration = uploadSessions.reduce(
-    //     (sum, session) => sum + session.durationSeconds,
-    //     0,
-    //   );
-    //   const totalMsgs = uploadSessions.reduce(
-    //     (sum, session) => sum + session.messageCount,
-    //     0,
-    //   );
-    //   logger.info(
-    //     `  active: ${formatTime(totalActive)} / total: ${formatTime(totalDuration)}, ${totalMsgs} messages`,
-    //   );
-    // }
+    logger.info(`Synced ${syncParts.join(" + ")}.`);
 
     if (!quiet) {
       logger.info(`\nView your dashboard at: ${apiUrl}/usage`);

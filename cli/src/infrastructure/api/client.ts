@@ -13,6 +13,21 @@ const MAX_RETRIES = 3;
 const INITIAL_DELAY = 1000;
 const TIMEOUT_MS = 60_000;
 
+export function getIngestPayloadSize(
+  device: DeviceMetadata,
+  buckets: UploadTokenBucket[],
+  sessions?: UploadSessionMetadata[],
+): number {
+  const payload = {
+    schemaVersion: 2 as const,
+    device,
+    buckets,
+    sessions: sessions ?? [],
+  };
+
+  return Buffer.byteLength(JSON.stringify(payload));
+}
+
 export class ApiClient {
   constructor(
     private apiUrl: string,
@@ -61,13 +76,14 @@ export class ApiClient {
   ): Promise<{ ingested?: number; sessions?: number }> {
     return new Promise((resolve, reject) => {
       const url = new URL("/api/usage/ingest", this.apiUrl);
-      const payload = {
-        schemaVersion: 2 as const,
-        device,
-        buckets,
-        sessions: sessions ?? [],
-      };
-      const body = Buffer.from(JSON.stringify(payload));
+      const body = Buffer.from(
+        JSON.stringify({
+          schemaVersion: 2 as const,
+          device,
+          buckets,
+          sessions: sessions ?? [],
+        }),
+      );
       const totalBytes = body.length;
       const mod = url.protocol === "https:" ? https : http;
 
