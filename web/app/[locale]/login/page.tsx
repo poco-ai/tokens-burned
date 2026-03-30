@@ -5,6 +5,7 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginDitherBackground } from "@/components/auth/login-dither-background";
 import { LoginForm } from "@/components/auth/login-form";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
+import { ThemeSwitcher } from "@/components/shared/theme-switcher";
 import { getAuthenticatedAppPath } from "@/lib/account-setup";
 import { authMode, isSelfHosted } from "@/lib/auth-config";
 import { getEnabledLoginProviders } from "@/lib/auth-providers";
@@ -57,7 +58,12 @@ export default async function LoginPage({
         title={t("title")}
         description={description}
         titleVariant="hero"
-        footerActions={<LanguageSwitcher footerIcon variant="icon" />}
+        footerActions={
+          <>
+            <LanguageSwitcher footerIcon variant="icon" />
+            <ThemeSwitcher footerIcon variant="icon" />
+          </>
+        }
       >
         <LoginForm
           mode={authMode}

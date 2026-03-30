@@ -57,12 +57,6 @@ export async function AppShell({
           </div>
 
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <LanguageSwitcher
-              authenticated={Boolean(viewer)}
-              variant="compact"
-            />
-            <ThemeSwitcher authenticated={Boolean(viewer)} variant="compact" />
-
             {viewer ? (
               <AccountMenu
                 email={viewer.email}
@@ -88,7 +82,22 @@ export async function AppShell({
         {children}
       </div>
 
-      <AppFooter />
+      <AppFooter
+        actions={
+          <>
+            <LanguageSwitcher
+              authenticated={Boolean(viewer)}
+              footerIcon
+              variant="icon"
+            />
+            <ThemeSwitcher
+              authenticated={Boolean(viewer)}
+              footerIcon
+              variant="icon"
+            />
+          </>
+        }
+      />
     </main>
   );
 }
