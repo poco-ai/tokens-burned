@@ -70,6 +70,8 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
       viewer={{
         id: session.user.id,
         email: session.user.email,
+        name: session.user.name,
+        image: session.user.image,
         username: session.user.username,
       }}
     >

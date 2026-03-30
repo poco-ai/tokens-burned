@@ -14,6 +14,8 @@ type AppShellProps = {
   viewer: {
     id: string;
     email: string;
+    name?: string | null;
+    image?: string | null;
     username?: string | null;
   } | null;
   mainClassName?: string;
@@ -62,7 +64,12 @@ export async function AppShell({
             <ThemeSwitcher authenticated={Boolean(viewer)} variant="compact" />
 
             {viewer ? (
-              <AccountMenu email={viewer.email} username={viewer.username} />
+              <AccountMenu
+                email={viewer.email}
+                name={viewer.name}
+                image={viewer.image}
+                username={viewer.username}
+              />
             ) : (
               <>
                 <Button asChild type="button" variant="outline" size="sm">

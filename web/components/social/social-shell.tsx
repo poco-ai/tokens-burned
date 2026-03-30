@@ -6,6 +6,8 @@ type SocialShellProps = {
   viewer: {
     id: string;
     email: string;
+    name?: string | null;
+    image?: string | null;
     username?: string | null;
   } | null;
   children: ReactNode;

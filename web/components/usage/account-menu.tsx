@@ -17,6 +17,8 @@ import { cn } from "@/lib/utils";
 
 type AccountMenuProps = {
   email: string;
+  name?: string | null;
+  image?: string | null;
   username?: string | null;
 };
 
@@ -24,20 +26,23 @@ function getInitial(value: string) {
   return value.trim().charAt(0).toUpperCase() || "?";
 }
 
-function humanizeUsername(username: string) {
-  return username
-    .replace(/[._-]+/g, " ")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(" ");
-}
+function getIdentityLines(
+  email: string,
+  name?: string | null,
+  username?: string | null,
+) {
+  const trimmedName = name?.trim();
 
-function getIdentityLines(email: string, username?: string | null) {
+  if (trimmedName) {
+    return {
+      primary: trimmedName,
+      secondary: username ? `@${username}` : email,
+    };
+  }
+
   if (username) {
     return {
-      primary: humanizeUsername(username),
+      primary: username,
       secondary: `@${username}`,
     };
   }
@@ -52,12 +57,51 @@ type MenuLink = {
   icon: typeof Home;
 };
 
-export function AccountMenu({ email, username }: AccountMenuProps) {
+function AccountAvatar({
+  image,
+  identity,
+  sizeClassName,
+  textClassName,
+}: {
+  image?: string | null;
+  identity: string;
+  sizeClassName: string;
+  textClassName: string;
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (image && !imageFailed) {
+    return (
+      /* biome-ignore lint/performance/noImgElement: user avatars may come from arbitrary remote URLs */
+      <img
+        src={image}
+        alt=""
+        className={`${sizeClassName} rounded-full object-cover`}
+        onError={() => setImageFailed(true)}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-full bg-foreground font-semibold text-background ${sizeClassName} ${textClassName}`}
+    >
+      {getInitial(identity)}
+    </span>
+  );
+}
+
+export function AccountMenu({
+  email,
+  name,
+  image,
+  username,
+}: AccountMenuProps) {
   const t = useTranslations("common");
   const tUsage = useTranslations("usage.accountMenu");
   const tSocial = useTranslations("social.nav");
-  const identity = username ?? email;
-  const { primary, secondary } = getIdentityLines(email, username);
+  const identity = name?.trim() || username || email;
+  const { primary, secondary } = getIdentityLines(email, name, username);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const closeTimeoutRef = useRef<number | null>(null);
@@ -133,9 +177,12 @@ export function AccountMenu({ email, username }: AccountMenuProps) {
         }}
         onClick={() => setOpen((current) => !current)}
       >
-        <span className="inline-flex size-5 items-center justify-center rounded-full bg-foreground text-[0.7rem] font-semibold text-background">
-          {getInitial(identity)}
-        </span>
+        <AccountAvatar
+          image={image}
+          identity={identity}
+          sizeClassName="size-5"
+          textClassName="text-[0.7rem]"
+        />
       </button>
 
       {open ? (
@@ -159,12 +206,12 @@ export function AccountMenu({ email, username }: AccountMenuProps) {
             className="flex items-center gap-3 rounded-lg bg-muted/40 px-2 py-2"
             role="none"
           >
-            <span
-              className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background"
-              aria-hidden
-            >
-              {getInitial(identity)}
-            </span>
+            <AccountAvatar
+              image={image}
+              identity={identity}
+              sizeClassName="size-10 shrink-0"
+              textClassName="text-sm"
+            />
             <div className="min-w-0 flex-1">
               <div className="truncate font-semibold leading-tight text-foreground">
                 {primary}

@@ -200,6 +200,8 @@ export default async function PeoplePage({
           ? {
               id: viewer.user.id,
               email: viewer.user.email,
+              name: viewer.user.name,
+              image: viewer.user.image,
               username: viewer.user.username,
             }
           : null

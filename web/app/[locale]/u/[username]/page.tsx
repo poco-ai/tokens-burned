@@ -70,6 +70,8 @@ export default async function PublicProfilePage({
           ? {
               id: viewer.user.id,
               email: viewer.user.email,
+              name: viewer.user.name,
+              image: viewer.user.image,
               username: viewer.user.username,
             }
           : null
