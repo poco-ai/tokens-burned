@@ -161,7 +161,7 @@ export function AccountMenu({
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        className="inline-flex size-9 items-center justify-center rounded-full outline-none transition-transform hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="inline-flex size-8 items-center justify-center rounded-full outline-none transition-transform hover:scale-[1.03] focus-visible:ring-2 focus-visible:ring-ring/50"
         aria-label={tUsage("open")}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -180,8 +180,8 @@ export function AccountMenu({
         <AccountAvatar
           image={image}
           identity={identity}
-          sizeClassName="size-5"
-          textClassName="text-[0.7rem]"
+          sizeClassName="size-8"
+          textClassName="text-xs"
         />
       </button>
 
