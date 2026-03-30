@@ -118,6 +118,7 @@
       "manageKeys": "Manage keys"
     },
     "filters": {
+      "sectionTitle": "Usage statistics",
       "custom": "Custom",
       "filters": "Filters",
       "customRangeTitle": "Custom range",

@@ -252,6 +252,9 @@ export function FiltersBar({
     <div className="rounded-2xl bg-card px-4 py-4 text-card-foreground ring-1 ring-foreground/10 sm:px-6">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-wrap items-center gap-2">
+          <span className="shrink-0 font-heading text-base font-medium leading-snug text-card-foreground">
+            {t("sectionTitle")}
+          </span>
           {presets.map((item) =>
             item === "custom" ? (
               <Popover

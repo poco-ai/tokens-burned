@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { AppShell } from "@/components/app/app-shell";
+import { ProfileHeatmap } from "@/components/social/profile-heatmap";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BreakdownGrid } from "@/components/usage/breakdown-grid";
 import { EmptyState } from "@/components/usage/empty-state";
 import { FiltersBar } from "@/components/usage/filters-bar";
@@ -13,6 +15,7 @@ import { SessionsSection } from "@/components/usage/sessions-section";
 import { TokenTrendCard } from "@/components/usage/token-trend-card";
 import { Link } from "@/i18n/navigation";
 import { getSessionOrRedirect } from "@/lib/session";
+import { getActivityHeatmap365 } from "@/lib/social/queries";
 import { dashboardQuerySchema } from "@/lib/usage/contracts";
 import { resolveDashboardRange } from "@/lib/usage/date-range";
 import { formatDateTime } from "@/lib/usage/format";
@@ -79,6 +82,10 @@ export default async function UsagePage({
   const { locale } = await params;
   const session = await getSessionOrRedirect(locale);
   const t = await getTranslations({ locale, namespace: "usage" });
+  const tProfile = await getTranslations({
+    locale,
+    namespace: "social.profile",
+  });
   const resolvedSearchParams = (searchParams ? await searchParams : {}) ?? {};
   const query = resolveQueryParams(resolvedSearchParams, locale);
   const preference = await getUsagePreference(session.user.id);
@@ -104,6 +111,7 @@ export default async function UsagePage({
     sessions,
     filterOptions,
     lastSyncedAt,
+    activityHeatmap,
   ] = await Promise.all([
     getOverviewMetrics({ userId: session.user.id, range, filters }),
     getTokenTrend({ userId: session.user.id, range, filters }),
@@ -112,10 +120,17 @@ export default async function UsagePage({
     getSessionRows({ userId: session.user.id, range, filters }),
     getFilterOptions(session.user.id),
     getLastSyncedAt(session.user.id),
+    getActivityHeatmap365({
+      userId: session.user.id,
+      timezone: preference.timezone,
+    }),
   ]);
 
   const hasData =
     overview.totalTokens.current > 0 || overview.sessions.current > 0;
+  const hasActivityHeatmap = activityHeatmap.some(
+    (day) => day.activeSeconds > 0,
+  );
   const lastSyncedText = lastSyncedAt
     ? t("lastSynced", {
         value: formatDateTime(lastSyncedAt, preference.timezone, locale),
@@ -134,6 +149,30 @@ export default async function UsagePage({
     >
       <UsagePageShell>
         <div className="space-y-4">
+          <Card className="bg-card shadow-sm ring-1 ring-border/60">
+            <CardHeader className="border-b border-border/50 pb-3 sm:px-6">
+              <CardTitle>
+                {tProfile("activityTitle")}
+                <span className="ml-2 font-normal text-muted-foreground">
+                  {tProfile("activitySubtitle")}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-1 flex-col justify-center gap-4 pt-4 sm:px-6">
+              {hasActivityHeatmap ? null : (
+                <p className="text-sm text-muted-foreground">
+                  {tProfile("noActivity")}
+                </p>
+              )}
+              <ProfileHeatmap
+                locale={locale}
+                days={activityHeatmap}
+                lessLabel={tProfile("less")}
+                moreLabel={tProfile("more")}
+              />
+            </CardContent>
+          </Card>
+
           <FiltersBar
             preset={range.preset}
             range={{
@@ -148,12 +187,12 @@ export default async function UsagePage({
 
           {hasData ? (
             <>
+              <TokenTrendCard data={tokenTrend} />
               <KpiGrid
                 overview={overview}
                 pricingSummary={pricing.summary}
                 modelPricingRows={pricing.modelPricingRows}
               />
-              <TokenTrendCard data={tokenTrend} />
               <BreakdownGrid breakdowns={breakdowns} />
               <SessionsSection
                 sessions={sessions}

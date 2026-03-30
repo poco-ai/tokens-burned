@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   formatDateTime: vi.fn(),
   getOverviewMetrics: vi.fn(),
   getTokenTrend: vi.fn(),
-  getActivityTrend: vi.fn(),
+  getActivityHeatmap365: vi.fn(),
   getBreakdowns: vi.fn(),
   getPricingSummaryAndRows: vi.fn(),
   getSessionRows: vi.fn(),
@@ -56,8 +56,8 @@ const mocks = vi.hoisted(() => ({
   TokenTrendCard: vi.fn(() =>
     React.createElement("div", { "data-slot": "token-trend-card" }),
   ),
-  ActivityTrendCard: vi.fn(() =>
-    React.createElement("div", { "data-slot": "activity-trend-card" }),
+  ProfileHeatmap: vi.fn(() =>
+    React.createElement("div", { "data-slot": "profile-heatmap" }),
   ),
 }));
 
@@ -82,8 +82,12 @@ vi.mock("@/components/usage/account-menu", () => ({
   AccountMenu: mocks.AccountMenu,
 }));
 
-vi.mock("@/components/usage/activity-trend-card", () => ({
-  ActivityTrendCard: mocks.ActivityTrendCard,
+vi.mock("@/components/social/profile-heatmap", () => ({
+  ProfileHeatmap: mocks.ProfileHeatmap,
+}));
+
+vi.mock("@/lib/social/queries", () => ({
+  getActivityHeatmap365: mocks.getActivityHeatmap365,
 }));
 
 vi.mock("@/components/usage/breakdown-grid", () => ({
@@ -141,7 +145,6 @@ vi.mock("@/lib/usage/preferences", () => ({
 vi.mock("@/lib/usage/queries", () => ({
   getOverviewMetrics: mocks.getOverviewMetrics,
   getTokenTrend: mocks.getTokenTrend,
-  getActivityTrend: mocks.getActivityTrend,
   getBreakdowns: mocks.getBreakdowns,
   getPricingSummaryAndRows: mocks.getPricingSummaryAndRows,
   getSessionRows: mocks.getSessionRows,
@@ -197,17 +200,7 @@ describe("UsagePage", () => {
         totalSeconds: 120,
       },
     ]);
-    mocks.getActivityTrend.mockResolvedValue([
-      {
-        label: "2026-03-24",
-        start: "2026-03-24T00:00:00.000Z",
-        activeSeconds: 100,
-        totalSeconds: 120,
-        sessions: 2,
-        messages: 10,
-        userMessages: 5,
-      },
-    ]);
+    mocks.getActivityHeatmap365.mockResolvedValue([]);
     mocks.getBreakdowns.mockResolvedValue({
       devices: [],
       tools: [],
@@ -241,7 +234,7 @@ describe("UsagePage", () => {
     mocks.formatDateTime.mockReturnValue("2026-03-26 00:00");
   });
 
-  it("renders the token trend without requesting or rendering the activity trend card", async () => {
+  it("renders the profile heatmap and token trend", async () => {
     const { default: UsagePage } = await import("@/app/[locale]/usage/page");
 
     const markup = renderToStaticMarkup(
@@ -251,7 +244,11 @@ describe("UsagePage", () => {
       }),
     );
 
-    expect(mocks.getActivityTrend).not.toHaveBeenCalled();
+    expect(mocks.getActivityHeatmap365).toHaveBeenCalledWith({
+      userId: "user_123",
+      timezone: "Asia/Shanghai",
+    });
+    expect(mocks.ProfileHeatmap).toHaveBeenCalledOnce();
     expect(mocks.TokenTrendCard).toHaveBeenCalledOnce();
     expect(mocks.SessionsSection).toHaveBeenCalledOnce();
     expect(mocks.getSessionRows).toHaveBeenCalledOnce();
@@ -261,9 +258,8 @@ describe("UsagePage", () => {
       }),
       undefined,
     );
-    expect(mocks.ActivityTrendCard).not.toHaveBeenCalled();
+    expect(markup).toContain('data-slot="profile-heatmap"');
     expect(markup).toContain('data-slot="token-trend-card"');
     expect(markup).toContain('data-slot="sessions-section"');
-    expect(markup).not.toContain('data-slot="activity-trend-card"');
   });
 });

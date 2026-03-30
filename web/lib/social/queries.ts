@@ -280,6 +280,45 @@ function buildHeatmap(
   return values;
 }
 
+export async function getActivityHeatmap365(input: {
+  userId: string;
+  timezone: string;
+}): Promise<ProfileHeatmapDay[]> {
+  const range365 = createDailyRange(input.timezone, 365);
+  const [sessions365, buckets365] = await Promise.all([
+    prisma.usageSession.findMany({
+      where: {
+        userId: input.userId,
+        firstMessageAt: {
+          gte: range365.from,
+          lte: range365.to,
+        },
+      },
+      select: {
+        firstMessageAt: true,
+        activeSeconds: true,
+      },
+      orderBy: { firstMessageAt: "asc" },
+    }),
+    prisma.usageBucket.findMany({
+      where: {
+        userId: input.userId,
+        bucketStart: {
+          gte: range365.from,
+          lte: range365.to,
+        },
+      },
+      select: {
+        bucketStart: true,
+        totalTokens: true,
+      },
+      orderBy: { bucketStart: "asc" },
+    }),
+  ]);
+
+  return buildHeatmap(input.timezone, sessions365, buckets365);
+}
+
 function buildTopTools(
   buckets: Array<{
     source: string;

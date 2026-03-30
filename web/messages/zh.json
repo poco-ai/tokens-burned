@@ -118,6 +118,7 @@
       "manageKeys": "管理 Keys"
     },
     "filters": {
+      "sectionTitle": "用量统计",
       "custom": "自定义",
       "filters": "筛选",
       "customRangeTitle": "自定义时间范围",

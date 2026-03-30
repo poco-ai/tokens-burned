@@ -45,7 +45,6 @@ describe("TokenTrendCard", () => {
       />,
     );
 
-    expect(markup).toContain("Daily Trend");
     expect(markup).toContain("Tokens");
     expect(markup).toContain("Cost");
     expect(markup).toContain("Time");

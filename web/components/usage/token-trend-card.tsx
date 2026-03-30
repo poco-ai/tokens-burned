@@ -13,7 +13,7 @@ import {
 } from "recharts";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   formatDuration,
   formatTokenCount,
@@ -237,7 +237,6 @@ export function TokenTrendCard({
       <CardHeader className="flex flex-col gap-4">
         <div className="flex w-full min-w-0 flex-row flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-            <CardTitle className="shrink-0">{t("title")}</CardTitle>
             <div className="inline-flex shrink-0 items-center gap-1">
               {TREND_VIEW_OPTIONS.map((view) => (
                 <Button
