@@ -1,5 +1,7 @@
 import { execFile } from "node:child_process";
-import { platform } from "node:os";
+import { existsSync } from "node:fs";
+import { appendFile, readFile } from "node:fs/promises";
+import { homedir, platform } from "node:os";
 import { createInterface } from "node:readline";
 import { ApiClient } from "../infrastructure/api/client";
 import {
@@ -101,4 +103,93 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   await runSync(config, { source: "init" });
 
   logger.info(`\nSetup complete! View your dashboard at: ${apiUrl}/usage`);
+
+  // Offer to set up shell alias
+  await setupShellAlias();
+}
+
+async function setupShellAlias(): Promise<void> {
+  const shell = process.env.SHELL;
+  if (!shell) {
+    return;
+  }
+
+  const shellName = shell.split("/").pop() ?? "";
+  const aliasName = "ta";
+
+  let configFile: string;
+  let aliasLine: string;
+  let sourceHint: string;
+
+  switch (shellName) {
+    case "zsh":
+      configFile = `${homedir()}/.zshrc`;
+      aliasLine = `alias ${aliasName}="tokenarena"`;
+      sourceHint = "source ~/.zshrc";
+      break;
+    case "bash":
+      // Check for bash_profile on macOS, bashrc on Linux
+      if (platform() === "darwin" && existsSync(`${homedir()}/.bash_profile`)) {
+        configFile = `${homedir()}/.bash_profile`;
+      } else {
+        configFile = `${homedir()}/.bashrc`;
+      }
+      aliasLine = `alias ${aliasName}="tokenarena"`;
+      sourceHint = `source ${configFile}`;
+      break;
+    case "fish":
+      configFile = `${homedir()}/.config/fish/config.fish`;
+      aliasLine = `alias ${aliasName} "tokenarena"`;
+      sourceHint = "source ~/.config/fish/config.fish";
+      break;
+    default:
+      // Unknown shell, skip
+      return;
+  }
+
+  const answer = await prompt(
+    `\nSet up shell alias '${aliasName}' for 'tokenarena'? (Y/n) `,
+  );
+  if (answer.toLowerCase() === "n") {
+    return;
+  }
+
+  try {
+    // Check if alias already exists
+    let existingContent = "";
+    if (existsSync(configFile)) {
+      existingContent = await readFile(configFile, "utf-8");
+    }
+
+    // Check for various alias formats
+    const aliasPatterns = [
+      `alias ${aliasName}=`,
+      `alias ${aliasName} "`,
+      `alias ${aliasName}=`,
+    ];
+
+    const aliasExists = aliasPatterns.some((pattern) =>
+      existingContent.includes(pattern),
+    );
+
+    if (aliasExists) {
+      logger.info(
+        `\nAlias '${aliasName}' already exists in ${configFile}. Skipping.`,
+      );
+      return;
+    }
+
+    // Append the alias
+    const aliasWithComment = `\n# TokenArena alias\n${aliasLine}\n`;
+    await appendFile(configFile, aliasWithComment);
+
+    logger.info(`\nAdded alias to ${configFile}`);
+    logger.info(`  Run '${sourceHint}' or restart your terminal to use it.`);
+    logger.info(`  Then you can use: ${aliasName} sync`);
+  } catch (err) {
+    logger.info(
+      `\nCould not write to ${configFile}: ${(err as Error).message}`,
+    );
+    logger.info(`  Add this line manually: ${aliasLine}`);
+  }
 }
