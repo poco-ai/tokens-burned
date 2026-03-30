@@ -1,6 +1,6 @@
 {
   "name": "token-arena",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "packageManager": "pnpm@10.32.1",
   "engines": {
@@ -18,7 +18,7 @@
     "format:web": "pnpm --filter ./web format",
     "check": "pnpm run lint:cli && pnpm run lint:web && pnpm run format:cli && pnpm run format:web",
     "prepare": "husky",
-    "publish":"pnpm --filter ./cli publish --access public",
+    "publish": "pnpm --filter ./cli publish --access public",
     "migrate": "pnpm --filter ./web exec prisma migrate deploy"
   },
   "devDependencies": {
