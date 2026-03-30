@@ -4,9 +4,8 @@ import { runDaemon } from "./commands/daemon";
 import { runInit } from "./commands/init";
 import { runStatus } from "./commands/status";
 import { runSyncCommand } from "./commands/sync";
-import { loadConfig } from "./infrastructure/config/manager";
+import { runUninstall } from "./commands/uninstall";
 import { getCliVersion } from "./infrastructure/runtime/cli-version";
-import { runSync } from "./services/sync-service";
 
 const CLI_VERSION = getCliVersion();
 
@@ -20,14 +19,13 @@ export function createCli(): Command {
     .showHelpAfterError()
     .showSuggestionAfterError();
 
-  // Default action: run init if not configured, otherwise sync
-  program.action(async () => {
-    const config = loadConfig();
-    if (!config?.apiKey) {
-      await runInit();
-    } else {
-      await runSync(config, { source: "default" });
+  // Default action: show help or error for unknown commands
+  program.action(() => {
+    const userArgs = process.argv.slice(2).filter((a) => !a.startsWith("-"));
+    if (userArgs.length > 0) {
+      program.error(`unknown command '${userArgs[0]}'`);
     }
+    program.help();
   });
 
   // init command
@@ -77,6 +75,14 @@ export function createCli(): Command {
       // Get all args after "config"
       const args = cmd.args.slice(1);
       handleConfig(args);
+    });
+
+  // uninstall command
+  program
+    .command("uninstall")
+    .description("Remove all local configuration and data")
+    .action(async () => {
+      await runUninstall();
     });
 
   return program;

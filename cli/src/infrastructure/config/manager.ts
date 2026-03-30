@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -54,7 +60,6 @@ export function saveConfig(config: Config): void {
 
 export function deleteConfig(): void {
   if (existsSync(CONFIG_FILE)) {
-    const { unlinkSync } = require("node:fs");
     unlinkSync(CONFIG_FILE);
   }
 }

@@ -80,6 +80,9 @@ chmod +x start.sh
 pnpm install
 pnpm dev:web    # 启动 Web 仪表盘
 pnpm dev:cli    # 启动 CLI 工具
+pnpm migrate    # 迁移数据库
+pnpm --filter ./cli dev -- init
+node cli/dist/index.js init # 测试初始化 CLI
 ```
 
 本地开发需要 PostgreSQL，Web 端环境变量配置在 `web/.env`：
