@@ -163,13 +163,11 @@
     },
     "emptyState": {
       "title": "还没有使用数据",
-      "description": "先创建 CLI Key、完成一次 CLI 配置，然后执行同步来填充仪表盘。",
-      "step1": "创建或复制一个 Usage API Key。",
-      "step2": "在 CLI 中运行 {command}。",
-      "step3": "粘贴密钥并同步本地使用记录。",
-      "openSetupGuide": "打开配置指南",
-      "createFirstKey": "创建第一个 Key",
-      "manageKeys": "管理 Keys"
+      "step1": "1. 创建或复制一个 Usage API Key。",
+      "step2": "2. 安装 CLI：",
+      "copyCommand": "复制命令",
+      "step3": "3. 运行下面的指令，并按照提示粘贴 API 密钥：",
+      "createFirstKey": "创建第一个 Key"
     },
     "filters": {
       "sectionTitle": "用量统计",

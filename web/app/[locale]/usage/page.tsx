@@ -30,6 +30,10 @@ import {
   getSessionRows,
   getTokenTrend,
 } from "@/lib/usage/queries";
+import {
+  SETTINGS_CLI_KEYS_HREF,
+  settingsCliKeysHrefWithCreateDialog,
+} from "@/lib/usage/settings-routes";
 import type { UsageFilters } from "@/lib/usage/types";
 
 type UsagePageProps = {
@@ -205,18 +209,17 @@ export default async function UsagePage({
             </>
           ) : (
             <EmptyState
-              primaryAction={
+              step1Action={
                 <Button asChild size="default" type="button">
-                  <Link href="/settings">
-                    {hasKeys
-                      ? t("emptyState.openSetupGuide")
-                      : t("emptyState.createFirstKey")}
+                  <Link
+                    href={
+                      hasKeys
+                        ? SETTINGS_CLI_KEYS_HREF
+                        : settingsCliKeysHrefWithCreateDialog()
+                    }
+                  >
+                    {t("emptyState.createFirstKey")}
                   </Link>
-                </Button>
-              }
-              secondaryAction={
-                <Button asChild variant="outline" size="default" type="button">
-                  <Link href="/settings">{t("emptyState.manageKeys")}</Link>
                 </Button>
               }
             />

@@ -163,13 +163,11 @@
     },
     "emptyState": {
       "title": "No usage data yet",
-      "description": "Create a CLI key, configure the CLI once, then run a sync to populate your dashboard.",
-      "step1": "Create or copy a usage API key.",
-      "step2": "Run {command} in the CLI.",
-      "step3": "Paste the key and sync your local usage records.",
-      "openSetupGuide": "Open setup guide",
-      "createFirstKey": "Create your first key",
-      "manageKeys": "Manage keys"
+      "step1": "1. Create or copy a usage API key.",
+      "step2": "2. Install the CLI globally:",
+      "copyCommand": "Copy command",
+      "step3": "3. Run the command below in your CLI and paste your API key when prompted:",
+      "createFirstKey": "Create your first key"
     },
     "filters": {
       "sectionTitle": "Usage statistics",
