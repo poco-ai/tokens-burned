@@ -7,7 +7,14 @@ import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -231,28 +238,29 @@ export function KeyManager({ initialKeys, variant = "page" }: KeyManagerProps) {
           ) : null}
 
           {rawKey ? (
-            <Alert className="border-border/60 bg-background">
-              <AlertDescription className="space-y-3">
-                <div className="space-y-1">
-                  <div className="font-medium text-foreground">
-                    {t("newKey")}
-                  </div>
-                  <div>{t("copyShownOnce")}</div>
-                </div>
+            <Card size="sm" className="gap-0 bg-muted/30 ring-1 ring-border/60">
+              <CardHeader className="border-b border-border/50 pb-3">
+                <CardTitle>{t("newKey")}</CardTitle>
+                <CardDescription>{t("copyShownOnce")}</CardDescription>
+                <CardAction className="self-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className={mutedControlClassName}
+                    onClick={copyRawKey}
+                  >
+                    <Copy />
+                    {t("copyKey")}
+                  </Button>
+                </CardAction>
+              </CardHeader>
+              <CardContent className="pt-3 pb-3">
                 <code className="block overflow-x-auto rounded-lg border border-border/60 bg-background px-3 py-2 text-xs text-foreground">
                   {rawKey}
                 </code>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className={mutedControlClassName}
-                  onClick={copyRawKey}
-                >
-                  <Copy />
-                  {t("copyKey")}
-                </Button>
-              </AlertDescription>
-            </Alert>
+              </CardContent>
+            </Card>
           ) : null}
 
           <div className="overflow-hidden rounded-xl border border-border/60 bg-background">
