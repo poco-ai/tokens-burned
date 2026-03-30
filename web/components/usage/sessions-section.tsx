@@ -112,15 +112,25 @@ export function SessionsSection({
             <Table className="min-w-[760px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("table.startedAt")}</TableHead>
-                  <TableHead>{t("table.tool")}</TableHead>
-                  <TableHead>{t("table.model")}</TableHead>
-                  <TableHead>{t("table.project")}</TableHead>
-                  <TableHead>{t("table.device")}</TableHead>
-                  <TableHead className="text-right">
+                  <TableHead className="text-center">
+                    {t("table.startedAt")}
+                  </TableHead>
+                  <TableHead className="text-center">
+                    {t("table.tool")}
+                  </TableHead>
+                  <TableHead className="text-center">
+                    {t("table.model")}
+                  </TableHead>
+                  <TableHead className="text-center">
+                    {t("table.project")}
+                  </TableHead>
+                  <TableHead className="text-center">
+                    {t("table.device")}
+                  </TableHead>
+                  <TableHead className="text-center">
                     {t("table.tokens")}
                   </TableHead>
-                  <TableHead className="text-right">
+                  <TableHead className="text-center">
                     {t("table.cost")}
                   </TableHead>
                 </TableRow>
