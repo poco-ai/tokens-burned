@@ -49,6 +49,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "0.167.1",
     "jsdom": "^29.0.1",
     "prisma": "^7.5.0",
     "tailwindcss": "^4",
