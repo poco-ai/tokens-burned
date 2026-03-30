@@ -247,8 +247,9 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   }
 
   const apiUrl = opts.apiUrl || getDefaultApiUrl();
-  logger.info(`Open ${apiUrl}/usage and create your API key from Settings.\n`);
-  openBrowser(`${apiUrl}/usage`);
+  const cliKeysUrl = `${apiUrl}/zh/settings/cli-keys`;
+  logger.info(`Open ${cliKeysUrl} to create your CLI API key.\n`);
+  openBrowser(cliKeysUrl);
 
   let apiKey: string;
   while (true) {
