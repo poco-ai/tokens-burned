@@ -1,6 +1,5 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
-import { createInterface } from "node:readline";
 import {
   deleteConfig,
   getConfigDir,
@@ -11,17 +10,15 @@ import {
   getRuntimeDirPath,
   getStateDir,
 } from "../infrastructure/runtime/paths";
+import {
+  formatBullet,
+  formatHeader,
+  formatKeyValue,
+  formatSection,
+  maskSecret,
+} from "../infrastructure/ui/format";
+import { promptConfirm } from "../infrastructure/ui/prompts";
 import { logger } from "../utils/logger";
-
-function prompt(question: string): Promise<string> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.trim());
-    });
-  });
-}
 
 function removeShellAlias(): void {
   const shell = process.env.SHELL;
@@ -93,33 +90,44 @@ export async function runUninstall(): Promise<void> {
   const configDir = getConfigDir();
 
   if (!existsSync(configPath)) {
-    logger.info("No configuration found. Nothing to uninstall.");
+    logger.info(formatHeader("卸载 TokenArena"));
+    logger.info(formatBullet("未发现本地配置，无需卸载。"));
     return;
   }
 
   const config = loadConfig();
-  if (config?.apiKey) {
-    logger.info(`API key: ${config.apiKey.slice(0, 8)}...`);
-  }
-  logger.info(`Config directory: ${configDir}`);
-
-  const answer = await prompt(
-    "\nAre you sure you want to uninstall? This will delete all local data. (y/N) ",
+  logger.info(
+    formatHeader(
+      "卸载 TokenArena",
+      "该操作会删除本地配置、同步状态与运行时文件。",
+    ),
   );
-  if (answer.toLowerCase() !== "y") {
-    logger.info("Cancelled.");
+  if (config?.apiKey) {
+    logger.info(formatKeyValue("API Key", maskSecret(config.apiKey)));
+  }
+  logger.info(formatKeyValue("配置目录", configDir));
+  logger.info(formatKeyValue("状态目录", getStateDir()));
+  logger.info(formatKeyValue("运行目录", getRuntimeDirPath()));
+
+  const shouldUninstall = await promptConfirm({
+    message: "确认继续卸载本地 TokenArena 数据？",
+    defaultValue: false,
+  });
+  if (!shouldUninstall) {
+    logger.info(formatBullet("已取消卸载。", "warning"));
     return;
   }
 
   // 1. Delete config file
   deleteConfig();
-  logger.info("Deleted configuration file.");
+  logger.info(formatSection("执行结果"));
+  logger.info(formatBullet("已删除配置文件。", "success"));
 
   // 2. Remove config directory if empty
   if (existsSync(configDir)) {
     try {
       rmSync(configDir, { recursive: false, force: true });
-      logger.info("Deleted config directory.");
+      logger.info(formatBullet("已删除配置目录。", "success"));
     } catch {
       // Directory not empty (other files), skip silently
     }
@@ -129,18 +137,19 @@ export async function runUninstall(): Promise<void> {
   const stateDir = getStateDir();
   if (existsSync(stateDir)) {
     rmSync(stateDir, { recursive: true, force: true });
-    logger.info("Deleted state data.");
+    logger.info(formatBullet("已删除状态数据。", "success"));
   }
 
   // 4. Delete runtime directory (sync.lock, etc.)
   const runtimeDir = getRuntimeDirPath();
   if (existsSync(runtimeDir)) {
     rmSync(runtimeDir, { recursive: true, force: true });
-    logger.info("Deleted runtime data.");
+    logger.info(formatBullet("已删除运行时数据。", "success"));
   }
 
   // 4. Clean up shell alias
   removeShellAlias();
 
-  logger.info("\nTokenArena has been uninstalled successfully.");
+  logger.info(formatSection("完成"));
+  logger.info(formatBullet("TokenArena 已从本地卸载完成。", "success"));
 }

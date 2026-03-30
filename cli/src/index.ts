@@ -13,11 +13,11 @@ export function normalizeArgv(argv: string[]) {
   return argv.filter((arg, index) => index < 2 || arg !== "--");
 }
 
-export function run(argv = process.argv) {
+export async function run(argv = process.argv) {
   const program = createCli();
-  program.parse(normalizeArgv(argv));
+  await program.parseAsync(normalizeArgv(argv));
 }
 
 if (isMainModule()) {
-  run();
+  void run();
 }

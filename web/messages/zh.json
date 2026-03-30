@@ -579,8 +579,8 @@
       "emptyGlobal": "还没有公开的使用数据。",
       "emptyFollowing": "你的关注网络里在这个窗口内还没有排行榜数据。",
       "privateNoticeTitle": "你的主页还没有进入全站排行榜",
-      "privateNoticeDescription": "如果你希望自己的使用数据出现在公开榜单里，可以先在仪表盘中开启公开主页。",
-      "openDashboard": "打开仪表盘",
+      "privateNoticeDescription": "如果你希望自己的使用数据出现在公开榜单里，请点击右侧按钮或在设置页面开启公开主页。",
+      "enablePublicProfile": "公开主页",
       "signInTitle": "登录后查看关注排行榜",
       "signInDescription": "关注榜是个性化视图，登录后才会展示。",
       "table": {

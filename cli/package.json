@@ -1,6 +1,6 @@
 {
   "name": "@poco-ai/tokenarena",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "type": "module",
   "description": "Collect and sync local AI coding CLI usage data",
   "license": "MIT",
@@ -27,13 +27,14 @@
     "format": "biome format --write"
   },
   "dependencies": {
+    "@inquirer/prompts": "^8.3.2",
     "commander": "^12.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
     "@types/node": "^20.0.0",
-    "tsx": "^4.0.0",
     "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "vitest": "^3.2.4"
   }

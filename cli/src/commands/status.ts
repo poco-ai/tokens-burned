@@ -1,6 +1,14 @@
 import { getConfigPath, loadConfig } from "../infrastructure/config/manager";
 import { loadSyncState } from "../infrastructure/runtime/state";
 import {
+  formatBullet,
+  formatHeader,
+  formatKeyValue,
+  formatSection,
+  formatStatusBadge,
+  maskSecret,
+} from "../infrastructure/ui/format";
+import {
   detectInstalledTools,
   getAllTools,
   isToolInstalled,
@@ -13,55 +21,80 @@ function formatMaybe(value?: string): string {
 
 export async function runStatus(): Promise<void> {
   const config = loadConfig();
-  logger.info("\ntokenarena status\n");
+  logger.info(
+    formatHeader(
+      "TokenArena 状态",
+      "查看当前配置、已检测工具以及最近一次同步情况。",
+    ),
+  );
 
+  logger.info(formatSection("配置"));
   if (!config?.apiKey) {
-    logger.info("  Config: not configured");
-    logger.info("  Run `tokenarena init` to set up.\n");
+    logger.info(formatKeyValue("状态", formatStatusBadge("未配置", "warning")));
+    logger.info(formatBullet("运行 tokenarena init 完成首次设置。", "warning"));
   } else {
-    logger.info(`  Config: ${getConfigPath()}`);
-    logger.info(`  API key: ${config.apiKey.slice(0, 8)}...`);
-    logger.info(`  API URL: ${config.apiUrl || "http://localhost:3000"}`);
+    logger.info(formatKeyValue("状态", formatStatusBadge("已配置", "success")));
+    logger.info(formatKeyValue("配置文件", getConfigPath()));
+    logger.info(formatKeyValue("API Key", maskSecret(config.apiKey)));
+    logger.info(
+      formatKeyValue("API URL", config.apiUrl || "https://token.poco-ai.com"),
+    );
     if (config.syncInterval) {
       logger.info(
-        `  Sync interval: ${Math.round(config.syncInterval / 60000)}m`,
+        formatKeyValue(
+          "同步间隔",
+          `${Math.round(config.syncInterval / 60000)} 分钟`,
+        ),
       );
     }
   }
 
-  logger.info("\n  Detected tools:");
+  logger.info(formatSection("已检测工具"));
   const detected = detectInstalledTools();
   if (detected.length === 0) {
-    logger.info("    (none)\n");
+    logger.info(formatBullet("未检测到已安装的 AI CLI。", "warning"));
   } else {
     for (const tool of detected) {
-      logger.info(`    ${tool.name}`);
+      logger.info(formatBullet(tool.name, "success"));
     }
-    logger.info("");
   }
 
-  logger.info("  All supported tools:");
+  logger.info(formatSection("支持的工具"));
   for (const tool of getAllTools()) {
-    const installed = isToolInstalled(tool.id) ? "installed" : "not found";
-    logger.info(`    ${tool.name}: ${installed}`);
-  }
-
-  const syncState = loadSyncState();
-  logger.info("\n  Sync state:");
-  logger.info(`    Status: ${syncState.status}`);
-  logger.info(`    Last attempt: ${formatMaybe(syncState.lastAttemptAt)}`);
-  logger.info(`    Last success: ${formatMaybe(syncState.lastSuccessAt)}`);
-  if (syncState.lastSource) {
-    logger.info(`    Last source: ${syncState.lastSource}`);
-  }
-  if (syncState.lastError) {
-    logger.info(`    Last error: ${syncState.lastError}`);
-  }
-  if (syncState.lastResult) {
+    const installed = isToolInstalled(tool.id);
     logger.info(
-      `    Last result: ${syncState.lastResult.buckets} buckets, ${syncState.lastResult.sessions} sessions`,
+      formatBullet(
+        `${tool.name} · ${installed ? "已安装" : "未发现"}`,
+        installed ? "success" : "neutral",
+      ),
     );
   }
 
-  logger.info("");
+  const syncState = loadSyncState();
+  logger.info(formatSection("同步状态"));
+  const statusTone =
+    syncState.status === "idle"
+      ? "success"
+      : syncState.status === "syncing"
+        ? "warning"
+        : "danger";
+  logger.info(
+    formatKeyValue("状态", formatStatusBadge(syncState.status, statusTone)),
+  );
+  logger.info(formatKeyValue("上次尝试", formatMaybe(syncState.lastAttemptAt)));
+  logger.info(formatKeyValue("上次成功", formatMaybe(syncState.lastSuccessAt)));
+  if (syncState.lastSource) {
+    logger.info(formatKeyValue("触发来源", syncState.lastSource));
+  }
+  if (syncState.lastError) {
+    logger.info(formatKeyValue("错误信息", syncState.lastError));
+  }
+  if (syncState.lastResult) {
+    logger.info(
+      formatKeyValue(
+        "最近结果",
+        `${syncState.lastResult.buckets} buckets, ${syncState.lastResult.sessions} sessions`,
+      ),
+    );
+  }
 }

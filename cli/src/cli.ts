@@ -1,11 +1,13 @@
 import { Command, Option } from "commander";
 import { handleConfig } from "./commands/config";
 import { runDaemon } from "./commands/daemon";
+import { runHome } from "./commands/home";
 import { runInit } from "./commands/init";
 import { runStatus } from "./commands/status";
 import { runSyncCommand } from "./commands/sync";
 import { runUninstall } from "./commands/uninstall";
 import { getCliVersion } from "./infrastructure/runtime/cli-version";
+import { isInteractiveTerminal } from "./infrastructure/ui/prompts";
 
 const CLI_VERSION = getCliVersion();
 
@@ -21,10 +23,14 @@ export function createCli(): Command {
     .helpCommand("help [command]", "Display help for command");
 
   // Default action: show help or error for unknown commands
-  program.action(() => {
+  program.action(async () => {
     const userArgs = process.argv.slice(2).filter((a) => !a.startsWith("-"));
     if (userArgs.length > 0) {
       program.error(`unknown command '${userArgs[0]}'`);
+    }
+    if (isInteractiveTerminal()) {
+      await runHome(program);
+      return;
     }
     program.help();
   });
@@ -68,14 +74,16 @@ export function createCli(): Command {
   program
     .command("config")
     .description("Manage configuration")
-    .argument("<subcommand>", "get|set|show")
+    .argument("[subcommand]", "get|set|show")
     .argument("[key]", "Config key")
     .argument("[value]", "Config value")
     .allowUnknownOption(true)
-    .action((_subcommand, _key, _value, cmd) => {
-      // Get all args after "config"
-      const args = cmd.args.slice(1);
-      handleConfig(args);
+    .action(async (subcommand, key, value) => {
+      await handleConfig(
+        [subcommand, key, value].filter(
+          (item): item is string => typeof item === "string",
+        ),
+      );
     });
 
   // uninstall command

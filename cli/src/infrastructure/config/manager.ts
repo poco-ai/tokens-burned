@@ -21,7 +21,7 @@ const CONFIG_DIR = join(getConfigHome(), "tokenarena");
 const isDev = process.env.TOKEN_ARENA_DEV === "1";
 const CONFIG_FILE = join(CONFIG_DIR, isDev ? "config.dev.json" : "config.json");
 
-const DEFAULT_API_URL = "http://localhost:3000";
+const DEFAULT_API_URL = "https://token.poco-ai.com";
 const VALID_CONFIG_KEYS = [
   "apiKey",
   "apiUrl",

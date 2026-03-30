@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { LeaderboardMetricSelect } from "@/components/social/leaderboard-metric-select";
+import { LeaderboardPrivateNotice } from "@/components/social/leaderboard-private-notice";
 import { LeaderboardTable } from "@/components/social/leaderboard-table";
 import { LeaderboardTagSelect } from "@/components/social/leaderboard-tag-select";
 import { SocialShell } from "@/components/social/social-shell";
@@ -134,17 +135,7 @@ export default async function LeaderboardPage({
 
   const viewerSummary =
     viewer && data.viewerPublicProfileEnabled === false ? (
-      <Card className="border-dashed shadow-sm ring-1 ring-border/60">
-        <CardContent className="space-y-3 py-1">
-          <div className="text-sm font-medium">{t("privateNoticeTitle")}</div>
-          <p className="text-sm text-muted-foreground">
-            {t("privateNoticeDescription")}
-          </p>
-          <Button asChild type="button" size="sm" variant="outline">
-            <Link href="/usage">{t("openDashboard")}</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <LeaderboardPrivateNotice />
     ) : null;
 
   return (

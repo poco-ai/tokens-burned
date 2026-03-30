@@ -56,6 +56,7 @@ COPY --from=deps --chown=nextjs:nodejs /app/web/node_modules ./web/node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/web/.next/standalone ./
 # Next serves static assets relative to /app/web/server.js inside standalone
 COPY --from=builder --chown=nextjs:nodejs /app/web/.next/static ./web/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/web/public ./web/public
 
 # Copy Prisma schema, migrations, and config for migrate deploy
 COPY --from=builder --chown=nextjs:nodejs /app/web/package.json ./web/package.json

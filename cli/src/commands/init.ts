@@ -3,7 +3,6 @@ import { existsSync } from "node:fs";
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { homedir, platform } from "node:os";
 import { dirname, join, posix, win32 } from "node:path";
-import { createInterface } from "node:readline";
 import { ApiClient } from "../infrastructure/api/client";
 import {
   type Config,
@@ -13,6 +12,15 @@ import {
   saveConfig,
   validateApiKey,
 } from "../infrastructure/config/manager";
+import {
+  formatBullet,
+  formatHeader,
+  formatKeyValue,
+  formatMutedPath,
+  formatSection,
+  maskSecret,
+} from "../infrastructure/ui/format";
+import { promptConfirm, promptPassword } from "../infrastructure/ui/prompts";
 import { getDetectedTools } from "../services/parser-service";
 import { runSync } from "../services/sync-service";
 import { logger } from "../utils/logger";
@@ -45,16 +53,6 @@ function joinForPlatform(
   return currentPlatform === "win32"
     ? win32.join(...parts)
     : posix.join(...parts);
-}
-
-function prompt(question: string): Promise<string> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.trim());
-    });
-  });
 }
 
 function basenameLikeShell(input: string): string {
@@ -235,46 +233,69 @@ export interface InitOptions {
 }
 
 export async function runInit(opts: InitOptions = {}): Promise<void> {
-  logger.info("\n  tokenarena - Token Usage Tracker\n");
+  logger.info(formatHeader("TokenArena 初始化"));
 
   const existing = loadConfig();
   if (existing?.apiKey) {
-    const answer = await prompt("Config already exists. Overwrite? (y/N) ");
-    if (answer.toLowerCase() !== "y") {
-      logger.info("Cancelled.");
+    logger.info(formatSection("检测到已有配置"));
+    logger.info(formatKeyValue("当前 API Key", maskSecret(existing.apiKey)));
+    logger.info(
+      formatKeyValue(
+        "当前 API 地址",
+        existing.apiUrl || "https://token.poco-ai.com",
+      ),
+    );
+
+    const shouldOverwrite = await promptConfirm({
+      message: "已经存在本地配置，是否覆盖并重新初始化？",
+      defaultValue: false,
+    });
+
+    if (!shouldOverwrite) {
+      logger.info(formatBullet("已取消初始化。", "warning"));
       return;
     }
   }
 
   const apiUrl = opts.apiUrl || getDefaultApiUrl();
-  logger.info(`Open ${apiUrl}/usage and create your API key from Settings.\n`);
-  openBrowser(`${apiUrl}/usage`);
+  const cliKeysUrl = `${apiUrl}/zh/settings/cli-keys`;
+  logger.info(formatSection("第 1 步：准备 API Key"));
+  logger.info(formatBullet("浏览器将尝试自动打开 CLI Key 页面。"));
+  logger.info(formatKeyValue("Key 页面", formatMutedPath(cliKeysUrl)));
+  openBrowser(cliKeysUrl);
 
-  let apiKey: string;
-  while (true) {
-    apiKey = await prompt("Paste your API key: ");
-    if (validateApiKey(apiKey)) break;
-    logger.info('Invalid key - must start with "ta_". Try again.');
-  }
+  const apiKey = await promptPassword({
+    message: "请粘贴你的 CLI API Key",
+    validate: (value) => validateApiKey(value) || 'API Key 必须以 "ta_" 开头。',
+  });
 
-  logger.info(`\nVerifying key ${apiKey.slice(0, 8)}...`);
+  logger.info(formatSection("第 2 步：验证 API Key"));
+  logger.info(formatKeyValue("待验证 Key", maskSecret(apiKey)));
   try {
     const client = new ApiClient(apiUrl, apiKey);
     const settings = await client.fetchSettings();
 
     if (!settings) {
       logger.info(
-        "Could not verify key settings (network error). Saving anyway.\n",
+        formatBullet(
+          "无法在线验证 Key（可能是网络原因），将继续保存。",
+          "warning",
+        ),
       );
     } else {
-      logger.info("Key verified.\n");
+      logger.info(formatBullet("API Key 验证成功。", "success"));
     }
   } catch (err) {
     if ((err as Error).message === "UNAUTHORIZED") {
       logger.error("Invalid API key. Please check and try again.");
       process.exit(1);
     }
-    logger.info("Could not verify key (network error). Saving anyway.\n");
+    logger.info(
+      formatBullet(
+        "无法完成在线验证（可能是网络原因），将继续保存。",
+        "warning",
+      ),
+    );
   }
 
   const config: Config = {
@@ -285,19 +306,31 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   saveConfig(config);
   const deviceId = getOrCreateDeviceId(config);
   config.deviceId = deviceId;
-  logger.info(`Device registered: ${deviceId.slice(0, 8)}...`);
+  logger.info(formatSection("第 3 步：完成本地注册"));
 
   const tools = getDetectedTools();
   if (tools.length > 0) {
-    logger.info(`Detected tools: ${tools.map((tool) => tool.name).join(", ")}`);
+    logger.info(formatSection("检测到的 AI CLI"));
+    for (const tool of tools) {
+      logger.info(formatBullet(tool.name, "success"));
+    }
   } else {
-    logger.info("No AI coding tools detected. Install one and re-run init.");
+    logger.info(formatSection("检测到的 AI CLI"));
+    logger.info(
+      formatBullet(
+        "当前未检测到已安装工具，稍后安装后也可以直接执行 sync。",
+        "warning",
+      ),
+    );
   }
 
-  logger.info("\nRunning initial sync...");
+  logger.info(formatSection("首次同步"));
+  logger.info(formatBullet("正在上传本地已有的使用数据。"));
   await runSync(config, { source: "init" });
 
-  logger.info(`\nSetup complete! View your dashboard at: ${apiUrl}/usage`);
+  logger.info(formatSection("初始化完成"));
+  logger.info(formatBullet("TokenArena 已准备就绪。", "success"));
+  logger.info(formatKeyValue("控制台", `${apiUrl}/usage`));
 
   await setupShellAlias();
 }
@@ -308,10 +341,12 @@ async function setupShellAlias(): Promise<void> {
     return;
   }
 
-  const answer = await prompt(
-    `\nSet up ${setup.shellLabel} alias 'ta' for 'tokenarena'? (Y/n) `,
-  );
-  if (answer.toLowerCase() === "n") {
+  const shouldCreateAlias = await promptConfirm({
+    message: `是否为 ${setup.shellLabel} 自动添加 ta 别名？`,
+    defaultValue: true,
+  });
+  if (!shouldCreateAlias) {
+    logger.info(formatBullet("已跳过 shell alias 设置。"));
     return;
   }
 
@@ -329,24 +364,27 @@ async function setupShellAlias(): Promise<void> {
     );
 
     if (aliasExists) {
-      logger.info(
-        `\nAlias 'ta' already exists in ${setup.configFile}. Skipping.`,
-      );
+      logger.info(formatBullet(`别名 ta 已存在：${setup.configFile}`));
       return;
     }
 
     const aliasWithComment = `\n# TokenArena alias\n${setup.aliasLine}\n`;
     await appendFile(setup.configFile, aliasWithComment, "utf-8");
 
-    logger.info(`\nAdded alias to ${setup.configFile}`);
+    logger.info(formatSection("Shell alias"));
+    logger.info(formatBullet(`已写入 ${setup.configFile}`, "success"));
     logger.info(
-      `  Run '${setup.sourceHint}' or restart your terminal to use it.`,
+      formatKeyValue("生效方式", `执行 '${setup.sourceHint}' 或重启终端`),
     );
-    logger.info("  Then you can use: ta sync");
+    logger.info(formatKeyValue("之后可用", "ta sync"));
   } catch (err) {
+    logger.info(formatSection("Shell alias"));
     logger.info(
-      `\nCould not write to ${setup.configFile}: ${(err as Error).message}`,
+      formatBullet(
+        `无法写入 ${setup.configFile}: ${(err as Error).message}`,
+        "warning",
+      ),
     );
-    logger.info(`  Add this line manually: ${setup.aliasLine}`);
+    logger.info(formatKeyValue("请手动添加", setup.aliasLine));
   }
 }
