@@ -12,6 +12,14 @@ vi.mock("next-intl", () => ({
       button: "Settings",
       title: "Settings",
       description: "Manage preferences and CLI API keys.",
+      navAccount: "Account",
+      navPreferences: "Preferences",
+      navAuthentication: "Authentication",
+      navCliKeys: "CLI keys",
+      panelAccountDescription: "Account panel",
+      panelPreferencesDescription: "Preferences panel",
+      panelAuthenticationDescription: "Auth panel",
+      panelCliKeysDescription: "Keys panel",
     })[key] ?? key,
 }));
 
@@ -59,20 +67,21 @@ vi.mock("./connected-accounts-card", () => ({
   ConnectedAccountsCard: () => <div data-slot="connected-accounts-card" />,
 }));
 
+vi.mock("@/components/usage/settings-page-header", () => ({
+  SettingsPageHeader: () => <div data-slot="settings-page-header" />,
+}));
+
 vi.mock("./settings-preferences", () => ({
   SettingsPreferences: ({
     initialTimezone,
     initialProjectMode,
     initialPublicProfileEnabled,
-    initialBio,
   }: {
     initialTimezone: string;
     initialProjectMode: string;
     initialPublicProfileEnabled: boolean;
-    initialBio: string | null;
   }) => (
     <div
-      data-bio={initialBio ?? ""}
       data-project-mode={initialProjectMode}
       data-public-profile={String(initialPublicProfileEnabled)}
       data-slot="settings-preferences"
@@ -123,6 +132,14 @@ describe("SettingsDialog", () => {
       );
     });
 
+    const preferenceTab = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent?.includes("Preferences"),
+    );
+
+    act(() => {
+      preferenceTab?.click();
+    });
+
     const preferences = container.querySelector(
       '[data-slot="settings-preferences"]',
     );
@@ -130,7 +147,6 @@ describe("SettingsDialog", () => {
     expect(preferences?.getAttribute("data-timezone")).toBe("UTC");
     expect(preferences?.getAttribute("data-project-mode")).toBe("raw");
     expect(preferences?.getAttribute("data-public-profile")).toBe("false");
-    expect(preferences?.getAttribute("data-bio")).toBe("");
 
     act(() => {
       window.dispatchEvent(
@@ -160,9 +176,6 @@ describe("SettingsDialog", () => {
     );
     expect(updatedPreferences?.getAttribute("data-public-profile")).toBe(
       "true",
-    );
-    expect(updatedPreferences?.getAttribute("data-bio")).toBe(
-      "Building with AI",
     );
   });
 });
