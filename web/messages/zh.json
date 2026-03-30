@@ -85,6 +85,45 @@
       "description": "管理偏好设置和 CLI API Key。",
       "profileSectionTitle": "个人资料",
       "preferencesTitle": "偏好设置",
+      "identity": {
+        "title": "账户资料",
+        "name": "展示名称",
+        "username": "用户名",
+        "nameHint": "会展示在公开主页上，之后也可以随时修改。",
+        "usernameHint": "用于个人主页地址和 @提及，只能包含字母、数字、下划线和英文句点。",
+        "usernamePreview": "个人主页预览：@{value}",
+        "setupNotice": "继续之前，请先确认一个别人可以 @ 你的用户名。你可以直接使用当前建议，也可以重新修改。",
+        "save": "保存资料",
+        "saving": "保存资料中...",
+        "saved": "资料已更新。",
+        "errors": {
+          "default": "暂时无法保存资料，请稍后再试。",
+          "nameRequired": "请输入展示名称。",
+          "nameTooLong": "名称过长。",
+          "usernameRequired": "请输入用户名。",
+          "usernameTooShort": "用户名至少需要 3 个字符。",
+          "usernameTooLong": "用户名最多只能有 30 个字符。",
+          "usernameInvalid": "用户名只能包含字母、数字、下划线和英文句点。",
+          "usernameTaken": "该用户名已被占用。"
+        }
+      },
+      "connectedAccounts": {
+        "title": "已连接的登录方式",
+        "description": "查看当前账户已经绑定了哪些 provider，并在需要时继续添加新的登录方式。",
+        "empty": "当前还没有已连接的第三方登录方式。",
+        "connected": "已连接",
+        "credentialLabel": "邮箱和密码",
+        "accountId": "Provider 账户：{value}",
+        "available": "绑定更多 provider",
+        "connectAction": "绑定 {provider}",
+        "connecting": "绑定中...",
+        "disconnect": "解除绑定",
+        "disconnecting": "解除中...",
+        "errors": {
+          "connect": "暂时无法绑定这个 provider。",
+          "disconnect": "暂时无法解除这个 provider。"
+        }
+      },
       "saving": "保存中...",
       "saved": "已保存",
       "saveFailed": "无法保存偏好设置。",

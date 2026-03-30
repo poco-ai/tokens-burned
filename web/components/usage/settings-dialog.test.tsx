@@ -51,6 +51,14 @@ vi.mock("./key-manager", () => ({
   KeyManager: () => <div data-slot="key-manager" />,
 }));
 
+vi.mock("./account-identity-card", () => ({
+  AccountIdentityCard: () => <div data-slot="account-identity-card" />,
+}));
+
+vi.mock("./connected-accounts-card", () => ({
+  ConnectedAccountsCard: () => <div data-slot="connected-accounts-card" />,
+}));
+
 vi.mock("./settings-preferences", () => ({
   SettingsPreferences: ({
     initialTimezone,

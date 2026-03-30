@@ -16,6 +16,11 @@ export const authClient = createAuthClient({
           unique: true,
           sortable: true,
         },
+        usernameNeedsSetup: {
+          type: "boolean",
+          required: false,
+          returned: true,
+        },
       },
     }),
   ],

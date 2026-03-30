@@ -62,11 +62,13 @@ export function SocialLoginForm({
         await authClient.signIn.social({
           provider: provider.id,
           callbackURL: "/usage",
+          newUserCallbackURL: "/settings",
         });
       } else {
         await authClient.signIn.oauth2({
           providerId: provider.id,
           callbackURL: "/usage",
+          newUserCallbackURL: "/settings",
         });
       }
     } catch (error) {

@@ -52,6 +52,7 @@ model User {
   id                         String                     @id
   name                       String
   username                   String                     @unique
+  usernameNeedsSetup         Boolean                    @default(false)
   email                      String
   emailVerified              Boolean                    @default(false)
   image                      String?

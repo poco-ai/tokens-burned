@@ -12,16 +12,29 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { LoginProvider } from "@/lib/auth-providers";
 import type { ProjectMode } from "@/lib/usage/types";
 import type { UsageKeyRecord } from "./key-manager";
 import { SettingsBody } from "./settings-body";
 
 type SettingsDialogProps = {
+  initialName?: string;
+  initialUsername?: string;
+  requireUsernameSetup?: boolean;
   initialTimezone: string;
   initialProjectMode: ProjectMode;
   initialPublicProfileEnabled: boolean;
   initialBio: string | null;
   initialKeys: UsageKeyRecord[];
+  connectedAccounts?: Array<{
+    id: string;
+    providerId: string;
+    accountId: string;
+    createdAt: string;
+    updatedAt: string;
+    scopes: string[];
+  }>;
+  availableProviders?: LoginProvider[];
   triggerVariant?: "button" | "icon";
   triggerLabel?: ReactNode;
   triggerButtonVariant?: "default" | "outline" | "secondary" | "ghost";
@@ -30,11 +43,16 @@ type SettingsDialogProps = {
 };
 
 export function SettingsDialog({
+  initialName = "",
+  initialUsername = "",
+  requireUsernameSetup = false,
   initialTimezone,
   initialProjectMode,
   initialPublicProfileEnabled,
   initialBio,
   initialKeys,
+  connectedAccounts = [],
+  availableProviders = [],
   triggerVariant = "button",
   triggerLabel,
   triggerButtonVariant = "outline",
@@ -85,11 +103,16 @@ export function SettingsDialog({
 
         <div className="overflow-y-auto bg-muted p-4 sm:p-5">
           <SettingsBody
+            initialName={initialName}
+            initialUsername={initialUsername}
+            requireUsernameSetup={requireUsernameSetup}
             initialTimezone={initialTimezone}
             initialProjectMode={initialProjectMode}
             initialPublicProfileEnabled={initialPublicProfileEnabled}
             initialBio={initialBio}
             initialKeys={initialKeys}
+            connectedAccounts={connectedAccounts}
+            availableProviders={availableProviders}
             keyManagerVariant="dialog"
           />
         </div>

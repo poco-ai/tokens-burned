@@ -14,6 +14,7 @@ import { UsagePageShell } from "@/components/usage/page-shell";
 import { SessionsSection } from "@/components/usage/sessions-section";
 import { TokenTrendCard } from "@/components/usage/token-trend-card";
 import { Link } from "@/i18n/navigation";
+import { redirectIfUsernameSetupNeeded } from "@/lib/account-setup";
 import { getSessionOrRedirect } from "@/lib/session";
 import { getActivityHeatmap365 } from "@/lib/social/queries";
 import { dashboardQuerySchema } from "@/lib/usage/contracts";
@@ -81,6 +82,7 @@ export default async function UsagePage({
 }: UsagePageProps) {
   const { locale } = await params;
   const session = await getSessionOrRedirect(locale);
+  redirectIfUsernameSetupNeeded(locale, session.user);
   const t = await getTranslations({ locale, namespace: "usage" });
   const tProfile = await getTranslations({
     locale,

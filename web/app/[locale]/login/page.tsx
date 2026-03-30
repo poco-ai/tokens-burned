@@ -5,6 +5,8 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginDitherBackground } from "@/components/auth/login-dither-background";
 import { LoginForm } from "@/components/auth/login-form";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
+import { ThemeSwitcher } from "@/components/shared/theme-switcher";
+import { getAuthenticatedAppPath } from "@/lib/account-setup";
 import { authMode, isSelfHosted } from "@/lib/auth-config";
 import { getEnabledLoginProviders } from "@/lib/auth-providers";
 import { getOptionalSession } from "@/lib/session";
@@ -42,7 +44,7 @@ export default async function LoginPage({
   const t = await getTranslations("auth.login");
 
   if (session) {
-    redirect(`/${locale}/usage`);
+    redirect(getAuthenticatedAppPath(locale, session.user));
   }
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;

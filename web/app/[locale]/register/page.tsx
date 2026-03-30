@@ -5,6 +5,7 @@ import { AuthShell } from "@/components/auth/auth-shell";
 import { RegisterForm } from "@/components/auth/register-form";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
+import { getAuthenticatedAppPath } from "@/lib/account-setup";
 import { isProduction } from "@/lib/auth-config";
 import { getOptionalSession } from "@/lib/session";
 
@@ -37,7 +38,7 @@ export default async function RegisterPage({
   }
 
   if (session) {
-    redirect(`/${locale}/usage`);
+    redirect(getAuthenticatedAppPath(locale, session.user));
   }
 
   return (

@@ -85,6 +85,45 @@
       "description": "Manage preferences and CLI API keys.",
       "profileSectionTitle": "Profile",
       "preferencesTitle": "Preferences",
+      "identity": {
+        "title": "Account identity",
+        "name": "Display name",
+        "username": "Username",
+        "nameHint": "Shown on your public profile and can be changed anytime.",
+        "usernameHint": "Used for your profile URL and @mentions. Only letters, numbers, underscores, and periods are allowed.",
+        "usernamePreview": "Profile link preview: @{value}",
+        "setupNotice": "Before you continue, confirm the username people can @mention. You can keep the suggested one or choose a new one.",
+        "save": "Save profile",
+        "saving": "Saving profile...",
+        "saved": "Profile updated.",
+        "errors": {
+          "default": "Unable to save your profile right now.",
+          "nameRequired": "Name is required.",
+          "nameTooLong": "Name is too long.",
+          "usernameRequired": "Username is required.",
+          "usernameTooShort": "Username must be at least 3 characters.",
+          "usernameTooLong": "Username must be at most 30 characters.",
+          "usernameInvalid": "Username may only contain letters, numbers, underscores, and periods.",
+          "usernameTaken": "This username is already taken."
+        }
+      },
+      "connectedAccounts": {
+        "title": "Connected providers",
+        "description": "View which providers are already linked to this account and add another sign-in method when needed.",
+        "empty": "No sign-in providers are connected yet.",
+        "connected": "Connected",
+        "credentialLabel": "Email & Password",
+        "accountId": "Provider account: {value}",
+        "available": "Add another provider",
+        "connectAction": "Connect {provider}",
+        "connecting": "Connecting...",
+        "disconnect": "Disconnect",
+        "disconnecting": "Disconnecting...",
+        "errors": {
+          "connect": "Unable to connect this provider right now.",
+          "disconnect": "Unable to disconnect this provider right now."
+        }
+      },
       "saving": "Saving...",
       "saved": "Saved",
       "saveFailed": "Unable to save preferences.",

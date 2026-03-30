@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getAuthenticatedAppPath } from "@/lib/account-setup";
 import { getOptionalSession } from "@/lib/session";
 import { getUsagePreference } from "@/lib/usage/preferences";
 
@@ -12,7 +13,7 @@ export default async function LocaleHomePage({
 
   if (session) {
     const preference = await getUsagePreference(session.user.id);
-    redirect(`/${preference.locale}/usage`);
+    redirect(getAuthenticatedAppPath(preference.locale, session.user));
   }
 
   redirect(`/${locale}/login`);
