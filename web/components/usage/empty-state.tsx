@@ -24,17 +24,22 @@ export async function EmptyState({ step1Action }: EmptyStateProps) {
       </CardHeader>
       <CardContent className="flex flex-col gap-4 text-sm text-muted-foreground">
         <ol className="list-inside list-decimal space-y-3 pl-6 sm:pl-8">
+          {/* step1 */}
           <li className="space-y-2">{step1Action}</li>
 
+          {/* step2 */}
           <li className="space-y-2">
             {t("step2")}
-            <UsageEmptyCopyableCommand command={USAGE_EMPTY_INSTALL_COMMAND} />
+            <br />
           </li>
+          <UsageEmptyCopyableCommand command={USAGE_EMPTY_INSTALL_COMMAND} />
 
+          {/* step3 */}
           <li className="space-y-2">
             {t("step3")}
-            <UsageEmptyCopyableCommand command={USAGE_EMPTY_INIT_COMMAND} />
+            <br />
           </li>
+          <UsageEmptyCopyableCommand command={USAGE_EMPTY_INIT_COMMAND} />
         </ol>
       </CardContent>
     </Card>
