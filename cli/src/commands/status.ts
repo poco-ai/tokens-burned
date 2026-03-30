@@ -1,10 +1,12 @@
 import { existsSync } from "node:fs";
 import { getConfigPath, loadConfig } from "../infrastructure/config/manager";
 import { loadSyncState } from "../infrastructure/runtime/state";
-import { getLaunchdStatus } from "../infrastructure/service/launchd";
-import { loadServiceManifest } from "../infrastructure/service/manifest";
 import { detectInstalledTools, getAllTools } from "../parsers/registry";
 import { logger } from "../utils/logger";
+
+function formatMaybe(value?: string): string {
+  return value || "(never)";
+}
 
 export async function runStatus(): Promise<void> {
   const config = loadConfig();
@@ -41,35 +43,21 @@ export async function runStatus(): Promise<void> {
     logger.info(`    ${tool.name}: ${installed}`);
   }
 
-  const serviceManifest = loadServiceManifest();
-  if (process.platform === "darwin" || serviceManifest) {
-    const label = serviceManifest?.label;
-    const launchd =
-      process.platform === "darwin" ? getLaunchdStatus(label) : null;
-    const syncState = loadSyncState();
-
-    logger.info("\n  Background sync:");
+  const syncState = loadSyncState();
+  logger.info("\n  Sync state:");
+  logger.info(`    Status: ${syncState.status}`);
+  logger.info(`    Last attempt: ${formatMaybe(syncState.lastAttemptAt)}`);
+  logger.info(`    Last success: ${formatMaybe(syncState.lastSuccessAt)}`);
+  if (syncState.lastSource) {
+    logger.info(`    Last source: ${syncState.lastSource}`);
+  }
+  if (syncState.lastError) {
+    logger.info(`    Last error: ${syncState.lastError}`);
+  }
+  if (syncState.lastResult) {
     logger.info(
-      `    Installed: ${launchd ? (launchd.installed ? "yes" : "no") : serviceManifest ? "yes" : "no"}`,
+      `    Last result: ${syncState.lastResult.buckets} buckets, ${syncState.lastResult.sessions} sessions`,
     );
-    if (launchd) {
-      logger.info(`    Loaded: ${launchd.loaded ? "yes" : "no"}`);
-      logger.info(`    Label: ${launchd.label}`);
-    }
-    if (serviceManifest) {
-      logger.info(
-        `    Interval: ${Math.round(serviceManifest.intervalMs / 60000)}m`,
-      );
-      logger.info(`    Plist: ${serviceManifest.plistPath}`);
-      logger.info(`    Logs: ${serviceManifest.logPath}`);
-    }
-    logger.info(`    Last sync status: ${syncState.status}`);
-    if (syncState.lastSuccessAt) {
-      logger.info(`    Last success: ${syncState.lastSuccessAt}`);
-    }
-    if (syncState.lastError) {
-      logger.info(`    Last error: ${syncState.lastError}`);
-    }
   }
 
   logger.info("");

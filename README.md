@@ -60,41 +60,29 @@ BETTER_AUTH_URL=http://localhost:3000
 2. **创建 API Key** — 在 Settings 中生成 CLI 用的 API key
 3. **初始化 CLI** — 运行 `pnpm --filter ./cli dev -- init`，输入服务地址和 API key
 4. **同步数据** — 运行 `pnpm --filter ./cli dev -- sync`，数据会上传到 Web 端
-5. **开启自动同步（macOS）** — 运行 `pnpm --filter ./cli dev -- service install`，注册为 LaunchAgent 定时同步
+5. **开启持续同步（跨平台）** — 运行 `pnpm --filter ./cli dev -- daemon`，保持 CLI 进程运行即可定时同步
 6. **查看分析** — 打开 `/usage` 页面查看你的 token 用量分析
 
-## CLI 自动同步（macOS）
+## CLI 持续同步（跨平台）
 
-CLI 现在支持注册为 macOS `launchd` 后台服务，按固定间隔自动执行同步。
+CLI 提供 `daemon` 命令，启动后会常驻运行并按固定间隔自动执行同步。
 
 ```bash
-# 安装后台自动同步（默认 5 分钟）
-pnpm --filter ./cli dev -- service install
+# 开启持续同步（默认 5 分钟）
+pnpm --filter ./cli dev -- daemon
 
 # 指定同步间隔（毫秒）
-pnpm --filter ./cli dev -- service install --interval 600000
+pnpm --filter ./cli dev -- daemon --interval 600000
 
-# 查看状态
-pnpm --filter ./cli dev -- service status
-
-# 停止 / 启动 / 重启
-pnpm --filter ./cli dev -- service stop
-pnpm --filter ./cli dev -- service start
-pnpm --filter ./cli dev -- service restart
-
-# 查看最近日志
-pnpm --filter ./cli dev -- service logs
-
-# 卸载后台服务
-pnpm --filter ./cli dev -- service uninstall
+# 停止
+# Ctrl+C
 ```
 
-后台服务会：
+持续同步模式会：
 
-- 以当前用户的 LaunchAgent 形式运行
 - 默认每 5 分钟执行一次 `tokens-burned sync`
 - 将运行状态写入 `~/.tokens-burned/runtime/status.json`
-- 将日志写入 `~/.tokens-burned/logs/service.log`
+- 适用于 macOS、Linux、Windows，也可以配合 tmux、screen、systemd、launchd 等外部进程管理器使用
 
 ## 部署说明
 

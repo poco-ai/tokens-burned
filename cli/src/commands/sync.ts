@@ -4,7 +4,6 @@ import { logger } from "../utils/logger";
 
 export interface SyncCommandOptions {
   quiet?: boolean;
-  serviceMode?: boolean;
 }
 
 export async function runSyncCommand(
@@ -18,7 +17,6 @@ export async function runSyncCommand(
 
   await runSync(config, {
     quiet: opts.quiet,
-    serviceMode: opts.serviceMode,
-    source: opts.serviceMode ? "service" : "manual",
+    source: "manual",
   });
 }

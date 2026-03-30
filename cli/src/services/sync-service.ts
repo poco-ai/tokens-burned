@@ -43,7 +43,6 @@ function formatTime(secs: number): string {
 }
 
 export interface SyncOptions {
-  serviceMode?: boolean;
   source?: SyncSource;
   throws?: boolean;
   quiet?: boolean;
@@ -162,12 +161,7 @@ export async function runSync(
   config: Config,
   opts: SyncOptions = {},
 ): Promise<SyncResult> {
-  const {
-    quiet = false,
-    serviceMode = false,
-    source = "manual",
-    throws = false,
-  } = opts;
+  const { quiet = false, source = "manual", throws = false } = opts;
 
   const lock = tryAcquireSyncLock(source);
   if (!lock) {
@@ -199,14 +193,14 @@ export async function runSync(
     } = await runAllParsers();
 
     if (allBuckets.length === 0 && allSessions.length === 0) {
-      if (!quiet || serviceMode) {
+      if (!quiet) {
         logger.info("No new usage data found.");
       }
       markSyncSucceeded(source, { buckets: 0, sessions: 0 });
       return { buckets: 0, sessions: 0 };
     }
 
-    if (!quiet && !serviceMode && parserResults.length > 0) {
+    if (!quiet && parserResults.length > 0) {
       for (const p of parserResults) {
         const parts: string[] = [];
         if (p.buckets > 0) parts.push(`${p.buckets} buckets`);
@@ -244,7 +238,7 @@ export async function runSync(
     const uploadBuckets = toUploadBuckets(allBuckets, settings, device);
     const uploadSessions = toUploadSessions(allSessions, settings, device);
 
-    if (!quiet && !serviceMode) {
+    if (!quiet) {
       const projectModeLabel: Record<ApiSettings["projectMode"], string> = {
         hashed: "哈希化",
         raw: "原始名称",
@@ -259,7 +253,7 @@ export async function runSync(
     );
     const totalBatches = Math.max(bucketBatches, sessionBatches, 1);
 
-    if (!quiet && !serviceMode) {
+    if (!quiet) {
       const parts: string[] = [];
       if (uploadBuckets.length > 0) {
         parts.push(`${uploadBuckets.length} buckets`);
@@ -289,7 +283,7 @@ export async function runSync(
         device,
         batch,
         batchSessions.length > 0 ? batchSessions : undefined,
-        quiet || serviceMode
+        quiet
           ? undefined
           : (sent, total) => {
               const pct = Math.round((sent / total) * 100);
@@ -303,11 +297,7 @@ export async function runSync(
       totalSessionsSynced += result.sessions ?? batchSessions.length;
     }
 
-    if (
-      !quiet &&
-      !serviceMode &&
-      (totalBatches > 1 || uploadBuckets.length > 0)
-    ) {
+    if (!quiet && (totalBatches > 1 || uploadBuckets.length > 0)) {
       process.stdout.write("\n");
     }
 
@@ -316,13 +306,9 @@ export async function runSync(
       syncParts.push(`${totalSessionsSynced} sessions`);
     }
 
-    if (serviceMode) {
-      logger.info(`sync finished: ${syncParts.join(", ")}`);
-    } else {
-      logger.info(`Synced ${syncParts.join(" + ")}.`);
-    }
+    logger.info(`Synced ${syncParts.join(" + ")}.`);
 
-    if (!quiet && !serviceMode && totalSessionsSynced > 0) {
+    if (!quiet && totalSessionsSynced > 0) {
       const totalActive = uploadSessions.reduce(
         (sum, session) => sum + session.activeSeconds,
         0,
@@ -340,7 +326,7 @@ export async function runSync(
       );
     }
 
-    if (!quiet && !serviceMode) {
+    if (!quiet) {
       logger.info(`\nView your dashboard at: ${apiUrl}/usage`);
     }
 

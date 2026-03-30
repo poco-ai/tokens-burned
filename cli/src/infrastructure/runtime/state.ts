@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { ensureAppRuntimeDirs, getSyncStatePath } from "./paths";
 
-export type SyncSource = "daemon" | "default" | "init" | "manual" | "service";
+export type SyncSource = "daemon" | "default" | "init" | "manual";
 
 export type SyncStateStatus =
   | "auth_error"

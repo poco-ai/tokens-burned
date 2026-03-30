@@ -2,15 +2,6 @@ import { Command, Option } from "commander";
 import { handleConfig } from "./commands/config";
 import { runDaemon } from "./commands/daemon";
 import { runInit } from "./commands/init";
-import {
-  runServiceInstall,
-  runServiceLogs,
-  runServiceRestart,
-  runServiceStart,
-  runServiceStatus,
-  runServiceStop,
-  runServiceUninstall,
-} from "./commands/service";
 import { runStatus } from "./commands/status";
 import { runSyncCommand } from "./commands/sync";
 import { loadConfig } from "./infrastructure/config/manager";
@@ -53,7 +44,6 @@ export function createCli(): Command {
     .command("sync")
     .description("Manually sync usage data to server")
     .addOption(new Option("--quiet").hideHelp())
-    .addOption(new Option("--service-mode").hideHelp())
     .action(async (opts) => {
       await runSyncCommand(opts);
     });
@@ -65,61 +55,6 @@ export function createCli(): Command {
     .option("--interval <ms>", "Sync interval in milliseconds", parseInt)
     .action(async (opts) => {
       await runDaemon(opts);
-    });
-
-  // service command
-  const service = program
-    .command("service")
-    .description("Manage macOS background sync service");
-
-  service
-    .command("install")
-    .description("Install the macOS LaunchAgent for automatic sync")
-    .option("--interval <ms>", "Sync interval in milliseconds", parseInt)
-    .action(async (opts) => {
-      await runServiceInstall(opts);
-    });
-
-  service
-    .command("uninstall")
-    .description("Remove the macOS LaunchAgent")
-    .action(async () => {
-      await runServiceUninstall();
-    });
-
-  service
-    .command("start")
-    .description("Start the background sync service")
-    .action(async () => {
-      await runServiceStart();
-    });
-
-  service
-    .command("stop")
-    .description("Stop the background sync service")
-    .action(async () => {
-      await runServiceStop();
-    });
-
-  service
-    .command("restart")
-    .description("Restart the background sync service")
-    .action(async () => {
-      await runServiceRestart();
-    });
-
-  service
-    .command("status")
-    .description("Show background sync service status")
-    .action(async () => {
-      await runServiceStatus();
-    });
-
-  service
-    .command("logs")
-    .description("Show recent background sync logs")
-    .action(async () => {
-      await runServiceLogs();
     });
 
   // status command
