@@ -84,7 +84,7 @@ describe("settings dialog section spacing", () => {
           {
             id: "key_123",
             name: "test",
-            prefix: "vbu_5de06989",
+            prefix: "ta_5de06989",
             status: "active",
             lastUsedAt: "2026-03-26T09:05:35.000Z",
             createdAt: "2026-03-26T08:44:25.000Z",

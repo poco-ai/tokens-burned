@@ -11,7 +11,7 @@ export function splitApiKeyPrefix(raw: string) {
 }
 
 export function generateUsageApiKey() {
-  const raw = `vbu_${randomBytes(24).toString("hex")}`;
+  const raw = `ta_${randomBytes(24).toString("hex")}`;
 
   return {
     raw,
@@ -86,7 +86,7 @@ export async function deleteUsageApiKey(userId: string, id: string) {
 }
 
 export async function findUsageApiKeyByRaw(rawKey: string) {
-  if (!rawKey.startsWith("vbu_")) {
+  if (!rawKey.startsWith("ta_")) {
     return null;
   }
 

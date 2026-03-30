@@ -74,7 +74,7 @@ export function getOrCreateDeviceId(config: Config): string {
 }
 
 export function validateApiKey(key: string): boolean {
-  return key.startsWith("vbu_");
+  return key.startsWith("ta_");
 }
 
 export function isValidConfigKey(key: string): boolean {

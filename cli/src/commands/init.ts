@@ -254,7 +254,7 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   while (true) {
     apiKey = await prompt("Paste your API key: ");
     if (validateApiKey(apiKey)) break;
-    logger.info('Invalid key - must start with "vbu_". Try again.');
+    logger.info('Invalid key - must start with "ta_". Try again.');
   }
 
   logger.info(`\nVerifying key ${apiKey.slice(0, 8)}...`);

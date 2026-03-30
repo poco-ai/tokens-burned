@@ -7,18 +7,18 @@ import {
 } from "./api-keys";
 
 describe("usage api keys", () => {
-  it("generates vbu_ prefixed keys", () => {
+  it("generates ta_ prefixed keys", () => {
     const key = generateUsageApiKey();
 
-    expect(key.raw.startsWith("vbu_")).toBe(true);
+    expect(key.raw.startsWith("ta_")).toBe(true);
     expect(key.prefix).toBe(key.raw.slice(0, 12));
   });
 
   it("hashes deterministically", () => {
-    expect(hashUsageApiKey("vbu_test")).toBe(hashUsageApiKey("vbu_test"));
+    expect(hashUsageApiKey("ta_test")).toBe(hashUsageApiKey("ta_test"));
   });
 
   it("extracts the display prefix", () => {
-    expect(splitApiKeyPrefix("vbu_1234567890abcdef")).toBe("vbu_12345678");
+    expect(splitApiKeyPrefix("ta_1234567890abcdef")).toBe("ta_12345678");
   });
 });
