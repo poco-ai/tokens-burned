@@ -86,6 +86,7 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   const config: Config = {
     apiKey,
     apiUrl,
+    ...(existing?.deviceId ? { deviceId: existing.deviceId } : {}),
   };
   saveConfig(config);
   const deviceId = getOrCreateDeviceId(config);

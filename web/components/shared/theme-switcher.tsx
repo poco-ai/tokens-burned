@@ -33,7 +33,6 @@ export function ThemeSwitcher({
   const t = useTranslations("common");
   const { resolvedTheme, themeMode, setThemeMode } = useTheme();
   const compact = variant === "compact";
-  const ThemeIcon = themeIcons[themeMode];
   const nextThemeMode = resolvedTheme === "dark" ? "light" : "dark";
   const CompactThemeIcon = nextThemeMode === "dark" ? MoonStar : Sun;
 
