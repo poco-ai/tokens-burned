@@ -75,67 +75,23 @@ export function FollowButton({
   }
 
   return (
-    <div className="space-y-2">
-      <Button
-        type="button"
-        size={size}
-        variant={following ? "secondary" : "default"}
-        disabled={isPending}
-        onClick={() => {
-          startTransition(async () => {
-            setError(null);
-
-            try {
-              const response = await fetch(
-                `/api/social/follows/${encodeURIComponent(username)}`,
-                {
-                  method: following ? "DELETE" : "POST",
-                },
-              );
-
-              if (response.status === 401) {
-                router.push(`/${locale}/login`);
-                return;
-              }
-
-              if (!response.ok) {
-                throw new Error(tErrors("followFailed"));
-              }
-
-              setFollowing(!following);
-              setTag(null);
-              router.refresh();
-            } catch {
-              setError(tErrors("followFailed"));
-            }
-          });
-        }}
-      >
-        {following ? t("followingAction") : t("follow")}
-      </Button>
-
-      {following ? (
-        <Select
-          value={toFollowTagSelectValue(tag)}
-          onValueChange={(nextValue) => {
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-nowrap items-center gap-2">
+        <Button
+          type="button"
+          size={size}
+          variant={following ? "secondary" : "default"}
+          disabled={isPending}
+          className="shrink-0"
+          onClick={() => {
             startTransition(async () => {
               setError(null);
-
-              const nextTag = fromFollowTagSelectValue(
-                nextValue as FollowTagSelectValue,
-              );
 
               try {
                 const response = await fetch(
                   `/api/social/follows/${encodeURIComponent(username)}`,
                   {
-                    method: "PATCH",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      tag: nextTag,
-                    }),
+                    method: following ? "DELETE" : "POST",
                   },
                 );
 
@@ -145,35 +101,82 @@ export function FollowButton({
                 }
 
                 if (!response.ok) {
-                  throw new Error(tErrors("tagFailed"));
+                  throw new Error(tErrors("followFailed"));
                 }
 
-                setTag(nextTag);
+                setFollowing(!following);
+                setTag(null);
                 router.refresh();
               } catch {
-                setError(tErrors("tagFailed"));
+                setError(tErrors("followFailed"));
               }
             });
           }}
-          disabled={isPending}
         >
-          <SelectTrigger
-            aria-label={tTags("selectLabel")}
-            size={size}
-            className="min-w-[132px] bg-background"
+          {following ? t("followingAction") : t("follow")}
+        </Button>
+
+        {following ? (
+          <Select
+            value={toFollowTagSelectValue(tag)}
+            onValueChange={(nextValue) => {
+              startTransition(async () => {
+                setError(null);
+
+                const nextTag = fromFollowTagSelectValue(
+                  nextValue as FollowTagSelectValue,
+                );
+
+                try {
+                  const response = await fetch(
+                    `/api/social/follows/${encodeURIComponent(username)}`,
+                    {
+                      method: "PATCH",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        tag: nextTag,
+                      }),
+                    },
+                  );
+
+                  if (response.status === 401) {
+                    router.push(`/${locale}/login`);
+                    return;
+                  }
+
+                  if (!response.ok) {
+                    throw new Error(tErrors("tagFailed"));
+                  }
+
+                  setTag(nextTag);
+                  router.refresh();
+                } catch {
+                  setError(tErrors("tagFailed"));
+                }
+              });
+            }}
+            disabled={isPending}
           >
-            <SelectValue placeholder={tTags("none")} />
-          </SelectTrigger>
-          <SelectContent align="end">
-            <SelectItem value="none">{tTags("none")}</SelectItem>
-            {followTags.map((value) => (
-              <SelectItem key={value} value={value}>
-                {tTags(`options.${value}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ) : null}
+            <SelectTrigger
+              aria-label={tTags("selectLabel")}
+              size={size}
+              className="min-w-[132px] shrink-0 bg-background"
+            >
+              <SelectValue placeholder={tTags("none")} />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="none">{tTags("none")}</SelectItem>
+              {followTags.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {tTags(`options.${value}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
+      </div>
 
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>

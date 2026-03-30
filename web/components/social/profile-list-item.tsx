@@ -99,7 +99,7 @@ export function ProfileListItem({
 
         <div
           className={cn(
-            "flex shrink-0 flex-wrap items-center gap-2",
+            "flex shrink-0 flex-nowrap items-center gap-2",
             profile.isSelf ? "sm:self-center" : undefined,
           )}
         >

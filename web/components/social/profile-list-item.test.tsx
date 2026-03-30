@@ -63,4 +63,39 @@ describe("ProfileListItem", () => {
       '<div class="text-sm text-muted-foreground">@qychen</div>',
     );
   });
+
+  it("keeps the action area on a single row", () => {
+    const markup = renderToStaticMarkup(
+      <ProfileListItem
+        locale="zh-CN"
+        isAuthenticated
+        profile={{
+          id: "user_456",
+          username: "alice",
+          name: "Alice",
+          image: null,
+          bio: null,
+          followerCount: 12,
+          followingCount: 8,
+          isFollowing: true,
+          followTag: "coworker",
+          followsYou: false,
+          isSelf: false,
+          publicProfileEnabled: true,
+        }}
+        labels={{
+          followers: "粉丝",
+          following: "关注",
+          mutual: "互相关注",
+          private: "私密",
+          you: "你",
+          viewProfile: "查看主页",
+        }}
+      />,
+    );
+
+    expect(markup).toContain("flex shrink-0 flex-nowrap items-center gap-2");
+    expect(markup).not.toContain("flex shrink-0 flex-wrap items-center gap-2");
+    expect(markup).not.toContain("flex shrink-0 flex-nowrap items-start gap-2");
+  });
 });
