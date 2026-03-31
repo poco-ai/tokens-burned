@@ -26,14 +26,6 @@ type ConnectedAccountsCardProps = {
   availableProviders?: LoginProvider[];
 };
 
-function formatAccountId(accountId: string) {
-  if (accountId.length <= 12) {
-    return accountId;
-  }
-
-  return `${accountId.slice(0, 6)}…${accountId.slice(-4)}`;
-}
-
 async function postAuthAction(
   path: string,
   body: Record<string, unknown>,
@@ -207,25 +199,15 @@ export function ConnectedAccountsCard({
       <div className="divide-y divide-border/50 overflow-hidden rounded-xl border border-border/50">
         {rows.map((row) => {
           if (row.kind === "credential") {
-            const { account } = row;
-
             return (
-              <div
-                key={row.key}
-                className="flex flex-wrap items-center gap-4 px-4 py-4 sm:flex-nowrap"
-              >
+              <div key={row.key} className="flex items-center gap-4 px-4 py-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center text-foreground">
                   <ProviderIcon providerId="credential" />
                 </div>
-                <div className="min-w-0 flex-1 space-y-0.5">
+                <div className="min-w-0 flex-1">
                   <div className="font-medium text-foreground">
                     {t("credentialLabel")}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {t("accountId", {
-                      value: formatAccountId(account.accountId),
-                    })}
-                  </p>
                 </div>
               </div>
             );
@@ -241,24 +223,16 @@ export function ConnectedAccountsCard({
 
           if (account) {
             return (
-              <div
-                key={row.key}
-                className="flex flex-wrap items-center gap-4 px-4 py-4 sm:flex-nowrap"
-              >
+              <div key={row.key} className="flex items-center gap-4 px-4 py-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center text-foreground">
                   <ProviderIcon providerId={provider.id} />
                 </div>
-                <div className="min-w-0 flex-1 space-y-0.5">
+                <div className="min-w-0 flex-1">
                   <div className="font-medium text-foreground">
                     {provider.label}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {t("accountId", {
-                      value: formatAccountId(account.accountId),
-                    })}
-                  </p>
                 </div>
-                <div className="flex shrink-0 justify-end sm:ml-auto">
+                <div className="flex shrink-0 justify-end">
                   {canDisconnect ? (
                     <Button
                       type="button"
@@ -278,24 +252,16 @@ export function ConnectedAccountsCard({
           }
 
           return (
-            <div
-              key={row.key}
-              className="flex flex-wrap items-center gap-4 px-4 py-4 sm:flex-nowrap"
-            >
+            <div key={row.key} className="flex items-center gap-4 px-4 py-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center text-foreground">
                 <ProviderIcon providerId={provider.id} />
               </div>
-              <div className="min-w-0 flex-1 space-y-0.5">
+              <div className="min-w-0 flex-1">
                 <div className="font-medium text-foreground">
                   {provider.label}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {t("signInWithProvider", {
-                    provider: provider.label,
-                  })}
-                </p>
               </div>
-              <div className="flex shrink-0 justify-end sm:ml-auto">
+              <div className="flex shrink-0 justify-end">
                 <Button
                   type="button"
                   variant="secondary"
