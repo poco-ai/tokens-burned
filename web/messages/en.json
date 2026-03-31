@@ -16,7 +16,8 @@
       "dark": "Dark",
       "system": "System"
     },
-    "footerCopyright": "TokenArena @ Poco-ai"
+    "footerCopyright": "TokenArena @ Poco-ai",
+    "footerVersion": "Version {version}"
   },
   "auth": {
     "fields": {
@@ -52,6 +53,10 @@
       "usernameHint": "Unique identifier for your profile URL, only letters, numbers, underscores and periods",
       "submit": "Create account",
       "submitting": "Creating account...",
+      "agreementPrefix": "By registering, you agree to the",
+      "termsLink": "Terms of Service",
+      "and": "and",
+      "privacyLink": "Privacy Policy",
       "haveAccount": "Already have an account?",
       "signInLink": "Sign in",
       "errors": {

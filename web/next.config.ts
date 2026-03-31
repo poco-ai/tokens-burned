@@ -3,6 +3,9 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  env: {
+    NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version ?? "dev",
+  },
   images: {
     remotePatterns: [
       {

@@ -16,7 +16,8 @@
       "dark": "深色",
       "system": "跟随系统"
     },
-    "footerCopyright": "TokenArena @ Poco-ai"
+    "footerCopyright": "TokenArena @ Poco-ai",
+    "footerVersion": "版本 {version}"
   },
   "auth": {
     "fields": {
@@ -52,6 +53,10 @@
       "usernameHint": "唯一标识符，用于个人主页地址，只能包含字母、数字、下划线和英文句点",
       "submit": "创建账号",
       "submitting": "创建中...",
+      "agreementPrefix": "注册即表示你同意",
+      "termsLink": "《用户协议》",
+      "and": "与",
+      "privacyLink": "《隐私协议》",
       "haveAccount": "已经有账号？",
       "signInLink": "登录",
       "errors": {
