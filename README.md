@@ -145,6 +145,12 @@ git add --renormalize .
 | 构建 | pnpm monorepo |
 | 部署 | Docker Compose |
 
+## 致谢
+
+本项目灵感来源于 [vibe-cafe/vibe-usage](https://github.com/vibe-cafe/vibe-usage)，感谢该项目的启发。
+
+特别感谢 [Linux.do](https://linux.do/) 和 [观猹](https://watcha.cn/) 社区的支持与帮助。
+
 ## License
 
 MIT
