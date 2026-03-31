@@ -25,6 +25,10 @@ export function getSyncStatePath(): string {
   return join(getStateDir(), "status.json");
 }
 
+export function getUploadManifestPath(): string {
+  return join(getStateDir(), "upload-manifest.json");
+}
+
 export function ensureAppDirs(): void {
   mkdirSync(getRuntimeDirPath(), { recursive: true });
   mkdirSync(getStateDir(), { recursive: true });

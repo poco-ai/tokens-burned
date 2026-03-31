@@ -8,6 +8,12 @@ import type {
   UploadSessionMetadata,
   UploadTokenBucket,
 } from "../domain/types";
+import {
+  buildUploadManifestScope,
+  diffUploadManifest,
+  type UploadManifest,
+  type UploadManifestScopeChange,
+} from "../domain/upload-manifest";
 import { ApiClient, getIngestPayloadSize } from "../infrastructure/api/client";
 import {
   type Config,
@@ -23,6 +29,10 @@ import {
   markSyncSucceeded,
   type SyncSource,
 } from "../infrastructure/runtime/state";
+import {
+  loadUploadManifest,
+  saveUploadManifest,
+} from "../infrastructure/runtime/upload-manifest";
 import { logger } from "../utils/logger";
 import { runAllParsers } from "./parser-service";
 
@@ -56,6 +66,29 @@ function writeUploadProgress(
   process.stdout.write(
     `\r  Uploading ${progressBar} ${String(pct).padStart(3, " ")}% · ${formatBytes(sent)}/${formatBytes(total)}${batchLabel}\x1b[K`,
   );
+}
+
+function formatScopeChangeReason(reason: UploadManifestScopeChange): string {
+  switch (reason) {
+    case "server_or_api_key":
+      return "server/API key";
+    case "device_id":
+      return "device ID";
+    case "project_identity":
+      return "project identity settings";
+  }
+}
+
+function persistUploadManifest(manifest: UploadManifest, quiet: boolean): void {
+  try {
+    saveUploadManifest(manifest);
+  } catch (error) {
+    if (!quiet) {
+      logger.warn(
+        `Uploaded data, but failed to update the local sync manifest: ${(error as Error).message}`,
+      );
+    }
+  }
 }
 
 export interface SyncOptions {
@@ -251,12 +284,70 @@ export async function runSync(
     }
 
     const device = toDeviceMetadata(config);
+    const manifestScope = buildUploadManifestScope({
+      apiKey: config.apiKey,
+      apiUrl,
+      deviceId: device.deviceId,
+      settings,
+    });
     const uploadBuckets = toUploadBuckets(allBuckets, settings, device);
     const uploadSessions = toUploadSessions(allSessions, settings, device);
+    const uploadDiff = diffUploadManifest({
+      buckets: uploadBuckets,
+      previous: loadUploadManifest(),
+      scope: manifestScope,
+      sessions: uploadSessions,
+    });
+    const changedBuckets = uploadDiff.bucketsToUpload;
+    const changedSessions = uploadDiff.sessionsToUpload;
 
-    const bucketBatches = Math.ceil(uploadBuckets.length / BATCH_SIZE);
+    if (!quiet && uploadDiff.scopeChangedReasons.length > 0) {
+      logger.warn(
+        `Upload scope changed (${uploadDiff.scopeChangedReasons.map(formatScopeChangeReason).join(", ")}). TokenArena will upload the current snapshot again, but existing remote records from the previous scope will not be deleted automatically.`,
+      );
+    }
+
+    if (
+      !quiet &&
+      (uploadDiff.removedBuckets > 0 || uploadDiff.removedSessions > 0)
+    ) {
+      const parts: string[] = [];
+      if (uploadDiff.removedBuckets > 0) {
+        parts.push(`${uploadDiff.removedBuckets} buckets`);
+      }
+      if (uploadDiff.removedSessions > 0) {
+        parts.push(`${uploadDiff.removedSessions} sessions`);
+      }
+      logger.warn(
+        `Detected ${parts.join(" + ")} that were present in the previous local snapshot but are missing now. Remote deletions are not supported yet, so renamed projects or removed local logs may leave stale data online.`,
+      );
+    }
+
+    if (changedBuckets.length === 0 && changedSessions.length === 0) {
+      if (!quiet) {
+        const skippedParts: string[] = [];
+        if (uploadDiff.unchangedBuckets > 0) {
+          skippedParts.push(`${uploadDiff.unchangedBuckets} unchanged buckets`);
+        }
+        if (uploadDiff.unchangedSessions > 0) {
+          skippedParts.push(
+            `${uploadDiff.unchangedSessions} unchanged sessions`,
+          );
+        }
+        logger.info(
+          skippedParts.length > 0
+            ? `No new or updated usage data to upload. Skipped ${skippedParts.join(" + ")}.`
+            : "No new or updated usage data to upload.",
+        );
+      }
+      persistUploadManifest(uploadDiff.nextManifest, quiet);
+      markSyncSucceeded(source, { buckets: 0, sessions: 0 });
+      return { buckets: 0, sessions: 0 };
+    }
+
+    const bucketBatches = Math.ceil(changedBuckets.length / BATCH_SIZE);
     const sessionBatches = Math.ceil(
-      uploadSessions.length / SESSION_BATCH_SIZE,
+      changedSessions.length / SESSION_BATCH_SIZE,
     );
     const totalBatches = Math.max(bucketBatches, sessionBatches, 1);
     const batchPayloadSizes = Array.from(
@@ -264,11 +355,11 @@ export async function runSync(
       (_, batchIdx) =>
         getIngestPayloadSize(
           device,
-          uploadBuckets.slice(
+          changedBuckets.slice(
             batchIdx * BATCH_SIZE,
             (batchIdx + 1) * BATCH_SIZE,
           ),
-          uploadSessions.slice(
+          changedSessions.slice(
             batchIdx * SESSION_BATCH_SIZE,
             (batchIdx + 1) * SESSION_BATCH_SIZE,
           ),
@@ -282,23 +373,30 @@ export async function runSync(
 
     if (!quiet) {
       const parts: string[] = [];
-      if (uploadBuckets.length > 0) {
-        parts.push(`${uploadBuckets.length} buckets`);
+      if (changedBuckets.length > 0) {
+        parts.push(`${changedBuckets.length} buckets`);
       }
-      if (uploadSessions.length > 0) {
-        parts.push(`${uploadSessions.length} sessions`);
+      if (changedSessions.length > 0) {
+        parts.push(`${changedSessions.length} sessions`);
+      }
+      const skippedParts: string[] = [];
+      if (uploadDiff.unchangedBuckets > 0) {
+        skippedParts.push(`${uploadDiff.unchangedBuckets} unchanged buckets`);
+      }
+      if (uploadDiff.unchangedSessions > 0) {
+        skippedParts.push(`${uploadDiff.unchangedSessions} unchanged sessions`);
       }
       logger.info(
-        `Uploading ${parts.join(" + ")} (${totalBatches} batch${totalBatches > 1 ? "es" : ""})...`,
+        `Uploading ${parts.join(" + ")} (${totalBatches} batch${totalBatches > 1 ? "es" : ""}${skippedParts.length > 0 ? `, skipped ${skippedParts.join(" + ")}` : ""})...`,
       );
     }
 
     for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
-      const batch = uploadBuckets.slice(
+      const batch = changedBuckets.slice(
         batchIdx * BATCH_SIZE,
         (batchIdx + 1) * BATCH_SIZE,
       );
-      const batchSessions = uploadSessions.slice(
+      const batchSessions = changedSessions.slice(
         batchIdx * SESSION_BATCH_SIZE,
         (batchIdx + 1) * SESSION_BATCH_SIZE,
       );
@@ -325,7 +423,7 @@ export async function runSync(
       uploadedBytesBeforeBatch += batchPayloadSizes[batchIdx] ?? 0;
     }
 
-    if (!quiet && (totalBatches > 1 || uploadBuckets.length > 0)) {
+    if (!quiet && (totalBatches > 1 || changedBuckets.length > 0)) {
       writeUploadProgress(
         totalPayloadBytes,
         totalPayloadBytes,
@@ -345,6 +443,7 @@ export async function runSync(
       logger.info(`\nView your dashboard at: ${apiUrl}/usage`);
     }
 
+    persistUploadManifest(uploadDiff.nextManifest, quiet);
     markSyncSucceeded(source, {
       buckets: totalIngested,
       sessions: totalSessionsSynced,
