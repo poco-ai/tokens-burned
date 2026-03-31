@@ -656,7 +656,11 @@
       },
       "volume": {
         "title": "Volume",
-        "description": "Lifetime milestones for tokens, sessions, and active time."
+        "description": "Lifetime milestones for sessions, tokens, and active time."
+      },
+      "spend": {
+        "title": "Spend",
+        "description": "Milestones for estimated lifetime API spend (USD)."
       },
       "craft": {
         "title": "Craft",
@@ -668,7 +672,11 @@
       },
       "social": {
         "title": "Social",
-        "description": "Public identity, follows, and mutual connections reinforce belonging."
+        "description": "Follows and mutual connections reinforce belonging."
+      },
+      "leaderboard": {
+        "title": "Leaderboard",
+        "description": "Milestones for ranking on global token leaderboards (daily, weekly, monthly, and all-time)."
       }
     },
     "notification": {
@@ -692,9 +700,9 @@
         "title": "First Sync",
         "description": "Successfully sync local usage data into Token Arena for the first time."
       },
-      "public_profile": {
-        "title": "Public Builder",
-        "description": "Enable your public profile so other builders can discover your track record."
+      "sessions_1": {
+        "title": "First Session",
+        "description": "Complete your first session."
       },
       "streak_3": {
         "title": "3-Day Spark",
@@ -703,6 +711,10 @@
       "streak_7": {
         "title": "Weekly Momentum",
         "description": "Stay active for 7 consecutive days."
+      },
+      "streak_14": {
+        "title": "Two-Week Streak",
+        "description": "Stay active for 14 consecutive days."
       },
       "streak_30": {
         "title": "30-Day Marathon",
@@ -720,6 +732,50 @@
         "title": "Long-Game Builder",
         "description": "Reach 100 lifetime active days."
       },
+      "active_days_365": {
+        "title": "Year of Building",
+        "description": "Reach 365 lifetime active days."
+      },
+      "sessions_200": {
+        "title": "200 Sessions",
+        "description": "Complete 200 sessions."
+      },
+      "sessions_1k": {
+        "title": "1K Sessions",
+        "description": "Complete 1,000 sessions."
+      },
+      "sessions_5k": {
+        "title": "5K Sessions",
+        "description": "Complete 5,000 sessions."
+      },
+      "sessions_20k": {
+        "title": "20K Sessions",
+        "description": "Complete 20,000 sessions."
+      },
+      "sessions_100k": {
+        "title": "100K Sessions",
+        "description": "Complete 100,000 sessions."
+      },
+      "spend_usd_100": {
+        "title": "$100 Spent",
+        "description": "Reach $100 in estimated lifetime API spend."
+      },
+      "spend_usd_1k": {
+        "title": "$1K Spent",
+        "description": "Reach $1,000 in estimated lifetime API spend."
+      },
+      "spend_usd_5k": {
+        "title": "$5K Spent",
+        "description": "Reach $5,000 in estimated lifetime API spend."
+      },
+      "spend_usd_20k": {
+        "title": "$20K Spent",
+        "description": "Reach $20,000 in estimated lifetime API spend."
+      },
+      "spend_usd_100k": {
+        "title": "Money Leviathan",
+        "description": "Reach $100,000 in estimated lifetime API spend."
+      },
       "tokens_100k": {
         "title": "100K Burn",
         "description": "Accumulate 100K total tokens."
@@ -732,69 +788,141 @@
         "title": "10M Forge",
         "description": "Accumulate 10M total tokens."
       },
-      "sessions_10": {
-        "title": "Multi-Run",
-        "description": "Complete 10 sessions."
+      "tokens_1b": {
+        "title": "Billion Scale",
+        "description": "Accumulate 1B total tokens."
       },
-      "sessions_100": {
-        "title": "Hundred Runs",
-        "description": "Complete 100 sessions."
+      "tokens_10b": {
+        "title": "10B Horizon",
+        "description": "Accumulate 10B total tokens."
       },
-      "sessions_1000": {
-        "title": "Session Commander",
-        "description": "Complete 1000 sessions."
+      "tokens_100b": {
+        "title": "100B Singularity",
+        "description": "Accumulate 100B total tokens."
       },
       "active_hours_10": {
         "title": "10 Active Hours",
         "description": "Reach 10 lifetime active hours."
       },
-      "active_hours_50": {
-        "title": "50 Active Hours",
-        "description": "Reach 50 lifetime active hours."
+      "active_hours_100": {
+        "title": "100 Active Hours",
+        "description": "Reach 100 lifetime active hours."
       },
       "active_hours_200": {
         "title": "200 Active Hours",
         "description": "Reach 200 lifetime active hours."
       },
+      "active_hours_500": {
+        "title": "500 Active Hours",
+        "description": "Reach 500 lifetime active hours."
+      },
+      "active_hours_2000": {
+        "title": "2,000 Active Hours",
+        "description": "Reach 2,000 lifetime active hours."
+      },
       "reasoning_25": {
         "title": "Reasoning Driven",
         "description": "At least 25% of your last 30 days of tokens were spent on reasoning."
+      },
+      "reasoning_40": {
+        "title": "Reasoning Heavy",
+        "description": "At least 40% of your last 30 days of tokens were spent on reasoning."
       },
       "cache_15": {
         "title": "Cache Specialist",
         "description": "At least 15% of your last 30 days of tokens came from cache hits."
       },
+      "cache_30": {
+        "title": "Cache Master",
+        "description": "At least 30% of your last 30 days of tokens came from cache hits."
+      },
       "project_focus_70": {
         "title": "Deep Focus",
         "description": "At least 70% of your last 30 days of tokens were concentrated in one project."
+      },
+      "project_focus_90": {
+        "title": "Laser Focus",
+        "description": "At least 90% of your last 30 days of tokens were concentrated in one project."
       },
       "models_3": {
         "title": "Model Explorer",
         "description": "Use 3 different models over time."
       },
+      "models_5": {
+        "title": "Model Voyager",
+        "description": "Use 5 different models over time."
+      },
       "tools_2": {
         "title": "Tool Switcher",
         "description": "Use 2 different AI tool sources."
+      },
+      "tools_4": {
+        "title": "Tool Quartet",
+        "description": "Use 4 different AI tool sources."
       },
       "projects_5": {
         "title": "Project Rover",
         "description": "Work across 5 projects."
       },
+      "projects_15": {
+        "title": "Project Universe",
+        "description": "Work across 15 projects."
+      },
       "devices_2": {
         "title": "Dual Device",
         "description": "Be active from 2 different devices."
+      },
+      "devices_3": {
+        "title": "Triple Device",
+        "description": "Be active from 3 different devices."
       },
       "first_follow": {
         "title": "First Follow",
         "description": "Follow your first public builder."
       },
+      "following_10": {
+        "title": "Following Ten",
+        "description": "Follow 10 public builders."
+      },
       "first_follower": {
         "title": "First Follower",
         "description": "Gain your first follower."
       },
+      "followers_10": {
+        "title": "Ten Followers",
+        "description": "Gain 10 followers."
+      },
       "mutual_3": {
         "title": "Mutual Circle",
         "description": "Build 3 mutual follow relationships."
+      },
+      "mutual_10": {
+        "title": "Mutual Network",
+        "description": "Build 10 mutual follow relationships."
+      },
+      "leaderboard_day_top50": {
+        "title": "Daily Top 50",
+        "description": "Place in the top 50 on the global daily total-tokens leaderboard."
+      },
+      "leaderboard_week_top50": {
+        "title": "Weekly Top 50",
+        "description": "Place in the top 50 on the global weekly total-tokens leaderboard."
+      },
+      "leaderboard_month_top50": {
+        "title": "Monthly Top 50",
+        "description": "Place in the top 50 on the global monthly total-tokens leaderboard."
+      },
+      "leaderboard_all_time_top100": {
+        "title": "Hall of Fame",
+        "description": "Place in the top 100 on the global all-time total-tokens leaderboard."
+      },
+      "leaderboard_all_time_top10": {
+        "title": "All-Time Top 10",
+        "description": "Place in the top 10 on the global all-time total-tokens leaderboard."
+      },
+      "leaderboard_all_time_first": {
+        "title": "World #1",
+        "description": "Reach #1 on the global all-time total-tokens leaderboard."
       }
     }
   }

@@ -656,7 +656,11 @@
       },
       "volume": {
         "title": "产量",
-        "description": "累计 token、会话数与活跃时长里程碑。"
+        "description": "会话数、token 与活跃时长等累计里程碑。"
+      },
+      "spend": {
+        "title": "花费",
+        "description": "按官方定价估算的累计 API 花费（美元）里程碑。"
       },
       "craft": {
         "title": "技巧",
@@ -668,7 +672,11 @@
       },
       "social": {
         "title": "社交",
-        "description": "公开主页、关注关系与互关网络都会形成身份感。"
+        "description": "关注关系与互关网络都会形成身份感。"
+      },
+      "leaderboard": {
+        "title": "排行榜",
+        "description": "在全站 token 排行榜（日、周、月与总榜）上达成名次里程碑。"
       }
     },
     "notification": {
@@ -692,9 +700,9 @@
         "title": "首发同步",
         "description": "第一次把本地使用数据成功同步到 Token Arena。"
       },
-      "public_profile": {
-        "title": "公开建造者",
-        "description": "开启公开主页，让别人能发现你的 AI 编程轨迹。"
+      "sessions_1": {
+        "title": "首个会话",
+        "description": "累计完成第 1 个会话。"
       },
       "streak_3": {
         "title": "三连击",
@@ -703,6 +711,10 @@
       "streak_7": {
         "title": "一周热身",
         "description": "连续活跃 7 天。"
+      },
+      "streak_14": {
+        "title": "双周连击",
+        "description": "连续活跃 14 天。"
       },
       "streak_30": {
         "title": "月度长跑",
@@ -720,6 +732,50 @@
         "title": "长期主义者",
         "description": "累计活跃 100 天。"
       },
+      "active_days_365": {
+        "title": "年度长跑",
+        "description": "累计活跃 365 天。"
+      },
+      "sessions_200": {
+        "title": "二百局",
+        "description": "累计完成 200 个会话。"
+      },
+      "sessions_1k": {
+        "title": "千局",
+        "description": "累计完成 1,000 个会话。"
+      },
+      "sessions_5k": {
+        "title": "五千局",
+        "description": "累计完成 5,000 个会话。"
+      },
+      "sessions_20k": {
+        "title": "两万局",
+        "description": "累计完成 20,000 个会话。"
+      },
+      "sessions_100k": {
+        "title": "十万局",
+        "description": "累计完成 100,000 个会话。"
+      },
+      "spend_usd_100": {
+        "title": "百元投入",
+        "description": "累计估算 API 花费达到 $100。"
+      },
+      "spend_usd_1k": {
+        "title": "千元投入",
+        "description": "累计估算 API 花费达到 $1,000。"
+      },
+      "spend_usd_5k": {
+        "title": "五千元投入",
+        "description": "累计估算 API 花费达到 $5,000。"
+      },
+      "spend_usd_20k": {
+        "title": "两万元投入",
+        "description": "累计估算 API 花费达到 $20,000。"
+      },
+      "spend_usd_100k": {
+        "title": "吞金巨兽",
+        "description": "累计估算 API 花费达到 $100,000。"
+      },
       "tokens_100k": {
         "title": "十万火力",
         "description": "累计消耗 100K tokens。"
@@ -732,69 +788,141 @@
         "title": "千万熔炉",
         "description": "累计消耗 10M tokens。"
       },
-      "sessions_10": {
-        "title": "多次出击",
-        "description": "累计完成 10 个会话。"
+      "tokens_1b": {
+        "title": "十亿量级",
+        "description": "累计消耗 1B tokens。"
       },
-      "sessions_100": {
-        "title": "百战老手",
-        "description": "累计完成 100 个会话。"
+      "tokens_10b": {
+        "title": "百亿征途",
+        "description": "累计消耗 10B tokens。"
       },
-      "sessions_1000": {
-        "title": "千局指挥官",
-        "description": "累计完成 1000 个会话。"
+      "tokens_100b": {
+        "title": "千亿奇点",
+        "description": "累计消耗 100B tokens。"
       },
       "active_hours_10": {
         "title": "沉浸 10 小时",
         "description": "累计活跃时长达到 10 小时。"
       },
-      "active_hours_50": {
-        "title": "沉浸 50 小时",
-        "description": "累计活跃时长达到 50 小时。"
+      "active_hours_100": {
+        "title": "沉浸 100 小时",
+        "description": "累计活跃时长达到 100 小时。"
       },
       "active_hours_200": {
         "title": "沉浸 200 小时",
         "description": "累计活跃时长达到 200 小时。"
       },
+      "active_hours_500": {
+        "title": "沉浸 500 小时",
+        "description": "累计活跃时长达到 500 小时。"
+      },
+      "active_hours_2000": {
+        "title": "沉浸 2000 小时",
+        "description": "累计活跃时长达到 2000 小时。"
+      },
       "reasoning_25": {
         "title": "推理驱动",
         "description": "最近 30 天里，至少 25% 的 tokens 用在 reasoning。"
+      },
+      "reasoning_40": {
+        "title": "推理重度",
+        "description": "最近 30 天里，至少 40% 的 tokens 用在 reasoning。"
       },
       "cache_15": {
         "title": "缓存高手",
         "description": "最近 30 天里，至少 15% 的 tokens 来自缓存命中。"
       },
+      "cache_30": {
+        "title": "缓存大师",
+        "description": "最近 30 天里，至少 30% 的 tokens 来自缓存命中。"
+      },
       "project_focus_70": {
         "title": "深潜项目",
         "description": "最近 30 天里，至少 70% 的 tokens 集中在同一个项目。"
+      },
+      "project_focus_90": {
+        "title": "极致专注",
+        "description": "最近 30 天里，至少 90% 的 tokens 集中在同一个项目。"
       },
       "models_3": {
         "title": "多模型试炼",
         "description": "累计使用过 3 个模型。"
       },
+      "models_5": {
+        "title": "五模型远征",
+        "description": "累计使用过 5 个不同模型。"
+      },
       "tools_2": {
         "title": "双工具协同",
         "description": "累计使用过 2 个 AI 工具来源。"
+      },
+      "tools_4": {
+        "title": "四工具协同",
+        "description": "累计使用过 4 个 AI 工具来源。"
       },
       "projects_5": {
         "title": "项目巡航",
         "description": "累计使用过 5 个项目。"
       },
+      "projects_15": {
+        "title": "十五项目漫游",
+        "description": "累计在 15 个项目中活跃。"
+      },
       "devices_2": {
         "title": "双端联动",
         "description": "累计在 2 台设备上活跃。"
+      },
+      "devices_3": {
+        "title": "三端通行",
+        "description": "累计在 3 台设备上活跃。"
       },
       "first_follow": {
         "title": "第一位关注",
         "description": "关注第一位公开建造者。"
       },
+      "following_10": {
+        "title": "关注十人",
+        "description": "关注 10 位公开建造者。"
+      },
       "first_follower": {
         "title": "第一位粉丝",
         "description": "获得第一位粉丝。"
       },
+      "followers_10": {
+        "title": "十位粉丝",
+        "description": "获得 10 位粉丝。"
+      },
       "mutual_3": {
         "title": "互关小队",
         "description": "达成 3 个互关关系。"
+      },
+      "mutual_10": {
+        "title": "互关矩阵",
+        "description": "达成 10 个互关关系。"
+      },
+      "leaderboard_day_top50": {
+        "title": "日榜前 50",
+        "description": "进入全站日榜总 token 排名前 50。"
+      },
+      "leaderboard_week_top50": {
+        "title": "周榜前 50",
+        "description": "进入全站周榜总 token 排名前 50。"
+      },
+      "leaderboard_month_top50": {
+        "title": "月榜前 50",
+        "description": "进入全站月榜总 token 排名前 50。"
+      },
+      "leaderboard_all_time_top100": {
+        "title": "名人堂",
+        "description": "进入全站总榜总 token 排名前 100。"
+      },
+      "leaderboard_all_time_top10": {
+        "title": "总榜十强",
+        "description": "进入全站总榜总 token 排名前 10。"
+      },
+      "leaderboard_all_time_first": {
+        "title": "全站第一",
+        "description": "登上全站总榜总 token 排名第 1。"
       }
     }
   }
