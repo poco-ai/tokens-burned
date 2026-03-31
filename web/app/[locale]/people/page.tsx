@@ -17,6 +17,7 @@ import {
 import { Link } from "@/i18n/navigation";
 import { getOptionalSession } from "@/lib/session";
 import {
+  countPublicProfiles,
   listFollowerProfiles,
   listFollowingProfiles,
   type SocialListProfile,
@@ -31,13 +32,15 @@ type PeoplePageProps = {
 
 type PeopleTab = "all" | "following" | "followers";
 
-const PAGE_SIZE = 5;
+const DEFAULT_PAGE_SIZE = 5;
+const MIN_PAGE_SIZE = 1;
+const MAX_PAGE_SIZE = 100;
 
 function buildPageRange(
   current: number,
   total: number,
 ): ({ type: "ellipsis"; key: string } | { type: "page"; value: number })[] {
-  if (total <= 7) {
+  if (total <= 5) {
     return Array.from({ length: total }, (_, i) => ({
       type: "page" as const,
       value: i + 1,
@@ -66,6 +69,23 @@ function buildPageRange(
 
 function firstValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function normalizePositiveInteger(value: string | undefined, fallback: number) {
+  const parsed = Number.parseInt(value ?? "", 10);
+
+  if (Number.isNaN(parsed) || parsed < 1) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+function normalizePageSize(value: string | undefined) {
+  return Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(MIN_PAGE_SIZE, normalizePositiveInteger(value, DEFAULT_PAGE_SIZE)),
+  );
 }
 
 function normalizePeopleTab(
@@ -132,30 +152,64 @@ export default async function PeoplePage({
     firstValue(resolvedSearchParams?.tab),
     Boolean(viewer),
   );
+  const sizeParam = firstValue(resolvedSearchParams?.size);
+  const pageSize = normalizePageSize(sizeParam);
   const pageParam = firstValue(resolvedSearchParams?.page);
-  const currentPage = Math.max(1, Number(pageParam ?? 1));
+  const currentPage = normalizePositiveInteger(pageParam, 1);
 
-  const allProfiles = await (async () => {
+  const peopleData = await (async () => {
     if (tab === "following" && viewer) {
-      return filterProfiles(await listFollowingProfiles(viewer.user.id), query);
+      const allProfiles = filterProfiles(
+        await listFollowingProfiles(viewer.user.id),
+        query,
+      );
+
+      return {
+        totalCount: allProfiles.length,
+        profiles: allProfiles,
+      };
     }
 
     if (tab === "followers" && viewer) {
-      return filterProfiles(await listFollowerProfiles(viewer.user.id), query);
+      const allProfiles = filterProfiles(
+        await listFollowerProfiles(viewer.user.id),
+        query,
+      );
+
+      return {
+        totalCount: allProfiles.length,
+        profiles: allProfiles,
+      };
     }
 
-    return searchPublicProfiles({
+    const totalCount = await countPublicProfiles({
       query,
       viewerUserId: viewer?.user.id ?? null,
     });
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    const validPage = Math.min(currentPage, totalPages);
+    const profiles = await searchPublicProfiles({
+      query,
+      viewerUserId: viewer?.user.id ?? null,
+      offset: (validPage - 1) * pageSize,
+      limit: pageSize,
+    });
+
+    return {
+      totalCount,
+      profiles,
+    };
   })();
 
-  const totalPages = Math.max(1, Math.ceil(allProfiles.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(peopleData.totalCount / pageSize));
   const validPage = Math.min(currentPage, totalPages);
-  const profiles = allProfiles.slice(
-    (validPage - 1) * PAGE_SIZE,
-    validPage * PAGE_SIZE,
-  );
+  const profiles =
+    tab === "all"
+      ? peopleData.profiles
+      : peopleData.profiles.slice(
+          (validPage - 1) * pageSize,
+          validPage * pageSize,
+        );
 
   const tabs: Array<{ value: PeopleTab; label: string }> = [
     { value: "all", label: t("title") },
@@ -175,6 +229,27 @@ export default async function PeoplePage({
         : t("empty");
   const isNetworkEmptyState = tab === "following" || tab === "followers";
 
+  function buildTabHref(nextTab: PeopleTab) {
+    const nextQuery: Record<string, string> = {};
+
+    if (nextTab !== "all") {
+      nextQuery.tab = nextTab;
+    }
+    if (query) {
+      nextQuery.query = query;
+    }
+    if (pageSize !== DEFAULT_PAGE_SIZE) {
+      nextQuery.size = pageSize.toString();
+    }
+
+    return Object.keys(nextQuery).length > 0
+      ? {
+          pathname: "/people",
+          query: nextQuery,
+        }
+      : "/people";
+  }
+
   function buildPageUrl(pageNum: number) {
     const params = new URLSearchParams();
     if (tab !== "all") {
@@ -183,12 +258,16 @@ export default async function PeoplePage({
     if (query) {
       params.set("query", query);
     }
+    if (pageSize !== DEFAULT_PAGE_SIZE) {
+      params.set("size", pageSize.toString());
+    }
     if (pageNum > 1) {
       params.set("page", pageNum.toString());
     }
 
     const queryString = params.toString();
-    return queryString ? `/people?${queryString}` : "/people";
+    const basePath = `/${locale}/people`;
+    return queryString ? `${basePath}?${queryString}` : basePath;
   }
 
   const pages = buildPageRange(validPage, totalPages);
@@ -217,18 +296,7 @@ export default async function PeoplePage({
             {tabs.map((item) => (
               <Link
                 key={item.value}
-                href={
-                  item.value === "all"
-                    ? query
-                      ? { pathname: "/people", query: { query } }
-                      : "/people"
-                    : query
-                      ? {
-                          pathname: "/people",
-                          query: { tab: item.value, query },
-                        }
-                      : { pathname: "/people", query: { tab: item.value } }
-                }
+                href={buildTabHref(item.value)}
                 aria-current={tab === item.value ? "page" : undefined}
                 className={cn(
                   "inline-flex items-center border-b-2 border-transparent py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground",
@@ -243,6 +311,9 @@ export default async function PeoplePage({
           <form className="flex flex-col gap-2 sm:flex-row">
             {tab !== "all" ? (
               <input type="hidden" name="tab" value={tab} />
+            ) : null}
+            {pageSize !== DEFAULT_PAGE_SIZE ? (
+              <input type="hidden" name="size" value={pageSize} />
             ) : null}
             <Input
               type="search"
@@ -279,50 +350,126 @@ export default async function PeoplePage({
                 />
               ))}
             </div>
-            {totalPages > 1 && (
-              <div className="flex justify-center">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        href={buildPageUrl(validPage - 1)}
-                        className={
-                          validPage <= 1
-                            ? "pointer-events-none opacity-50"
-                            : undefined
-                        }
-                      />
-                    </PaginationItem>
-                    {pages.map((p) =>
-                      p.type === "ellipsis" ? (
-                        <PaginationItem key={p.key}>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      ) : (
-                        <PaginationItem key={p.value}>
-                          <PaginationLink
-                            href={buildPageUrl(p.value)}
-                            isActive={p.value === validPage}
-                          >
-                            {p.value}
-                          </PaginationLink>
-                        </PaginationItem>
-                      ),
-                    )}
-                    <PaginationItem>
-                      <PaginationNext
-                        href={buildPageUrl(validPage + 1)}
-                        className={
-                          validPage >= totalPages
-                            ? "pointer-events-none opacity-50"
-                            : undefined
-                        }
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            )}
+            <div
+              className={cn(
+                "border-t border-border/60 pt-4",
+                totalPages > 1
+                  ? "grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center"
+                  : "flex justify-end",
+              )}
+            >
+              {totalPages > 1 ? (
+                <>
+                  <div aria-hidden className="hidden sm:block" />
+                  <Pagination className="mx-0 w-auto sm:justify-self-center">
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationLink
+                          href={buildPageUrl(1)}
+                          size="default"
+                          aria-label={t("pagination.first")}
+                          className={
+                            validPage <= 1
+                              ? "pointer-events-none opacity-50"
+                              : undefined
+                          }
+                        >
+                          {t("pagination.first")}
+                        </PaginationLink>
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href={buildPageUrl(validPage - 1)}
+                          text={t("pagination.previous")}
+                          className={
+                            validPage <= 1
+                              ? "pointer-events-none opacity-50"
+                              : undefined
+                          }
+                        />
+                      </PaginationItem>
+                      {pages.map((p) =>
+                        p.type === "ellipsis" ? (
+                          <PaginationItem key={p.key}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        ) : (
+                          <PaginationItem key={p.value}>
+                            <PaginationLink
+                              href={buildPageUrl(p.value)}
+                              isActive={p.value === validPage}
+                            >
+                              {p.value}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ),
+                      )}
+                      <PaginationItem>
+                        <PaginationNext
+                          href={buildPageUrl(validPage + 1)}
+                          text={t("pagination.next")}
+                          className={
+                            validPage >= totalPages
+                              ? "pointer-events-none opacity-50"
+                              : undefined
+                          }
+                        />
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationLink
+                          href={buildPageUrl(totalPages)}
+                          size="default"
+                          aria-label={t("pagination.last")}
+                          className={
+                            validPage >= totalPages
+                              ? "pointer-events-none opacity-50"
+                              : undefined
+                          }
+                        >
+                          {t("pagination.last")}
+                        </PaginationLink>
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </>
+              ) : null}
+
+              <form
+                className={cn(
+                  "flex flex-wrap items-center gap-2",
+                  totalPages > 1
+                    ? "justify-center sm:justify-self-end"
+                    : "justify-end",
+                )}
+              >
+                {tab !== "all" ? (
+                  <input type="hidden" name="tab" value={tab} />
+                ) : null}
+                {query ? (
+                  <input type="hidden" name="query" value={query} />
+                ) : null}
+                <label
+                  htmlFor="people-page-size"
+                  className="text-sm text-muted-foreground"
+                >
+                  {t("pagination.pageSize")}
+                </label>
+                <Input
+                  id="people-page-size"
+                  type="number"
+                  name="size"
+                  min={MIN_PAGE_SIZE}
+                  max={MAX_PAGE_SIZE}
+                  step={1}
+                  inputMode="numeric"
+                  defaultValue={pageSize}
+                  className="h-7 w-20 rounded-md px-2 text-sm"
+                />
+                <Button type="submit" variant="outline" size="sm">
+                  {t("pagination.apply")}
+                </Button>
+              </form>
+            </div>
           </div>
         ) : (
           <Card

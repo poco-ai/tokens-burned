@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { LeaderboardMetricSelect } from "@/components/social/leaderboard-metric-select";
-import { LeaderboardPrivateNotice } from "@/components/social/leaderboard-private-notice";
+import { LeaderboardPublicProfileButton } from "@/components/social/leaderboard-private-notice";
 import { LeaderboardTable } from "@/components/social/leaderboard-table";
 import { LeaderboardTagSelect } from "@/components/social/leaderboard-tag-select";
 import { SocialShell } from "@/components/social/social-shell";
@@ -133,11 +133,6 @@ export default async function LeaderboardPage({
           tag: tTags(`options.${followTag}`),
         });
 
-  const viewerSummary =
-    viewer && data.viewerPublicProfileEnabled === false ? (
-      <LeaderboardPrivateNotice />
-    ) : null;
-
   return (
     <SocialShell
       locale={locale}
@@ -194,14 +189,22 @@ export default async function LeaderboardPage({
             />
           </div>
         </div>
-
-        {viewerSummary}
-
         <LeaderboardTable
           locale={locale}
           title={t("globalTitle")}
           emptyLabel={t("emptyGlobal")}
           entries={data.global.entries}
+          viewerEntry={data.viewerGlobalEntry}
+          viewerNotice={
+            viewer && data.viewerPublicProfileEnabled === false
+              ? {
+                  name: viewer.user.name,
+                  username: viewer.user.username,
+                  message: t("privateRankUnavailable"),
+                  action: <LeaderboardPublicProfileButton />,
+                }
+              : null
+          }
           labels={{
             rank: t("table.rank"),
             user: t("table.user"),

@@ -543,6 +543,7 @@ export async function searchPublicProfiles(input: {
   query?: string;
   viewerUserId?: string | null;
   limit?: number;
+  offset?: number;
 }) {
   const query = input.query?.trim();
   const users = await prisma.user.findMany({
@@ -591,7 +592,8 @@ export async function searchPublicProfiles(input: {
       ],
     },
     orderBy: query ? { username: "asc" } : { createdAt: "desc" },
-    take: input.limit ?? (query ? 50 : 24),
+    skip: input.offset ?? 0,
+    take: input.limit,
     select: profileUserSelect,
   });
 
@@ -650,6 +652,60 @@ export async function searchPublicProfiles(input: {
       input.viewerUserId,
     ),
   );
+}
+
+export async function countPublicProfiles(input: {
+  query?: string;
+  viewerUserId?: string | null;
+}) {
+  const query = input.query?.trim();
+
+  return prisma.user.count({
+    where: {
+      AND: [
+        input.viewerUserId
+          ? {
+              OR: [
+                {
+                  usagePreference: {
+                    is: {
+                      publicProfileEnabled: true,
+                    },
+                  },
+                },
+                {
+                  id: input.viewerUserId,
+                },
+              ],
+            }
+          : {
+              usagePreference: {
+                is: {
+                  publicProfileEnabled: true,
+                },
+              },
+            },
+        query
+          ? {
+              OR: [
+                {
+                  username: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  name: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            }
+          : {},
+      ],
+    },
+  });
 }
 
 export async function listFollowingProfiles(viewerUserId: string) {

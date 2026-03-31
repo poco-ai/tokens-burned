@@ -254,6 +254,57 @@ function buildUserUsageAggregates(
   return aggregates;
 }
 
+function hasMetricValue(
+  summary: Pick<LeaderboardEntrySummary, "estimatedCostUsd" | "totalTokens">,
+  metric: LeaderboardMetric,
+) {
+  return metric === "estimated_cost"
+    ? summary.estimatedCostUsd > 0
+    : summary.totalTokens > 0;
+}
+
+function compareLeaderboardSummaries(
+  left: Pick<
+    LeaderboardEntrySummary,
+    "estimatedCostUsd" | "totalTokens" | "userId"
+  >,
+  right: Pick<
+    LeaderboardEntrySummary,
+    "estimatedCostUsd" | "totalTokens" | "userId"
+  >,
+  metric: LeaderboardMetric,
+) {
+  const metricDiff =
+    metric === "estimated_cost"
+      ? right.estimatedCostUsd - left.estimatedCostUsd
+      : right.totalTokens - left.totalTokens;
+
+  if (metricDiff !== 0) {
+    return metricDiff;
+  }
+
+  if (right.totalTokens !== left.totalTokens) {
+    return right.totalTokens - left.totalTokens;
+  }
+
+  return left.userId.localeCompare(right.userId);
+}
+
+function rankLeaderboardSummaries(
+  summaries: LeaderboardEntrySummary[],
+  metric: LeaderboardMetric,
+  limit: number,
+) {
+  return summaries
+    .filter((summary) => hasMetricValue(summary, metric))
+    .sort((left, right) => compareLeaderboardSummaries(left, right, metric))
+    .slice(0, limit)
+    .map((summary, index) => ({
+      ...summary,
+      rank: index + 1,
+    }));
+}
+
 async function getEstimatedCostMapForUsers(
   userIds: string[],
   window: LeaderboardWindow,
@@ -335,46 +386,20 @@ function rankSummaries(
   metric: LeaderboardMetric,
   limit: number,
 ) {
-  const summaries = Array.from(aggregates)
-    .map((aggregate) => ({
-      rank: 0,
-      userId: aggregate.userId,
-      inputTokens: aggregate.inputTokens,
-      outputTokens: aggregate.outputTokens,
-      reasoningTokens: aggregate.reasoningTokens,
-      cachedTokens: aggregate.cachedTokens,
-      totalTokens: aggregate.totalTokens,
-      estimatedCostUsd: aggregate.estimatedCostUsd,
-      activeSeconds: statsMap.get(aggregate.userId)?.activeSeconds ?? 0,
-      sessions: statsMap.get(aggregate.userId)?.sessions ?? 0,
-    }))
-    .filter((summary) =>
-      metric === "estimated_cost"
-        ? summary.estimatedCostUsd > 0
-        : summary.totalTokens > 0,
-    )
-    .sort((left, right) => {
-      const metricDiff =
-        metric === "estimated_cost"
-          ? right.estimatedCostUsd - left.estimatedCostUsd
-          : right.totalTokens - left.totalTokens;
-
-      if (metricDiff !== 0) {
-        return metricDiff;
-      }
-
-      if (right.totalTokens !== left.totalTokens) {
-        return right.totalTokens - left.totalTokens;
-      }
-
-      return left.userId.localeCompare(right.userId);
-    })
-    .slice(0, limit);
-
-  return summaries.map((summary, index) => ({
-    ...summary,
-    rank: index + 1,
+  const summaries = Array.from(aggregates).map((aggregate) => ({
+    rank: 0,
+    userId: aggregate.userId,
+    inputTokens: aggregate.inputTokens,
+    outputTokens: aggregate.outputTokens,
+    reasoningTokens: aggregate.reasoningTokens,
+    cachedTokens: aggregate.cachedTokens,
+    totalTokens: aggregate.totalTokens,
+    estimatedCostUsd: aggregate.estimatedCostUsd,
+    activeSeconds: statsMap.get(aggregate.userId)?.activeSeconds ?? 0,
+    sessions: statsMap.get(aggregate.userId)?.sessions ?? 0,
   }));
+
+  return rankLeaderboardSummaries(summaries, metric, limit);
 }
 
 async function hydrateEntries(
@@ -618,6 +643,7 @@ async function ensureGlobalSnapshot(period: LeaderboardPeriod, now: Date) {
 async function getGlobalCostRankedSummaries(
   period: LeaderboardPeriod,
   now: Date,
+  limit = LEADERBOARD_PAGE_LIMIT,
 ) {
   const window = resolveLeaderboardWindow(period, now);
   const [catalog, groupedRows] = await Promise.all([
@@ -657,7 +683,7 @@ async function getGlobalCostRankedSummaries(
       aggregates.values(),
       statsMap,
       "estimated_cost",
-      LEADERBOARD_PAGE_LIMIT,
+      limit,
     ),
   };
 }
@@ -729,6 +755,72 @@ async function getFollowingCostRankedSummaries(input: {
       LEADERBOARD_PAGE_LIMIT,
     ),
   };
+}
+
+async function getGlobalViewerRankSummary(input: {
+  period: LeaderboardPeriod;
+  metric: LeaderboardMetric;
+  viewerUserId: string;
+  now: Date;
+}) {
+  if (input.metric === "estimated_cost") {
+    const { summaries, window } = await getGlobalCostRankedSummaries(
+      input.period,
+      input.now,
+      Number.MAX_SAFE_INTEGER,
+    );
+    const summary = summaries.find(
+      (entry) => entry.userId === input.viewerUserId,
+    );
+
+    return summary ? { summary, window } : null;
+  }
+
+  const window = resolveLeaderboardWindow(input.period, input.now);
+  const rows = await prisma.leaderboardUserDay.groupBy({
+    by: ["userId"],
+    where: {
+      ...buildWindowWhere(window),
+      user: {
+        usagePreference: {
+          is: {
+            publicProfileEnabled: true,
+          },
+        },
+      },
+    },
+    _sum: {
+      inputTokens: true,
+      outputTokens: true,
+      reasoningTokens: true,
+      cachedTokens: true,
+      totalTokens: true,
+      activeSeconds: true,
+      sessions: true,
+    },
+  });
+
+  const summaries = rankLeaderboardSummaries(
+    rows.map((row) => ({
+      rank: 0,
+      userId: row.userId,
+      inputTokens: coerceInt(row._sum.inputTokens),
+      outputTokens: coerceInt(row._sum.outputTokens),
+      reasoningTokens: coerceInt(row._sum.reasoningTokens),
+      cachedTokens: coerceInt(row._sum.cachedTokens),
+      totalTokens: coerceInt(row._sum.totalTokens),
+      estimatedCostUsd: 0,
+      activeSeconds: coerceInt(row._sum.activeSeconds),
+      sessions: coerceInt(row._sum.sessions),
+    })),
+    "total_tokens",
+    Number.MAX_SAFE_INTEGER,
+  );
+  const summary = summaries.find(
+    (entry) => entry.userId === input.viewerUserId,
+  );
+
+  return summary ? { summary, window } : null;
 }
 
 export async function getGlobalLeaderboard(input: {
@@ -914,10 +1006,36 @@ export async function getLeaderboardPageData(input: {
         })
       : Promise.resolve(null),
   ]);
+  const viewerGlobalEntry =
+    input.viewerUserId &&
+    viewerPreference?.publicProfileEnabled &&
+    global.entries.every((entry) => entry.userId !== input.viewerUserId)
+      ? await (async () => {
+          const rankedViewer = await getGlobalViewerRankSummary({
+            period: input.period,
+            metric: input.metric,
+            viewerUserId: input.viewerUserId,
+            now,
+          });
+
+          if (!rankedViewer) {
+            return null;
+          }
+
+          const [entry] = await hydrateEntries(
+            [rankedViewer.summary],
+            rankedViewer.window,
+            input.viewerUserId,
+          );
+
+          return entry ?? null;
+        })()
+      : null;
 
   return {
     global,
     following,
+    viewerGlobalEntry,
     viewerPublicProfileEnabled: viewerPreference?.publicProfileEnabled ?? null,
   };
 }

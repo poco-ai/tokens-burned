@@ -44,5 +44,6 @@ export type LeaderboardDataset = {
 export type LeaderboardPageData = {
   global: LeaderboardDataset;
   following: LeaderboardDataset | null;
+  viewerGlobalEntry: LeaderboardEntry | null;
   viewerPublicProfileEnabled: boolean | null;
 };

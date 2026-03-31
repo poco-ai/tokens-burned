@@ -3,13 +3,19 @@
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "@/i18n/navigation";
 import { emitPreferenceSavedNotice } from "@/lib/usage/preference-notice";
+import { cn } from "@/lib/utils";
 
-export function LeaderboardPrivateNotice() {
+type LeaderboardPublicProfileButtonProps = {
+  className?: string;
+};
+
+export function LeaderboardPublicProfileButton({
+  className,
+}: LeaderboardPublicProfileButtonProps) {
   const t = useTranslations("social.leaderboard");
   const tSettings = useTranslations("usage.settings");
   const router = useRouter();
@@ -54,13 +60,32 @@ export function LeaderboardPrivateNotice() {
   }
 
   return (
+    <div className={cn("flex flex-col items-end gap-1", className)}>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="shrink-0"
+        disabled={pending}
+        aria-busy={pending}
+        onClick={() => void enablePublicProfile()}
+      >
+        {pending ? (
+          <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
+        ) : null}
+        {t("enablePublicProfile")}
+      </Button>
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+    </div>
+  );
+}
+
+export function LeaderboardPrivateNotice() {
+  const t = useTranslations("social.leaderboard");
+
+  return (
     <Card className="border-dashed shadow-sm ring-1 ring-border/60">
       <CardContent className="flex flex-col gap-3 py-4">
-        {error ? (
-          <Alert variant="destructive" className="border-destructive/20">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
         <div className="flex flex-row items-center justify-between gap-4">
           <div className="min-w-0 flex-1 space-y-1">
             <div className="text-sm font-medium">{t("privateNoticeTitle")}</div>
@@ -68,20 +93,7 @@ export function LeaderboardPrivateNotice() {
               {t("privateNoticeDescription")}
             </p>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="shrink-0"
-            disabled={pending}
-            aria-busy={pending}
-            onClick={() => void enablePublicProfile()}
-          >
-            {pending ? (
-              <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />
-            ) : null}
-            {t("enablePublicProfile")}
-          </Button>
+          <LeaderboardPublicProfileButton />
         </div>
       </CardContent>
     </Card>

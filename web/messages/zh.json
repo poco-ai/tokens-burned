@@ -540,7 +540,15 @@
       "searchPlaceholder": "按用户名或名称搜索",
       "allPublic": "当前展示公开主页",
       "results": "{count} 条结果",
-      "empty": "没有找到公开主页。"
+      "empty": "没有找到公开主页。",
+      "pagination": {
+        "pageSize": "每页条数",
+        "apply": "应用",
+        "first": "首页",
+        "last": "尾页",
+        "previous": "上一页",
+        "next": "下一页"
+      }
     },
     "network": {
       "followingTitle": "关注中",
@@ -580,6 +588,7 @@
       "emptyFollowing": "你的关注网络里在这个窗口内还没有排行榜数据。",
       "privateNoticeTitle": "你的主页还没有进入全站排行榜",
       "privateNoticeDescription": "如果你希望自己的使用数据出现在公开榜单里，请点击右侧按钮或在设置页面开启公开主页。",
+      "privateRankUnavailable": "主页未公开，无法进行排名",
       "enablePublicProfile": "公开主页",
       "signInTitle": "登录后查看关注排行榜",
       "signInDescription": "关注榜是个性化视图，登录后才会展示。",

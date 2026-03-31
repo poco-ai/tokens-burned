@@ -540,7 +540,15 @@
       "searchPlaceholder": "Search by username or name",
       "allPublic": "Showing public profiles",
       "results": "{count} results",
-      "empty": "No public profiles found."
+      "empty": "No public profiles found.",
+      "pagination": {
+        "pageSize": "Per page",
+        "apply": "Apply",
+        "first": "First",
+        "last": "Last",
+        "previous": "Previous",
+        "next": "Next"
+      }
     },
     "network": {
       "followingTitle": "Following",
@@ -580,6 +588,7 @@
       "emptyFollowing": "No one in your network has leaderboard activity in this window yet.",
       "privateNoticeTitle": "Your profile is hidden from the global leaderboard",
       "privateNoticeDescription": "Click the button on the right or enable Public profile in Settings on the dashboard if you want your usage to appear in the public rankings.",
+      "privateRankUnavailable": "Profile is private and cannot be ranked.",
       "enablePublicProfile": "Public profile",
       "signInTitle": "Sign in for a network leaderboard",
       "signInDescription": "Your following leaderboard is personalized and only appears after you sign in.",
