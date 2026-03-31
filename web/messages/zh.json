@@ -588,6 +588,7 @@
       "emptyFollowing": "你的关注网络里在这个窗口内还没有排行榜数据。",
       "privateNoticeTitle": "你的主页还没有进入全站排行榜",
       "privateNoticeDescription": "如果你希望自己的使用数据出现在公开榜单里，请点击右侧按钮或在设置页面开启公开主页。",
+      "privateRankUnavailable": "主页未公开，无法进行排名",
       "enablePublicProfile": "公开主页",
       "signInTitle": "登录后查看关注排行榜",
       "signInDescription": "关注榜是个性化视图，登录后才会展示。",
