@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { FollowButton } from "@/components/social/follow-button";
+import { ProfileArenaLevelBar } from "@/components/social/profile-arena-level";
 import { ProfileHeatmap } from "@/components/social/profile-heatmap";
 import { ProfileTopList } from "@/components/social/profile-top-list";
 import { SocialShell } from "@/components/social/social-shell";
@@ -77,9 +78,9 @@ export default async function PublicProfilePage({
           : null
       }
     >
-      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-stretch">
-        <aside className="lg:col-start-1 lg:row-start-1">
-          <Card className="h-full bg-card shadow-sm ring-1 ring-border/60">
+      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+        <aside className="min-w-0">
+          <Card className="bg-card shadow-sm ring-1 ring-border/60">
             <CardContent className="space-y-4 py-4">
               <div className="space-y-3">
                 {profile.image ? (
@@ -125,24 +126,40 @@ export default async function PublicProfilePage({
                 ) : null}
               </div>
 
-              <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-                <span>
-                  {profile.followerCount.toLocaleString(locale)}{" "}
-                  {t("followers")}
-                </span>
-                <span>·</span>
-                <span>
-                  {profile.followingCount.toLocaleString(locale)}{" "}
-                  {t("following")}
-                </span>
+              <ProfileArenaLevelBar
+                locale={locale}
+                score={profile.overview.arenaScore}
+              />
+
+              <div className="grid grid-cols-3 gap-2 border-t border-border/50 pt-4 text-center">
+                <div className="space-y-0.5">
+                  <div className="text-lg font-semibold tabular-nums leading-none text-foreground">
+                    {profile.followingCount.toLocaleString(locale)}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {t("following")}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-lg font-semibold tabular-nums leading-none text-foreground">
+                    {profile.followerCount.toLocaleString(locale)}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {t("followers")}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-lg font-semibold tabular-nums leading-none text-foreground">
+                    {profile.overview.activeDays.toLocaleString(locale)}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {t("activeDays")}
+                  </div>
+                </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                {profile.isSelf ? (
-                  <Button asChild type="button" size="sm">
-                    <Link href="/usage">{t("goToDashboard")}</Link>
-                  </Button>
-                ) : (
+              {!profile.isSelf ? (
+                <div className="flex flex-wrap gap-2">
                   <FollowButton
                     locale={locale}
                     username={profile.username}
@@ -151,143 +168,134 @@ export default async function PublicProfilePage({
                     isAuthenticated={Boolean(viewer)}
                     canFollow={profile.publicProfileEnabled}
                   />
-                )}
-              </div>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </aside>
 
-        <Card className="h-full bg-card shadow-sm ring-1 ring-border/60 lg:col-start-2 lg:row-start-1">
-          <CardHeader className="border-b border-border/50 pb-3">
-            <CardTitle>
-              {t("activityTitle")}
-              <span className="ml-2 font-normal text-muted-foreground">
-                {t("activitySubtitle")}
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-1 flex-col justify-center gap-4 pt-4">
-            {hasActivity ? null : (
-              <p className="text-sm text-muted-foreground">{t("noActivity")}</p>
-            )}
-            <ProfileHeatmap
-              locale={locale}
-              days={profile.heatmap}
-              lessLabel={t("less")}
-              moreLabel={t("more")}
-            />
-          </CardContent>
-        </Card>
-
-        {profile.isSelf && !profile.publicProfileEnabled ? (
-          <Card className="border-dashed bg-card ring-1 ring-border/60 lg:col-start-2">
-            <CardContent className="space-y-2 py-1">
-              <div className="text-sm font-medium">
-                {t("privateBannerTitle")}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {t("privateBannerDescription")}
-              </p>
-              <Button asChild type="button" variant="outline" size="sm">
-                <Link href="/usage">{t("goToDashboard")}</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5 lg:col-start-2">
-          <Card className="bg-card shadow-sm ring-1 ring-border/60">
-            <CardHeader className="pb-1">
-              <CardTitle className="text-sm text-muted-foreground">
-                {t("totalTokens")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pb-1">
-              <div className="text-xl font-semibold">
-                {formatTokenCount(profile.overview.totalTokens)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card shadow-sm ring-1 ring-border/60">
-            <CardHeader className="pb-1">
-              <CardTitle className="text-sm text-muted-foreground">
-                {t("estimatedCost")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pb-1">
-              <div className="text-xl font-semibold">
-                {formatUsdAmount(profile.overview.estimatedCostUsd, locale)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card shadow-sm ring-1 ring-border/60">
-            <CardHeader className="pb-1">
-              <CardTitle className="text-sm text-muted-foreground">
-                {t("activeTime")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pb-1">
-              <div className="text-xl font-semibold">
-                {formatDuration(profile.overview.activeSeconds)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card shadow-sm ring-1 ring-border/60">
-            <CardHeader className="pb-1">
-              <CardTitle className="text-sm text-muted-foreground">
-                {t("sessions")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pb-1">
-              <div className="text-xl font-semibold">
-                {profile.overview.sessions.toLocaleString(locale)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card shadow-sm ring-1 ring-border/60">
-            <CardHeader className="pb-1">
-              <CardTitle className="text-sm text-muted-foreground">
-                {t("activeDays")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pb-1">
-              <div className="text-xl font-semibold">
-                {profile.overview.activeDays.toLocaleString(locale)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-2 lg:col-start-2">
+        <div className="flex min-w-0 flex-col gap-6">
           <Card className="bg-card shadow-sm ring-1 ring-border/60">
             <CardHeader className="border-b border-border/50 pb-3">
-              <CardTitle>{t("topTools")}</CardTitle>
+              <CardTitle>
+                {t("activityTitle")}
+                <span className="ml-2 font-normal text-muted-foreground">
+                  {t("activitySubtitle")}
+                </span>
+              </CardTitle>
             </CardHeader>
-            <CardContent className="pt-4">
-              <ProfileTopList
+            <CardContent className="flex flex-col gap-4 pt-4">
+              {hasActivity ? null : (
+                <p className="text-sm text-muted-foreground">
+                  {t("noActivity")}
+                </p>
+              )}
+              <ProfileHeatmap
                 locale={locale}
-                items={profile.topTools}
-                emptyLabel={t("noTopTools")}
+                days={profile.heatmap}
+                lessLabel={t("less")}
+                moreLabel={t("more")}
               />
             </CardContent>
           </Card>
 
-          <Card className="bg-card shadow-sm ring-1 ring-border/60">
-            <CardHeader className="border-b border-border/50 pb-3">
-              <CardTitle>{t("topModels")}</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <ProfileTopList
-                locale={locale}
-                items={profile.topModels}
-                emptyLabel={t("noTopModels")}
-              />
-            </CardContent>
-          </Card>
+          {profile.isSelf && !profile.publicProfileEnabled ? (
+            <Card className="border-dashed bg-card ring-1 ring-border/60">
+              <CardContent className="space-y-2 py-1">
+                <div className="text-sm font-medium">
+                  {t("privateBannerTitle")}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t("privateBannerDescription")}
+                </p>
+                <Button asChild type="button" variant="outline" size="sm">
+                  <Link href="/usage">{t("goToDashboard")}</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-4">
+            <Card className="bg-card shadow-sm ring-1 ring-border/60">
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm text-muted-foreground">
+                  {t("totalTokens")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-1">
+                <div className="text-xl font-semibold">
+                  {formatTokenCount(profile.overview.totalTokens)}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card shadow-sm ring-1 ring-border/60">
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm text-muted-foreground">
+                  {t("estimatedCost")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-1">
+                <div className="text-xl font-semibold">
+                  {formatUsdAmount(profile.overview.estimatedCostUsd, locale)}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card shadow-sm ring-1 ring-border/60">
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm text-muted-foreground">
+                  {t("activeTime")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-1">
+                <div className="text-xl font-semibold">
+                  {formatDuration(profile.overview.activeSeconds)}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card shadow-sm ring-1 ring-border/60">
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm text-muted-foreground">
+                  {t("sessions")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pb-1">
+                <div className="text-xl font-semibold">
+                  {profile.overview.sessions.toLocaleString(locale)}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <Card className="bg-card shadow-sm ring-1 ring-border/60">
+              <CardHeader className="border-b border-border/50 pb-3">
+                <CardTitle>{t("topTools")}</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <ProfileTopList
+                  locale={locale}
+                  items={profile.topTools}
+                  emptyLabel={t("noTopTools")}
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card shadow-sm ring-1 ring-border/60">
+              <CardHeader className="border-b border-border/50 pb-3">
+                <CardTitle>{t("topModels")}</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <ProfileTopList
+                  locale={locale}
+                  items={profile.topModels}
+                  emptyLabel={t("noTopModels")}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </SocialShell>

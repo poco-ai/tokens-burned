@@ -1,3 +1,4 @@
+import { getAchievementArenaSummary } from "@/lib/achievements/queries";
 import { normalizeUsername } from "@/lib/auth-username";
 import { getPricingCatalog } from "@/lib/pricing/catalog";
 import {
@@ -92,6 +93,8 @@ export type PublicProfilePageData = {
   followsYou: boolean;
   isSelf: boolean;
   overview: {
+    arenaScore: number;
+    arenaLevel: number;
     totalTokens: number;
     estimatedCostUsd: number;
     activeSeconds: number;
@@ -434,6 +437,7 @@ export async function getPublicProfilePageData(input: {
     buckets365,
     sessions30,
     buckets30,
+    arenaSummary,
   ] = await Promise.all([
     getPricingCatalog(),
     getRelationFlags(input.viewerUserId, user.id),
@@ -495,6 +499,7 @@ export async function getPublicProfilePageData(input: {
         totalTokens: true,
       },
     }),
+    getAchievementArenaSummary(user.id),
   ]);
 
   const heatmap = buildHeatmap(timezone, sessions365, buckets365);
@@ -518,6 +523,8 @@ export async function getPublicProfilePageData(input: {
     followsYou: relationFlags.followsYou,
     isSelf,
     overview: {
+      arenaScore: arenaSummary.score,
+      arenaLevel: arenaSummary.level,
       totalTokens: buckets30.reduce(
         (sum, bucket) => sum + bucket.totalTokens,
         0,

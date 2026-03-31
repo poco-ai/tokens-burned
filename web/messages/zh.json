@@ -504,11 +504,15 @@
       "signIn": "登录",
       "register": "注册",
       "leaderboard": "排行榜",
-      "openSourceGitHub": "在 GitHub 上查看开源仓库"
+      "openSourceGitHub": "在 GitHub 上查看开源仓库",
+      "achievements": "成就"
     },
     "profile": {
       "activityTitle": "AI 编程活跃度",
       "activitySubtitle": "过去 365 天",
+      "arenaScore": "Arena Score",
+      "arenaLevel": "等级",
+      "arenaProgressCaption": "当前分数 {score}，距离 Lv.{nextLevel} 还需 {remaining}",
       "totalTokens": "总 Tokens",
       "estimatedCost": "预估费用",
       "activeTime": "活跃时长",
@@ -614,6 +618,319 @@
         "friend": "朋友",
         "peer": "同行",
         "inspiration": "灵感"
+      }
+    }
+  },
+  "achievements": {
+    "page": {
+      "description": "成就徽章与里程碑。",
+      "empty": "还没有解锁成就。先同步一次使用数据，第一页就会开始亮起来。",
+      "overview": {
+        "score": "Arena Score",
+        "level": "等级",
+        "streak": "连续活跃",
+        "activeDays": "活跃天数",
+        "featured": "代表徽章",
+        "recent": "最近解锁",
+        "nextTargets": "即将解锁",
+        "currentPersona": "当前 Persona",
+        "noPersona": "开始同步后自动识别",
+        "unlocked": "已解锁",
+        "noFeatured": "再同步几次，代表徽章会出现在这里。",
+        "noRecent": "还没有最近解锁。",
+        "noNextTargets": "当前没有可追踪的目标。"
+      },
+      "card": {
+        "unlocked": "已解锁",
+        "locked": "未解锁",
+        "unlockedOn": "解锁于",
+        "progress": "进度"
+      },
+      "tiers": {
+        "bronze": "铜",
+        "silver": "银",
+        "gold": "金",
+        "special": "特别"
+      }
+    },
+    "sections": {
+      "activation": {
+        "title": "激活",
+        "description": "完成关键动作，让账号进入成就循环。"
+      },
+      "consistency": {
+        "title": "坚持",
+        "description": "奖励连续活跃与长期稳定输出。"
+      },
+      "volume": {
+        "title": "产量",
+        "description": "会话数、token 与活跃时长等累计里程碑。"
+      },
+      "spend": {
+        "title": "花费",
+        "description": "按官方定价估算的累计 API 花费（美元）里程碑。"
+      },
+      "craft": {
+        "title": "技巧",
+        "description": "识别你的工作方式、推理强度与项目专注度。"
+      },
+      "exploration": {
+        "title": "探索",
+        "description": "鼓励你尝试更多模型、工具、项目与设备。"
+      },
+      "social": {
+        "title": "社交",
+        "description": "关注关系与互关网络都会形成身份感。"
+      },
+      "leaderboard": {
+        "title": "排行榜",
+        "description": "在全站 token 排行榜（日、周、月与总榜）上达成名次里程碑。"
+      }
+    },
+    "notification": {
+      "button": "打开成就通知",
+      "title": "成就通知",
+      "description": "最近解锁、当前 Persona 与距离最近的目标都会汇总在这里。",
+      "score": "积分",
+      "level": "等级",
+      "streak": "连击",
+      "persona": "当前 Persona",
+      "noPersona": "还没有足够数据",
+      "recentUnlocks": "最近解锁",
+      "emptyRecent": "还没有近期解锁，先去同步或多活跃几天。",
+      "nextTargets": "下一批目标",
+      "viewAll": "查看全部成就",
+      "error": "成就数据加载失败，请稍后再试。",
+      "emptyNextTargets": "当前没有更近的目标了，继续保持节奏。"
+    },
+    "items": {
+      "first_sync": {
+        "title": "数据第一次回家",
+        "description": "第一次把本地使用数据成功同步到 Token Arena。"
+      },
+      "sessions_1": {
+        "title": "首局，开整",
+        "description": "累计完成第 1 个会话。"
+      },
+      "streak_3": {
+        "title": "三天不断电",
+        "description": "连续活跃 3 天。"
+      },
+      "streak_7": {
+        "title": "一周打卡王",
+        "description": "连续活跃 7 天。"
+      },
+      "streak_14": {
+        "title": "半月肝帝",
+        "description": "连续活跃 14 天。"
+      },
+      "streak_30": {
+        "title": "满月战士",
+        "description": "连续活跃 30 天。"
+      },
+      "active_days_7": {
+        "title": "七日练习生",
+        "description": "累计活跃 7 天。"
+      },
+      "active_days_30": {
+        "title": "稳定上分中",
+        "description": "累计活跃 30 天。"
+      },
+      "active_days_100": {
+        "title": "百日筑基",
+        "description": "累计活跃 100 天。"
+      },
+      "active_days_365": {
+        "title": "年卡用户（真）",
+        "description": "累计活跃 365 天。"
+      },
+      "sessions_200": {
+        "title": "已经上头了",
+        "description": "累计完成 200 个会话。"
+      },
+      "sessions_1k": {
+        "title": "千场老兵",
+        "description": "累计完成 1,000 个会话。"
+      },
+      "sessions_5k": {
+        "title": "会话海王",
+        "description": "累计完成 5,000 个会话。"
+      },
+      "sessions_20k": {
+        "title": "对话框战神",
+        "description": "累计完成 20,000 个会话。"
+      },
+      "sessions_100k": {
+        "title": "主线通关",
+        "description": "累计完成 100,000 个会话。"
+      },
+      "spend_usd_100": {
+        "title": "小额试水",
+        "description": "累计估算 API 花费达到 $100。"
+      },
+      "spend_usd_1k": {
+        "title": "氪金入门",
+        "description": "累计估算 API 花费达到 $1,000。"
+      },
+      "spend_usd_5k": {
+        "title": "钱包开始认真",
+        "description": "累计估算 API 花费达到 $5,000。"
+      },
+      "spend_usd_20k": {
+        "title": "地主家有余粮",
+        "description": "累计估算 API 花费达到 $20,000。"
+      },
+      "spend_usd_100k": {
+        "title": "吞金巨兽",
+        "description": "累计估算 API 花费达到 $100,000。"
+      },
+      "tokens_100k": {
+        "title": "先烧十万试试水",
+        "description": "累计消耗 100K tokens。"
+      },
+      "tokens_1m": {
+        "title": "百万厨力放出",
+        "description": "累计消耗 1M tokens。"
+      },
+      "tokens_10m": {
+        "title": "显卡在微笑",
+        "description": "累计消耗 10M tokens。"
+      },
+      "tokens_1b": {
+        "title": "十亿Token，懂的都懂",
+        "description": "累计消耗 1B tokens。"
+      },
+      "tokens_10b": {
+        "title": "算力天花板试探",
+        "description": "累计消耗 10B tokens。"
+      },
+      "tokens_100b": {
+        "title": "千亿奇点·飞升预备",
+        "description": "累计消耗 100B tokens。"
+      },
+      "active_hours_10": {
+        "title": "先泡十小时",
+        "description": "累计活跃时长达到 10 小时。"
+      },
+      "active_hours_100": {
+        "title": "工位扎根",
+        "description": "累计活跃时长达到 100 小时。"
+      },
+      "active_hours_200": {
+        "title": "椅子已经认主",
+        "description": "累计活跃时长达到 200 小时。"
+      },
+      "active_hours_500": {
+        "title": "五百小时露营",
+        "description": "累计活跃时长达到 500 小时。"
+      },
+      "active_hours_2000": {
+        "title": "住在 IDE 里",
+        "description": "累计活跃时长达到 2000 小时。"
+      },
+      "reasoning_25": {
+        "title": "大脑升级中",
+        "description": "最近 30 天里，至少 25% 的 tokens 用在 reasoning。"
+      },
+      "reasoning_40": {
+        "title": "银河系脑回路",
+        "description": "最近 30 天里，至少 40% 的 tokens 用在 reasoning。"
+      },
+      "cache_15": {
+        "title": "缓存，yyds",
+        "description": "最近 30 天里，至少 15% 的 tokens 来自缓存命中。"
+      },
+      "cache_30": {
+        "title": "省到就是赚到",
+        "description": "最近 30 天里，至少 30% 的 tokens 来自缓存命中。"
+      },
+      "project_focus_70": {
+        "title": "单推一个项目",
+        "description": "最近 30 天里，至少 70% 的 tokens 集中在同一个项目。"
+      },
+      "project_focus_90": {
+        "title": "眼里只有它",
+        "description": "最近 30 天里，至少 90% 的 tokens 集中在同一个项目。"
+      },
+      "models_3": {
+        "title": "海王式试模",
+        "description": "累计使用过 3 个模型。"
+      },
+      "models_5": {
+        "title": "五等分的模型",
+        "description": "累计使用过 5 个不同模型。"
+      },
+      "tools_2": {
+        "title": "左右互搏",
+        "description": "累计使用过 2 个 AI 工具来源。"
+      },
+      "tools_4": {
+        "title": "全家桶玩家",
+        "description": "累计使用过 4 个 AI 工具来源。"
+      },
+      "projects_5": {
+        "title": "项目太多，先开五个",
+        "description": "累计使用过 5 个项目。"
+      },
+      "projects_15": {
+        "title": "十五个坑都在填",
+        "description": "累计在 15 个项目中活跃。"
+      },
+      "devices_2": {
+        "title": "双机位直播",
+        "description": "累计在 2 台设备上活跃。"
+      },
+      "devices_3": {
+        "title": "三端无缝切",
+        "description": "累计在 3 台设备上活跃。"
+      },
+      "first_follow": {
+        "title": "第一个关注位",
+        "description": "关注第一位公开建造者。"
+      },
+      "following_10": {
+        "title": "关注列表满员中",
+        "description": "关注 10 位公开建造者。"
+      },
+      "first_follower": {
+        "title": "首位野生粉丝",
+        "description": "获得第一位粉丝。"
+      },
+      "followers_10": {
+        "title": "小透明也有春天",
+        "description": "获得 10 位粉丝。"
+      },
+      "mutual_3": {
+        "title": "互关三连",
+        "description": "达成 3 个互关关系。"
+      },
+      "mutual_10": {
+        "title": "互关天团",
+        "description": "达成 10 个互关关系。"
+      },
+      "leaderboard_day_top50": {
+        "title": "日榜特种兵",
+        "description": "进入全站日榜总 token 排名前 50。"
+      },
+      "leaderboard_week_top50": {
+        "title": "周榜显眼包",
+        "description": "进入全站周榜总 token 排名前 50。"
+      },
+      "leaderboard_month_top50": {
+        "title": "月榜卷王区",
+        "description": "进入全站月榜总 token 排名前 50。"
+      },
+      "leaderboard_all_time_top100": {
+        "title": "名人堂候补",
+        "description": "进入全站总榜总 token 排名前 100。"
+      },
+      "leaderboard_all_time_top10": {
+        "title": "总榜前十，懂的都懂",
+        "description": "进入全站总榜总 token 排名前 10。"
+      },
+      "leaderboard_all_time_first": {
+        "title": "全服榜一，坐稳了",
+        "description": "登上全站总榜总 token 排名第 1。"
       }
     }
   }

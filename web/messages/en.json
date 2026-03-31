@@ -504,11 +504,15 @@
       "signIn": "Sign in",
       "register": "Register",
       "leaderboard": "Leaderboard",
-      "openSourceGitHub": "View source on GitHub"
+      "openSourceGitHub": "View source on GitHub",
+      "achievements": "Achievements"
     },
     "profile": {
       "activityTitle": "AI Coding Activity",
       "activitySubtitle": "Past 365 days",
+      "arenaScore": "Arena Score",
+      "arenaLevel": "Level",
+      "arenaProgressCaption": "Score {score} · {remaining} more to Lv.{nextLevel}",
       "totalTokens": "Total Tokens",
       "estimatedCost": "Est. Cost",
       "activeTime": "Active Time",
@@ -614,6 +618,319 @@
         "friend": "Friend",
         "peer": "Peer",
         "inspiration": "Inspiration"
+      }
+    }
+  },
+  "achievements": {
+    "page": {
+      "description": "Achievement badges and milestones.",
+      "empty": "No achievements unlocked yet. Sync once and the wall will start lighting up.",
+      "overview": {
+        "score": "Arena Score",
+        "level": "Level",
+        "streak": "Current streak",
+        "activeDays": "Active days",
+        "featured": "Featured badges",
+        "recent": "Recently unlocked",
+        "nextTargets": "Almost there",
+        "currentPersona": "Current persona",
+        "noPersona": "Detected after more activity",
+        "unlocked": "unlocked",
+        "noFeatured": "Keep syncing and your featured badges will appear here.",
+        "noRecent": "No recent unlocks yet.",
+        "noNextTargets": "No immediate targets right now."
+      },
+      "card": {
+        "unlocked": "Unlocked",
+        "locked": "Locked",
+        "unlockedOn": "Unlocked on",
+        "progress": "Progress"
+      },
+      "tiers": {
+        "bronze": "Bronze",
+        "silver": "Silver",
+        "gold": "Gold",
+        "special": "Special"
+      }
+    },
+    "sections": {
+      "activation": {
+        "title": "Activation",
+        "description": "Core actions that pull a new user into the achievement loop."
+      },
+      "consistency": {
+        "title": "Consistency",
+        "description": "Rewards for showing up regularly and sustaining momentum."
+      },
+      "volume": {
+        "title": "Volume",
+        "description": "Lifetime milestones for sessions, tokens, and active time."
+      },
+      "spend": {
+        "title": "Spend",
+        "description": "Milestones for estimated lifetime API spend (USD)."
+      },
+      "craft": {
+        "title": "Craft",
+        "description": "Badges for how you work: reasoning depth, cache usage, and focus."
+      },
+      "exploration": {
+        "title": "Exploration",
+        "description": "Encourages trying more models, tools, projects, and devices."
+      },
+      "social": {
+        "title": "Social",
+        "description": "Follows and mutual connections reinforce belonging."
+      },
+      "leaderboard": {
+        "title": "Leaderboard",
+        "description": "Milestones for ranking on global token leaderboards (daily, weekly, monthly, and all-time)."
+      }
+    },
+    "notification": {
+      "button": "Open achievement notifications",
+      "title": "Achievement notifications",
+      "description": "Recent unlocks, your current persona, and the nearest milestones all show up here.",
+      "score": "Score",
+      "level": "Level",
+      "streak": "Streak",
+      "persona": "Current persona",
+      "noPersona": "Not enough data yet",
+      "recentUnlocks": "Recent unlocks",
+      "emptyRecent": "No recent unlocks yet. Sync again or stay active for a few more days.",
+      "nextTargets": "Next targets",
+      "viewAll": "View all achievements",
+      "error": "Failed to load achievements. Please try again later.",
+      "emptyNextTargets": "No nearby targets right now. Keep the momentum going."
+    },
+    "items": {
+      "first_sync": {
+        "title": "Hello, World",
+        "description": "Successfully sync local usage data into Token Arena for the first time."
+      },
+      "sessions_1": {
+        "title": "Session Zero",
+        "description": "Complete your first session."
+      },
+      "streak_3": {
+        "title": "Three-Day Streak — No Cap",
+        "description": "Stay active for 3 consecutive days."
+      },
+      "streak_7": {
+        "title": "Main Character Week",
+        "description": "Stay active for 7 consecutive days."
+      },
+      "streak_14": {
+        "title": "Two-Week Grind Arc",
+        "description": "Stay active for 14 consecutive days."
+      },
+      "streak_30": {
+        "title": "30-Day Speedrun",
+        "description": "Stay active for 30 consecutive days."
+      },
+      "active_days_7": {
+        "title": "Week One — Unlocked",
+        "description": "Reach 7 lifetime active days."
+      },
+      "active_days_30": {
+        "title": "Monthly Pass Holder",
+        "description": "Reach 30 lifetime active days."
+      },
+      "active_days_100": {
+        "title": "100-Day Ironman",
+        "description": "Reach 100 lifetime active days."
+      },
+      "active_days_365": {
+        "title": "Full Orbit — 365",
+        "description": "Reach 365 lifetime active days."
+      },
+      "sessions_200": {
+        "title": "200 — We're So Back",
+        "description": "Complete 200 sessions."
+      },
+      "sessions_1k": {
+        "title": "1K Sessions — Touch Grass Later",
+        "description": "Complete 1,000 sessions."
+      },
+      "sessions_5k": {
+        "title": "5K — Chat Dynasty",
+        "description": "Complete 5,000 sessions."
+      },
+      "sessions_20k": {
+        "title": "20K — Side Quest Maximalist",
+        "description": "Complete 20,000 sessions."
+      },
+      "sessions_100k": {
+        "title": "100K — Final Boss Energy",
+        "description": "Complete 100,000 sessions."
+      },
+      "spend_usd_100": {
+        "title": "Starter Pack Billing",
+        "description": "Reach $100 in estimated lifetime API spend."
+      },
+      "spend_usd_1k": {
+        "title": "1K — Rent Is Due",
+        "description": "Reach $1,000 in estimated lifetime API spend."
+      },
+      "spend_usd_5k": {
+        "title": "5K — Whale Watchlist",
+        "description": "Reach $5,000 in estimated lifetime API spend."
+      },
+      "spend_usd_20k": {
+        "title": "20K — Burn Rate CEO",
+        "description": "Reach $20,000 in estimated lifetime API spend."
+      },
+      "spend_usd_100k": {
+        "title": "Money Leviathan",
+        "description": "Reach $100,000 in estimated lifetime API spend."
+      },
+      "tokens_100k": {
+        "title": "100K — Token Snack",
+        "description": "Accumulate 100K total tokens."
+      },
+      "tokens_1m": {
+        "title": "1M — Millionaire Mindset",
+        "description": "Accumulate 1M total tokens."
+      },
+      "tokens_10m": {
+        "title": "10M — Token Furnace",
+        "description": "Accumulate 10M total tokens."
+      },
+      "tokens_1b": {
+        "title": "1B — Math Goes Brrr",
+        "description": "Accumulate 1B total tokens."
+      },
+      "tokens_10b": {
+        "title": "10B — Universe Budget",
+        "description": "Accumulate 10B total tokens."
+      },
+      "tokens_100b": {
+        "title": "100B — GPU's Last Wish",
+        "description": "Accumulate 100B total tokens."
+      },
+      "active_hours_10": {
+        "title": "10h — Coffee Break Scale",
+        "description": "Reach 10 lifetime active hours."
+      },
+      "active_hours_100": {
+        "title": "100h — Chair Imprint",
+        "description": "Reach 100 lifetime active hours."
+      },
+      "active_hours_200": {
+        "title": "200h — Deep Seat",
+        "description": "Reach 200 lifetime active hours."
+      },
+      "active_hours_500": {
+        "title": "500h — Legendary Camping",
+        "description": "Reach 500 lifetime active hours."
+      },
+      "active_hours_2000": {
+        "title": "2,000h — I Live Here Now",
+        "description": "Reach 2,000 lifetime active hours."
+      },
+      "reasoning_25": {
+        "title": "Big Brain Mode",
+        "description": "At least 25% of your last 30 days of tokens were spent on reasoning."
+      },
+      "reasoning_40": {
+        "title": "Galaxy Brain",
+        "description": "At least 40% of your last 30 days of tokens were spent on reasoning."
+      },
+      "cache_15": {
+        "title": "Cache Money",
+        "description": "At least 15% of your last 30 days of tokens came from cache hits."
+      },
+      "cache_30": {
+        "title": "Cache Bandit",
+        "description": "At least 30% of your last 30 days of tokens came from cache hits."
+      },
+      "project_focus_70": {
+        "title": "One Project to Rule Them All",
+        "description": "At least 70% of your last 30 days of tokens were concentrated in one project."
+      },
+      "project_focus_90": {
+        "title": "Laser Focus — No Scatter",
+        "description": "At least 90% of your last 30 days of tokens were concentrated in one project."
+      },
+      "models_3": {
+        "title": "Model Dilettante",
+        "description": "Use 3 different models over time."
+      },
+      "models_5": {
+        "title": "Model Polyglot",
+        "description": "Use 5 different models over time."
+      },
+      "tools_2": {
+        "title": "Two-Tool Tango",
+        "description": "Use 2 different AI tool sources."
+      },
+      "tools_4": {
+        "title": "Full Stack of Vibes",
+        "description": "Use 4 different AI tool sources."
+      },
+      "projects_5": {
+        "title": "Project Hopper",
+        "description": "Work across 5 projects."
+      },
+      "projects_15": {
+        "title": "15 Projects — Collector Edition",
+        "description": "Work across 15 projects."
+      },
+      "devices_2": {
+        "title": "Two-Device Lifestyle",
+        "description": "Be active from 2 different devices."
+      },
+      "devices_3": {
+        "title": "Three-Device Chaos",
+        "description": "Be active from 3 different devices."
+      },
+      "first_follow": {
+        "title": "First Follow — W",
+        "description": "Follow your first public builder."
+      },
+      "following_10": {
+        "title": "Following Ten — Fan Club",
+        "description": "Follow 10 public builders."
+      },
+      "first_follower": {
+        "title": "First Fan Unlocked",
+        "description": "Gain your first follower."
+      },
+      "followers_10": {
+        "title": "Ten Followers — Micro-Celebrity",
+        "description": "Gain 10 followers."
+      },
+      "mutual_3": {
+        "title": "Mutual Circle — Squad",
+        "description": "Build 3 mutual follow relationships."
+      },
+      "mutual_10": {
+        "title": "Mutual Network — Full Party",
+        "description": "Build 10 mutual follow relationships."
+      },
+      "leaderboard_day_top50": {
+        "title": "Daily Speedrun Top 50",
+        "description": "Place in the top 50 on the global daily total-tokens leaderboard."
+      },
+      "leaderboard_week_top50": {
+        "title": "Weekly Chart — Main Stage",
+        "description": "Place in the top 50 on the global weekly total-tokens leaderboard."
+      },
+      "leaderboard_month_top50": {
+        "title": "Monthly Billboard Top",
+        "description": "Place in the top 50 on the global monthly total-tokens leaderboard."
+      },
+      "leaderboard_all_time_top100": {
+        "title": "Hall of Fame — Reserved Seat",
+        "description": "Place in the top 100 on the global all-time total-tokens leaderboard."
+      },
+      "leaderboard_all_time_top10": {
+        "title": "All-Time Top 10 — Final Boss Lobby",
+        "description": "Place in the top 10 on the global all-time total-tokens leaderboard."
+      },
+      "leaderboard_all_time_first": {
+        "title": "World #1 — Printed",
+        "description": "Reach #1 on the global all-time total-tokens leaderboard."
       }
     }
   }
