@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -22,6 +23,12 @@ type LeaderboardTableProps = {
   emptyLabel: string;
   entries: LeaderboardEntry[];
   viewerEntry?: LeaderboardEntry | null;
+  viewerNotice?: {
+    name: string;
+    username: string;
+    message: string;
+    action?: ReactNode;
+  } | null;
   labels: {
     rank: string;
     user: string;
@@ -41,12 +48,15 @@ export function LeaderboardTable({
   emptyLabel,
   entries,
   viewerEntry = null,
+  viewerNotice = null,
   labels,
 }: LeaderboardTableProps) {
   const pinnedViewerEntry =
     viewerEntry && entries.every((entry) => entry.userId !== viewerEntry.userId)
       ? viewerEntry
       : null;
+  const pinnedViewerNotice =
+    !pinnedViewerEntry && viewerNotice ? viewerNotice : null;
 
   function renderEntryRow(entry: LeaderboardEntry, key: string) {
     return (
@@ -95,13 +105,51 @@ export function LeaderboardTable({
     );
   }
 
+  function renderViewerNoticeRow() {
+    if (!pinnedViewerNotice) {
+      return null;
+    }
+
+    return (
+      <TableRow
+        key={`${pinnedViewerNotice.username}-viewer-notice`}
+        className="bg-muted/30"
+      >
+        <TableCell className="font-medium text-muted-foreground">-</TableCell>
+        <TableCell className="min-w-64">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <Link
+              href={`/u/${pinnedViewerNotice.username}`}
+              className="truncate font-medium text-foreground hover:underline"
+            >
+              {pinnedViewerNotice.name}
+            </Link>
+            <span className="text-sm text-muted-foreground">
+              @{pinnedViewerNotice.username}
+            </span>
+            <Badge variant="outline">{labels.you}</Badge>
+          </div>
+        </TableCell>
+        <TableCell
+          colSpan={5}
+          className="text-right text-sm text-muted-foreground"
+        >
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span>{pinnedViewerNotice.message}</span>
+            {pinnedViewerNotice.action ?? null}
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
   return (
     <Card className="gap-0 py-3 shadow-sm ring-1 ring-border/60">
       <CardHeader className="border-b border-border/50 pb-2">
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="pt-2">
-        {entries.length === 0 ? (
+        {entries.length === 0 && !pinnedViewerEntry && !pinnedViewerNotice ? (
           <div className="flex min-h-28 items-center rounded-xl border border-dashed px-4 text-sm text-muted-foreground">
             {emptyLabel}
           </div>
@@ -140,6 +188,21 @@ export function LeaderboardTable({
                     pinnedViewerEntry,
                     `${pinnedViewerEntry.userId}-viewer`,
                   )}
+                </>
+              ) : null}
+              {pinnedViewerNotice ? (
+                <>
+                  {entries.length > 0 ? (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell
+                        colSpan={7}
+                        className="py-1 text-center text-muted-foreground"
+                      >
+                        ...
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                  {renderViewerNoticeRow()}
                 </>
               ) : null}
             </TableBody>
