@@ -623,7 +623,6 @@
   },
   "achievements": {
     "page": {
-      "title": "Achievements",
       "description": "Achievement badges and milestones.",
       "empty": "No achievements unlocked yet. Sync once and the wall will start lighting up.",
       "overview": {

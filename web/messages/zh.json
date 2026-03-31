@@ -623,7 +623,6 @@
   },
   "achievements": {
     "page": {
-      "title": "成就中心",
       "description": "成就徽章与里程碑。",
       "empty": "还没有解锁成就。先同步一次使用数据，第一页就会开始亮起来。",
       "overview": {
