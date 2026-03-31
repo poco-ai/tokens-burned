@@ -20,7 +20,9 @@ vi.mock("@/i18n/navigation", () => ({
 }));
 
 vi.mock("./follow-button", () => ({
-  FollowButton: () => <div data-testid="follow-button" />,
+  FollowButton: ({ initialTag }: { initialTag?: string | null }) => (
+    <div data-testid="follow-button" data-initial-tag={initialTag ?? "none"} />
+  ),
 }));
 
 describe("ProfileListItem", () => {
@@ -49,6 +51,11 @@ describe("ProfileListItem", () => {
           mutual: "互相关注",
           private: "私密",
           you: "你",
+          tagNone: "未分组",
+          tagCoworker: "同事",
+          tagFriend: "朋友",
+          tagPeer: "同行",
+          tagInspiration: "灵感",
         }}
       />,
     );
@@ -88,6 +95,11 @@ describe("ProfileListItem", () => {
           mutual: "互相关注",
           private: "私密",
           you: "你",
+          tagNone: "未分组",
+          tagCoworker: "同事",
+          tagFriend: "朋友",
+          tagPeer: "同行",
+          tagInspiration: "灵感",
         }}
       />,
     );
@@ -95,5 +107,6 @@ describe("ProfileListItem", () => {
     expect(markup).toContain("flex shrink-0 flex-nowrap items-center gap-2");
     expect(markup).not.toContain("flex shrink-0 flex-wrap items-center gap-2");
     expect(markup).not.toContain("flex shrink-0 flex-nowrap items-start gap-2");
+    expect(markup).toContain('data-initial-tag="coworker"');
   });
 });

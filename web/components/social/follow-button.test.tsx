@@ -20,8 +20,14 @@ vi.mock("next-intl", () => ({
           followingAction: "已关注",
           followToLogin: "登录后关注",
         },
+        "social.tags": {
+          selectLabel: "关注标签",
+          none: "未分组",
+          "options.coworker": "同事",
+        },
         "social.errors": {
           followFailed: "关注失败",
+          tagFailed: "标签更新失败",
         },
       };
 
@@ -56,12 +62,19 @@ describe("FollowButton", () => {
         locale="zh-CN"
         username="alice"
         initialFollowing
+        initialTag="coworker"
         isAuthenticated
       />,
     );
 
     expect(markup).toContain("已关注");
-    expect(markup).toContain('variant="secondary"');
+    expect(markup).toContain('data-slot="button-group"');
+    expect(markup).toContain('aria-label="关注标签"');
+    expect(markup).toContain(
+      "overflow-hidden border border-border/60 bg-secondary",
+    );
+    expect(markup).toContain("border-t-[5px] border-t-current");
+    expect(markup).not.toContain("rounded-r-none");
   });
 
   it("shows login link when not authenticated", () => {

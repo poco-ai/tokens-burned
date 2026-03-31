@@ -125,6 +125,7 @@ export default async function PeoplePage({
     namespace: "social.network",
   });
   const tCard = await getTranslations({ locale, namespace: "social.card" });
+  const tTags = await getTranslations({ locale, namespace: "social.tags" });
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const query = firstValue(resolvedSearchParams?.query)?.trim() ?? "";
   const tab = normalizePeopleTab(
@@ -269,6 +270,11 @@ export default async function PeoplePage({
                     mutual: tCard("mutual"),
                     private: tCard("private"),
                     you: tCard("you"),
+                    tagNone: tTags("none"),
+                    tagCoworker: tTags("options.coworker"),
+                    tagFriend: tTags("options.friend"),
+                    tagPeer: tTags("options.peer"),
+                    tagInspiration: tTags("options.inspiration"),
                   }}
                 />
               ))}

@@ -4,7 +4,6 @@ import { Link } from "@/i18n/navigation";
 import type { SocialListProfile } from "@/lib/social/queries";
 import { cn } from "@/lib/utils";
 import { FollowButton } from "./follow-button";
-import { FollowTagBadge } from "./follow-tag-badge";
 
 type ProfileListItemProps = {
   locale: string;
@@ -16,6 +15,11 @@ type ProfileListItemProps = {
     mutual: string;
     private: string;
     you: string;
+    tagNone: string;
+    tagCoworker: string;
+    tagFriend: string;
+    tagPeer: string;
+    tagInspiration: string;
   };
 };
 
@@ -75,12 +79,18 @@ export function ProfileListItem({
               {profile.isFollowing && profile.followsYou ? (
                 <Badge variant="secondary">{labels.mutual}</Badge>
               ) : null}
-              {profile.isFollowing && isAuthenticated ? (
-                <FollowTagBadge
-                  locale={locale}
-                  username={profile.username}
-                  tag={profile.followTag}
-                />
+              {profile.isFollowing && profile.followTag ? (
+                <Badge variant="secondary">
+                  {profile.followTag === "coworker"
+                    ? labels.tagCoworker
+                    : profile.followTag === "friend"
+                      ? labels.tagFriend
+                      : profile.followTag === "peer"
+                        ? labels.tagPeer
+                        : profile.followTag === "inspiration"
+                          ? labels.tagInspiration
+                          : labels.tagNone}
+                </Badge>
               ) : null}
             </div>
 
@@ -105,7 +115,7 @@ export function ProfileListItem({
 
         <div
           className={cn(
-            "flex shrink-0 flex-nowrap items-center",
+            "flex shrink-0 flex-nowrap items-center gap-2",
             profile.isSelf ? "sm:self-center" : undefined,
           )}
         >
@@ -113,6 +123,7 @@ export function ProfileListItem({
             locale={locale}
             username={profile.username}
             initialFollowing={profile.isFollowing}
+            initialTag={profile.followTag}
             isAuthenticated={isAuthenticated}
             isSelf={profile.isSelf}
             canFollow={profile.publicProfileEnabled || profile.isFollowing}

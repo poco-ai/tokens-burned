@@ -1,9 +1,9 @@
 "use client";
 
-import { ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -64,16 +64,11 @@ export function FollowTagBadge({ locale, username, tag }: FollowTagBadgeProps) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
-          disabled={isPending}
-        >
-          <span>{tag ? tTags(`options.${tag}`) : tTags("selectLabel")}</span>
-          <ChevronDownIcon className="size-3 shrink-0" />
-        </button>
+        <Badge variant="outline" className="cursor-pointer hover:bg-accent">
+          {tag ? tTags(`options.${tag}`) : tTags("selectLabel")}
+        </Badge>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-40 p-1">
+      <PopoverContent align="end" className="w-40 p-1">
         <div className="space-y-0.5">
           <button
             type="button"
