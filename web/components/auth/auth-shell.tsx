@@ -13,6 +13,7 @@ type AuthShellProps = {
   description: string;
   headerActions?: ReactNode;
   footerActions?: ReactNode;
+  cardFooter?: ReactNode;
   /** Renders behind the main column (e.g. full-page canvas). */
   background?: ReactNode;
   /** `hero`: title above the card (e.g. login with dither background). */
@@ -25,6 +26,7 @@ export function AuthShell({
   description,
   headerActions,
   footerActions,
+  cardFooter,
   background,
   titleVariant = "default",
   children,
@@ -54,6 +56,7 @@ export function AuthShell({
               </CardHeader>
               <CardContent>{children}</CardContent>
             </Card>
+            {cardFooter ? cardFooter : null}
           </div>
         </div>
         <AppFooter actions={footerActions} />

@@ -6,6 +6,7 @@ import { LoginDitherBackground } from "@/components/auth/login-dither-background
 import { LoginForm } from "@/components/auth/login-form";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { ThemeSwitcher } from "@/components/shared/theme-switcher";
+import { Link } from "@/i18n/navigation";
 import { getAuthenticatedAppPath } from "@/lib/account-setup";
 import { authMode, isSelfHosted } from "@/lib/auth-config";
 import { getEnabledLoginProviders } from "@/lib/auth-providers";
@@ -42,6 +43,7 @@ export default async function LoginPage({
   const { locale } = await params;
   const session = await getOptionalSession();
   const t = await getTranslations("auth.login");
+  const providers = getEnabledLoginProviders();
 
   if (session) {
     redirect(getAuthenticatedAppPath(locale, session.user));
@@ -58,6 +60,26 @@ export default async function LoginPage({
         title={t("title")}
         description={description}
         titleVariant="hero"
+        cardFooter={
+          providers.length > 0 ? (
+            <p className="text-center text-sm text-white/80">
+              {t("agreementPrefix")}{" "}
+              <Link
+                href="/legal/terms"
+                className="underline underline-offset-4"
+              >
+                {t("termsLink")}
+              </Link>{" "}
+              {t("and")}{" "}
+              <Link
+                href="/legal/privacy"
+                className="underline underline-offset-4"
+              >
+                {t("privacyLink")}
+              </Link>
+            </p>
+          ) : null
+        }
         footerActions={
           <>
             <LanguageSwitcher footerIcon variant="icon" />
@@ -68,7 +90,7 @@ export default async function LoginPage({
         <LoginForm
           mode={authMode}
           showInvalidSessionMessage={showInvalidSessionMessage}
-          providers={getEnabledLoginProviders()}
+          providers={providers}
         />
       </AuthShell>
     </div>

@@ -35,6 +35,10 @@
       "invalidSession": "Your session is invalid or expired. Please sign in again.",
       "noAccount": "Don't have an account?",
       "noProviders": "No sign-in providers are configured yet.",
+      "agreementPrefix": "By signing in, you agree to the",
+      "termsLink": "Terms of Service",
+      "and": "and",
+      "privacyLink": "Privacy Policy",
       "registerLink": "Register",
       "orContinueWith": "or continue with",
       "errors": {

@@ -220,6 +220,17 @@ export function RegisterForm() {
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
+        {t("register.agreementPrefix")}{" "}
+        <Link href="/legal/terms" className="underline underline-offset-4">
+          {t("register.termsLink")}
+        </Link>{" "}
+        {t("register.and")}{" "}
+        <Link href="/legal/privacy" className="underline underline-offset-4">
+          {t("register.privacyLink")}
+        </Link>
+      </p>
+
+      <p className="text-center text-sm text-muted-foreground">
         {t("register.haveAccount")}{" "}
         <Link
           href="/login"
