@@ -31,7 +31,6 @@ type LeaderboardTableProps = {
     followers: string;
     mutual: string;
     you: string;
-    viewProfile: string;
   };
 };
 

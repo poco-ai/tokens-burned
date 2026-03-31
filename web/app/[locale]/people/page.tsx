@@ -269,7 +269,6 @@ export default async function PeoplePage({
                     mutual: tCard("mutual"),
                     private: tCard("private"),
                     you: tCard("you"),
-                    viewProfile: tCard("viewProfile"),
                   }}
                 />
               ))}

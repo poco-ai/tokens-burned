@@ -49,7 +49,6 @@ describe("ProfileListItem", () => {
           mutual: "互相关注",
           private: "私密",
           you: "你",
-          viewProfile: "查看主页",
         }}
       />,
     );
@@ -89,7 +88,6 @@ describe("ProfileListItem", () => {
           mutual: "互相关注",
           private: "私密",
           you: "你",
-          viewProfile: "查看主页",
         }}
       />,
     );

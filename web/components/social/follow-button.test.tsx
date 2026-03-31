@@ -20,17 +20,8 @@ vi.mock("next-intl", () => ({
           followingAction: "已关注",
           followToLogin: "登录后关注",
         },
-        "social.tags": {
-          selectLabel: "关系",
-          none: "未分类",
-          "options.coworker": "同事",
-          "options.friend": "朋友",
-          "options.peer": "同行",
-          "options.inspiration": "灵感来源",
-        },
         "social.errors": {
           followFailed: "关注失败",
-          tagFailed: "标签更新失败",
         },
       };
 
@@ -44,52 +35,74 @@ vi.mock("@/i18n/navigation", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/select", () => ({
-  Select: ({ children }: { children: ReactNode }) => (
-    <div data-slot="select">{children}</div>
-  ),
-  SelectContent: ({ children }: { children: ReactNode }) => (
-    <div data-slot="select-content">{children}</div>
-  ),
-  SelectItem: ({ children, value }: { children: ReactNode; value: string }) => (
-    <div data-slot="select-item" data-value={value}>
-      {children}
-    </div>
-  ),
-  SelectTrigger: ({
-    children,
-    className,
-  }: {
-    children: ReactNode;
-    className?: string;
-  }) => (
-    <div data-slot="select-trigger" className={className}>
-      {children}
-    </div>
-  ),
-  SelectValue: ({ placeholder }: { placeholder?: string }) => (
-    <span data-slot="select-value">{placeholder}</span>
-  ),
-}));
-
 describe("FollowButton", () => {
-  it("keeps the follow action and tag selector on one row", () => {
+  it("renders follow button when not following", () => {
+    const markup = renderToStaticMarkup(
+      <FollowButton
+        locale="zh-CN"
+        username="alice"
+        initialFollowing={false}
+        isAuthenticated
+      />,
+    );
+
+    expect(markup).toContain("关注");
+    expect(markup).not.toContain("已关注");
+  });
+
+  it("renders following button variant when following", () => {
     const markup = renderToStaticMarkup(
       <FollowButton
         locale="zh-CN"
         username="alice"
         initialFollowing
-        initialTag={null}
         isAuthenticated
-        size="sm"
       />,
     );
 
-    expect(markup).toContain('class="flex flex-col gap-2"');
-    expect(markup).toContain('class="flex flex-nowrap items-center gap-2"');
-    expect(markup).toContain(
-      'data-slot="select-trigger" class="min-w-[132px] shrink-0 bg-background"',
+    expect(markup).toContain("已关注");
+    expect(markup).toContain('variant="secondary"');
+  });
+
+  it("shows login link when not authenticated", () => {
+    const markup = renderToStaticMarkup(
+      <FollowButton
+        locale="zh-CN"
+        username="alice"
+        initialFollowing={false}
+        isAuthenticated={false}
+      />,
     );
-    expect(markup).not.toContain("space-y-2");
+
+    expect(markup).toContain("登录后关注");
+    expect(markup).toContain('href="/login"');
+  });
+
+  it("returns null when isSelf", () => {
+    const markup = renderToStaticMarkup(
+      <FollowButton
+        locale="zh-CN"
+        username="alice"
+        initialFollowing={false}
+        isAuthenticated
+        isSelf
+      />,
+    );
+
+    expect(markup).toBe("");
+  });
+
+  it("returns null when cannot follow and not following", () => {
+    const markup = renderToStaticMarkup(
+      <FollowButton
+        locale="zh-CN"
+        username="alice"
+        initialFollowing={false}
+        isAuthenticated
+        canFollow={false}
+      />,
+    );
+
+    expect(markup).toBe("");
   });
 });

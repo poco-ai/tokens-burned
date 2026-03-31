@@ -1,10 +1,10 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import type { SocialListProfile } from "@/lib/social/queries";
 import { cn } from "@/lib/utils";
 import { FollowButton } from "./follow-button";
+import { FollowTagBadge } from "./follow-tag-badge";
 
 type ProfileListItemProps = {
   locale: string;
@@ -16,7 +16,6 @@ type ProfileListItemProps = {
     mutual: string;
     private: string;
     you: string;
-    viewProfile: string;
   };
 };
 
@@ -32,7 +31,7 @@ export function ProfileListItem({
 }: ProfileListItemProps) {
   return (
     <Card size="sm" className="shadow-sm ring-1 ring-border/60">
-      <CardContent className="flex flex-col gap-3 py-1 sm:flex-row sm:items-start sm:justify-between">
+      <CardContent className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 gap-3">
           {profile.image ? (
             /* biome-ignore lint/performance/noImgElement: user avatars may come from arbitrary remote URLs */
@@ -76,6 +75,13 @@ export function ProfileListItem({
               {profile.isFollowing && profile.followsYou ? (
                 <Badge variant="secondary">{labels.mutual}</Badge>
               ) : null}
+              {profile.isFollowing && isAuthenticated ? (
+                <FollowTagBadge
+                  locale={locale}
+                  username={profile.username}
+                  tag={profile.followTag}
+                />
+              ) : null}
             </div>
 
             {profile.bio ? (
@@ -99,24 +105,17 @@ export function ProfileListItem({
 
         <div
           className={cn(
-            "flex shrink-0 flex-nowrap items-center gap-2",
+            "flex shrink-0 flex-nowrap items-center",
             profile.isSelf ? "sm:self-center" : undefined,
           )}
         >
-          {profile.publicProfileEnabled ? (
-            <Button asChild type="button" variant="outline" size="sm">
-              <Link href={`/u/${profile.username}`}>{labels.viewProfile}</Link>
-            </Button>
-          ) : null}
           <FollowButton
             locale={locale}
             username={profile.username}
             initialFollowing={profile.isFollowing}
-            initialTag={profile.followTag}
             isAuthenticated={isAuthenticated}
             isSelf={profile.isSelf}
             canFollow={profile.publicProfileEnabled || profile.isFollowing}
-            size="sm"
           />
         </div>
       </CardContent>

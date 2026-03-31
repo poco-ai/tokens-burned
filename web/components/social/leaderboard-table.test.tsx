@@ -59,7 +59,6 @@ describe("LeaderboardTable", () => {
           followers: "Followers",
           mutual: "Mutual",
           you: "You",
-          viewProfile: "View profile",
         }}
       />,
     );
