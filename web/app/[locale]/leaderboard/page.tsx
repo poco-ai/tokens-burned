@@ -202,6 +202,7 @@ export default async function LeaderboardPage({
           title={t("globalTitle")}
           emptyLabel={t("emptyGlobal")}
           entries={data.global.entries}
+          viewerEntry={data.viewerGlobalEntry}
           labels={{
             rank: t("table.rank"),
             user: t("table.user"),
