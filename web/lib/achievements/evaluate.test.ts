@@ -16,12 +16,12 @@ function createMetrics(
     activeDayKeys: ["2026-03-29", "2026-03-30", "2026-03-31"],
     todayKey: "2026-03-31",
     yesterdayKey: "2026-03-30",
-    totalTokens: 150_000,
+    totalTokens: 15_000_000,
     totalSessions: 12,
     totalActiveSeconds: 12 * 60 * 60,
     tokenTimeline: [
-      { at: "2026-03-01T00:00:00.000Z", value: 50_000 },
-      { at: "2026-03-02T00:00:00.000Z", value: 100_000 },
+      { at: "2026-03-01T00:00:00.000Z", value: 5_000_000 },
+      { at: "2026-03-02T00:00:00.000Z", value: 10_000_000 },
     ],
     costTimeline: [],
     totalEstimatedCostUsd: 0,
@@ -122,10 +122,10 @@ describe("buildAchievementStatuses", () => {
   it("keeps locked achievements capped below full progress", () => {
     const statuses = buildAchievementStatuses(
       createMetrics({
-        totalTokens: 400_000,
+        totalTokens: 40_000_000,
         tokenTimeline: [
-          { at: "2026-03-01T00:00:00.000Z", value: 150_000 },
-          { at: "2026-03-02T00:00:00.000Z", value: 250_000 },
+          { at: "2026-03-01T00:00:00.000Z", value: 15_000_000 },
+          { at: "2026-03-02T00:00:00.000Z", value: 25_000_000 },
         ],
       }),
     );
@@ -143,11 +143,11 @@ describe("buildAchievementStatuses", () => {
           date.setUTCDate(date.getUTCDate() + index);
           return date.toISOString().slice(0, 10);
         }),
-        totalTokens: 120_000_000_000,
+        totalTokens: 1_200_000_000_000,
         totalSessions: 100_000,
         totalActiveSeconds: 2000 * 60 * 60,
         tokenTimeline: [
-          { at: "2025-04-01T00:00:00.000Z", value: 120_000_000_000 },
+          { at: "2025-04-01T00:00:00.000Z", value: 1_200_000_000_000 },
         ],
         costTimeline: [{ at: "2025-04-01T00:00:00.000Z", value: 100_000 }],
         totalEstimatedCostUsd: 100_000,
@@ -179,7 +179,7 @@ describe("buildAchievementStatuses", () => {
           { at: "2026-03-03T00:00:00.000Z", key: "windows" },
         ],
         reasoningShare30d: 0.42,
-        cacheShare30d: 0.31,
+        cacheShare30d: 0.96,
         topProjectShare30d: 0.91,
         followingCount: 10,
         followingTimeline: Array.from({ length: 10 }, (_, index) =>

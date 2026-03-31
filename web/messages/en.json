@@ -785,28 +785,28 @@
         "description": "Reach $100,000 in estimated lifetime API spend."
       },
       "tokens_100k": {
-        "title": "100K — Token Snack",
-        "description": "Accumulate 100K total tokens."
-      },
-      "tokens_1m": {
-        "title": "1M — Millionaire Mindset",
-        "description": "Accumulate 1M total tokens."
-      },
-      "tokens_10m": {
-        "title": "10M — Token Furnace",
+        "title": "10M — Token Snack",
         "description": "Accumulate 10M total tokens."
       },
-      "tokens_1b": {
-        "title": "1B — Math Goes Brrr",
+      "tokens_1m": {
+        "title": "100M — Millionaire Mindset",
+        "description": "Accumulate 100M total tokens."
+      },
+      "tokens_10m": {
+        "title": "1B — Token Furnace",
         "description": "Accumulate 1B total tokens."
       },
-      "tokens_10b": {
-        "title": "10B — Universe Budget",
+      "tokens_1b": {
+        "title": "10B — Math Goes Brrr",
         "description": "Accumulate 10B total tokens."
       },
-      "tokens_100b": {
-        "title": "100B — GPU's Last Wish",
+      "tokens_10b": {
+        "title": "100B — Universe Budget",
         "description": "Accumulate 100B total tokens."
+      },
+      "tokens_100b": {
+        "title": "1T — GPU's Last Wish",
+        "description": "Accumulate 1T total tokens."
       },
       "active_hours_10": {
         "title": "10h — Coffee Break Scale",
@@ -838,11 +838,11 @@
       },
       "cache_15": {
         "title": "Cache Money",
-        "description": "At least 15% of your last 30 days of tokens came from cache hits."
+        "description": "At least 90% of your last 30 days of tokens came from cache hits."
       },
       "cache_30": {
         "title": "Cache Bandit",
-        "description": "At least 30% of your last 30 days of tokens came from cache hits."
+        "description": "At least 95% of your last 30 days of tokens came from cache hits."
       },
       "project_focus_70": {
         "title": "One Project to Rule Them All",

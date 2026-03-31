@@ -367,33 +367,26 @@ export function buildAchievementStatuses(
     createStatus({
       code: "tokens_100k",
       current: metrics.totalTokens,
-      target: 100_000,
-      unit: "tokens",
-      unlockedAt: cumulativeThresholdDate(metrics.tokenTimeline, 100_000),
-    }),
-    createStatus({
-      code: "tokens_1m",
-      current: metrics.totalTokens,
-      target: 1_000_000,
-      unit: "tokens",
-      unlockedAt: cumulativeThresholdDate(metrics.tokenTimeline, 1_000_000),
-    }),
-    createStatus({
-      code: "tokens_10m",
-      current: metrics.totalTokens,
       target: 10_000_000,
       unit: "tokens",
       unlockedAt: cumulativeThresholdDate(metrics.tokenTimeline, 10_000_000),
     }),
     createStatus({
-      code: "tokens_1b",
+      code: "tokens_1m",
+      current: metrics.totalTokens,
+      target: 100_000_000,
+      unit: "tokens",
+      unlockedAt: cumulativeThresholdDate(metrics.tokenTimeline, 100_000_000),
+    }),
+    createStatus({
+      code: "tokens_10m",
       current: metrics.totalTokens,
       target: 1_000_000_000,
       unit: "tokens",
       unlockedAt: cumulativeThresholdDate(metrics.tokenTimeline, 1_000_000_000),
     }),
     createStatus({
-      code: "tokens_10b",
+      code: "tokens_1b",
       current: metrics.totalTokens,
       target: 10_000_000_000,
       unit: "tokens",
@@ -403,13 +396,23 @@ export function buildAchievementStatuses(
       ),
     }),
     createStatus({
-      code: "tokens_100b",
+      code: "tokens_10b",
       current: metrics.totalTokens,
       target: 100_000_000_000,
       unit: "tokens",
       unlockedAt: cumulativeThresholdDate(
         metrics.tokenTimeline,
         100_000_000_000,
+      ),
+    }),
+    createStatus({
+      code: "tokens_100b",
+      current: metrics.totalTokens,
+      target: 1_000_000_000_000,
+      unit: "tokens",
+      unlockedAt: cumulativeThresholdDate(
+        metrics.tokenTimeline,
+        1_000_000_000_000,
       ),
     }),
     createStatus({
@@ -485,18 +488,18 @@ export function buildAchievementStatuses(
     createStatus({
       code: "cache_15",
       current: metrics.cacheShare30d,
-      target: 0.15,
+      target: 0.9,
       unit: "percent",
       unlockedAt:
-        metrics.cacheShare30d >= 0.15 ? metrics.recentWindowUnlockedAt : null,
+        metrics.cacheShare30d >= 0.9 ? metrics.recentWindowUnlockedAt : null,
     }),
     createStatus({
       code: "cache_30",
       current: metrics.cacheShare30d,
-      target: 0.3,
+      target: 0.95,
       unit: "percent",
       unlockedAt:
-        metrics.cacheShare30d >= 0.3 ? metrics.recentWindowUnlockedAt : null,
+        metrics.cacheShare30d >= 0.95 ? metrics.recentWindowUnlockedAt : null,
     }),
     createStatus({
       code: "project_focus_70",

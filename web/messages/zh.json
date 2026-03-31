@@ -785,28 +785,28 @@
         "description": "累计估算 API 花费达到 $100,000。"
       },
       "tokens_100k": {
-        "title": "先烧十万试试水",
-        "description": "累计消耗 100K tokens。"
+        "title": "先烧一千万试试水",
+        "description": "累计消耗 10M tokens。"
       },
       "tokens_1m": {
-        "title": "百万厨力放出",
-        "description": "累计消耗 1M tokens。"
+        "title": "亿级厨力放出",
+        "description": "累计消耗 100M tokens。"
       },
       "tokens_10m": {
         "title": "显卡在微笑",
-        "description": "累计消耗 10M tokens。"
+        "description": "累计消耗 1B tokens。"
       },
       "tokens_1b": {
-        "title": "十亿Token，懂的都懂",
-        "description": "累计消耗 1B tokens。"
+        "title": "百亿Token，懂的都懂",
+        "description": "累计消耗 10B tokens。"
       },
       "tokens_10b": {
         "title": "算力天花板试探",
-        "description": "累计消耗 10B tokens。"
+        "description": "累计消耗 100B tokens。"
       },
       "tokens_100b": {
-        "title": "千亿奇点·飞升预备",
-        "description": "累计消耗 100B tokens。"
+        "title": "万亿奇点·飞升预备",
+        "description": "累计消耗 1T tokens。"
       },
       "active_hours_10": {
         "title": "先泡十小时",
@@ -838,11 +838,11 @@
       },
       "cache_15": {
         "title": "缓存，yyds",
-        "description": "最近 30 天里，至少 15% 的 tokens 来自缓存命中。"
+        "description": "最近 30 天里，至少 90% 的 tokens 来自缓存命中。"
       },
       "cache_30": {
         "title": "省到就是赚到",
-        "description": "最近 30 天里，至少 30% 的 tokens 来自缓存命中。"
+        "description": "最近 30 天里，至少 95% 的 tokens 来自缓存命中。"
       },
       "project_focus_70": {
         "title": "单推一个项目",
