@@ -51,6 +51,7 @@ export function AccountIdentityCard({
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
 
   useEffect(() => {
     setName(initialName);
@@ -63,6 +64,18 @@ export function AccountIdentityCard({
     setBio(initialBio ?? "");
     setSavedBio(initialBio ?? "");
   }, [initialBio]);
+
+  useEffect(() => {
+    if (!justSaved) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setJustSaved(false);
+    }, 2500);
+
+    return () => window.clearTimeout(timeout);
+  }, [justSaved]);
 
   const normalizedUsername = useMemo(
     () => normalizeUsername(username),
@@ -110,6 +123,7 @@ export function AccountIdentityCard({
     setUsernameError(null);
     setFormError(null);
     setSuccessMessage(null);
+    setJustSaved(false);
 
     let hasError = false;
 
@@ -169,6 +183,7 @@ export function AccountIdentityCard({
         setSavedName(trimmedName);
         setSavedUsername(normalizedUsername);
         setSuccessMessage(t("identity.saved"));
+        setJustSaved(true);
 
         if (requireUsernameSetup) {
           if (hasBioChanges) {
@@ -186,6 +201,7 @@ export function AccountIdentityCard({
         await saveBio(bio);
         if (!hasIdentityChanges && !requireUsernameSetup) {
           setSuccessMessage(t("saved"));
+          setJustSaved(true);
         }
         router.refresh();
       }
@@ -298,7 +314,11 @@ export function AccountIdentityCard({
             type="submit"
             disabled={isSubmitting || (!hasChanges && !requireUsernameSetup)}
           >
-            {isSubmitting ? t("identity.saving") : t("identity.save")}
+            {isSubmitting
+              ? t("identity.saving")
+              : justSaved && !hasChanges
+                ? t("saved")
+                : t("identity.save")}
           </Button>
         </div>
       </form>
