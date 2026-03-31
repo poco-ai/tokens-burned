@@ -231,7 +231,6 @@ export default async function LeaderboardPage({
               followers: t("table.followers"),
               mutual: tCard("mutual"),
               you: tCard("you"),
-              viewProfile: tCard("viewProfile"),
             }}
           />
         ) : (
