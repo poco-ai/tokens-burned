@@ -21,6 +21,7 @@ type LeaderboardTableProps = {
   title: string;
   emptyLabel: string;
   entries: LeaderboardEntry[];
+  viewerEntry?: LeaderboardEntry | null;
   labels: {
     rank: string;
     user: string;
@@ -39,8 +40,61 @@ export function LeaderboardTable({
   title,
   emptyLabel,
   entries,
+  viewerEntry = null,
   labels,
 }: LeaderboardTableProps) {
+  const pinnedViewerEntry =
+    viewerEntry && entries.every((entry) => entry.userId !== viewerEntry.userId)
+      ? viewerEntry
+      : null;
+
+  function renderEntryRow(entry: LeaderboardEntry, key: string) {
+    return (
+      <TableRow
+        key={key}
+        className={
+          entry.isSelf && pinnedViewerEntry ? "bg-muted/30" : undefined
+        }
+      >
+        <TableCell className="font-medium">#{entry.rank}</TableCell>
+        <TableCell className="min-w-64">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <Link
+              href={`/u/${entry.username}`}
+              className="truncate font-medium text-foreground hover:underline"
+            >
+              {entry.name}
+            </Link>
+            <span className="text-sm text-muted-foreground">
+              @{entry.username}
+            </span>
+            {entry.isSelf ? (
+              <Badge variant="outline">{labels.you}</Badge>
+            ) : null}
+            {entry.isFollowing && entry.followsYou ? (
+              <Badge variant="secondary">{labels.mutual}</Badge>
+            ) : null}
+          </div>
+        </TableCell>
+        <TableCell className="text-right font-medium">
+          {formatTokenCount(entry.totalTokens)}
+        </TableCell>
+        <TableCell className="text-right font-medium">
+          {formatUsdAmount(entry.estimatedCostUsd, locale)}
+        </TableCell>
+        <TableCell className="text-right text-muted-foreground">
+          {formatDuration(entry.activeSeconds)}
+        </TableCell>
+        <TableCell className="text-right text-muted-foreground">
+          {entry.sessions.toLocaleString(locale)}
+        </TableCell>
+        <TableCell className="text-right text-muted-foreground">
+          {entry.followerCount.toLocaleString(locale)}
+        </TableCell>
+      </TableRow>
+    );
+  }
+
   return (
     <Card className="gap-0 py-3 shadow-sm ring-1 ring-border/60">
       <CardHeader className="border-b border-border/50 pb-2">
@@ -71,45 +125,23 @@ export function LeaderboardTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {entries.map((entry) => (
-                <TableRow key={entry.userId}>
-                  <TableCell className="font-medium">#{entry.rank}</TableCell>
-                  <TableCell className="min-w-64">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <Link
-                        href={`/u/${entry.username}`}
-                        className="truncate font-medium text-foreground hover:underline"
-                      >
-                        {entry.name}
-                      </Link>
-                      <span className="text-sm text-muted-foreground">
-                        @{entry.username}
-                      </span>
-                      {entry.isSelf ? (
-                        <Badge variant="outline">{labels.you}</Badge>
-                      ) : null}
-                      {entry.isFollowing && entry.followsYou ? (
-                        <Badge variant="secondary">{labels.mutual}</Badge>
-                      ) : null}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatTokenCount(entry.totalTokens)}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatUsdAmount(entry.estimatedCostUsd, locale)}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {formatDuration(entry.activeSeconds)}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {entry.sessions.toLocaleString(locale)}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {entry.followerCount.toLocaleString(locale)}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {entries.map((entry) => renderEntryRow(entry, entry.userId))}
+              {pinnedViewerEntry ? (
+                <>
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell
+                      colSpan={7}
+                      className="py-1 text-center text-muted-foreground"
+                    >
+                      ...
+                    </TableCell>
+                  </TableRow>
+                  {renderEntryRow(
+                    pinnedViewerEntry,
+                    `${pinnedViewerEntry.userId}-viewer`,
+                  )}
+                </>
+              ) : null}
             </TableBody>
           </Table>
         )}
