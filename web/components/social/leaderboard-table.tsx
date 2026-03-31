@@ -51,6 +51,32 @@ export function LeaderboardTable({
   viewerNotice = null,
   labels,
 }: LeaderboardTableProps) {
+  function getTopRankRowClass(rank: number) {
+    if (rank === 1) {
+      return "bg-amber-50/80 hover:bg-amber-50 dark:bg-amber-950/30 dark:hover:bg-amber-950/40";
+    }
+    if (rank === 2) {
+      return "bg-slate-100/80 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800/70";
+    }
+    if (rank === 3) {
+      return "bg-orange-100/70 hover:bg-orange-100 dark:bg-orange-900/30 dark:hover:bg-orange-900/40";
+    }
+    return "";
+  }
+
+  function getTopRankMedal(rank: number) {
+    if (rank === 1) {
+      return "🥇";
+    }
+    if (rank === 2) {
+      return "🥈";
+    }
+    if (rank === 3) {
+      return "🥉";
+    }
+    return null;
+  }
+
   const pinnedViewerEntry =
     viewerEntry && entries.every((entry) => entry.userId !== viewerEntry.userId)
       ? viewerEntry
@@ -59,14 +85,27 @@ export function LeaderboardTable({
     !pinnedViewerEntry && viewerNotice ? viewerNotice : null;
 
   function renderEntryRow(entry: LeaderboardEntry, key: string) {
+    const topRankMedal = getTopRankMedal(entry.rank);
+    const rowClasses = [
+      entry.isSelf && pinnedViewerEntry ? "bg-muted/30" : "",
+      getTopRankRowClass(entry.rank),
+    ]
+      .filter(Boolean)
+      .join(" ");
+
     return (
-      <TableRow
-        key={key}
-        className={
-          entry.isSelf && pinnedViewerEntry ? "bg-muted/30" : undefined
-        }
-      >
-        <TableCell className="font-medium">#{entry.rank}</TableCell>
+      <TableRow key={key} className={rowClasses || undefined}>
+        <TableCell className="font-medium">
+          <div className="flex items-center gap-2">
+            {topRankMedal ? (
+              <span className="text-base leading-none" aria-hidden="true">
+                {topRankMedal}
+              </span>
+            ) : (
+              <span>#{entry.rank}</span>
+            )}
+          </div>
+        </TableCell>
         <TableCell className="min-w-64">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Link
