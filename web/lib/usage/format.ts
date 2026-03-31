@@ -1,5 +1,6 @@
 const datePartsFormatterCache = new Map<string, Intl.DateTimeFormat>();
-const dateTimeFormatterCache = new Map<string, Intl.DateTimeFormat>();
+const dateFormatterCache = new Map<string, Intl.DateTimeFormat>();
+const timeFormatterCache = new Map<string, Intl.DateTimeFormat>();
 const percentageFormatterCache = new Map<string, Intl.NumberFormat>();
 const compactCurrencyFormatterCache = new Map<string, Intl.NumberFormat>();
 const preciseCurrencyFormatterCache = new Map<string, Intl.NumberFormat>();
@@ -24,9 +25,9 @@ function getDatePartsFormatter(timezone: string) {
   return formatter;
 }
 
-function getDateTimeFormatter(timezone: string, locale = "en") {
+function getDateFormatter(timezone: string, locale = "en") {
   const cacheKey = `${locale}:${timezone}`;
-  const cached = dateTimeFormatterCache.get(cacheKey);
+  const cached = dateFormatterCache.get(cacheKey);
 
   if (cached) {
     return cached;
@@ -37,12 +38,29 @@ function getDateTimeFormatter(timezone: string, locale = "en") {
     year: "numeric",
     month: "short",
     day: "2-digit",
+  });
+
+  dateFormatterCache.set(cacheKey, formatter);
+
+  return formatter;
+}
+
+function getTimeFormatter(timezone: string, locale = "en") {
+  const cacheKey = `${locale}:${timezone}`;
+  const cached = timeFormatterCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const formatter = new Intl.DateTimeFormat(locale, {
+    timeZone: timezone,
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
   });
 
-  dateTimeFormatterCache.set(cacheKey, formatter);
+  timeFormatterCache.set(cacheKey, formatter);
 
   return formatter;
 }
@@ -219,5 +237,8 @@ export function formatDateTime(
   timezone: string,
   locale = "en",
 ) {
-  return getDateTimeFormatter(timezone, locale).format(normalizeDate(value));
+  const date = normalizeDate(value);
+  const datePart = getDateFormatter(timezone, locale).format(date);
+  const timePart = getTimeFormatter(timezone, locale).format(date);
+  return `${datePart} ${timePart}`;
 }
