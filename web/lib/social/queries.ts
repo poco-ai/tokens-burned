@@ -1,3 +1,5 @@
+import type { ProfileAchievementWallItem } from "@/lib/achievements/profile-wall";
+import { getProfileAchievementWall } from "@/lib/achievements/profile-wall";
 import { getAchievementArenaSummary } from "@/lib/achievements/queries";
 import { normalizeUsername } from "@/lib/auth-username";
 import { getPricingCatalog } from "@/lib/pricing/catalog";
@@ -112,6 +114,7 @@ export type PublicProfilePageData = {
     totalTokens: number;
     share: number;
   }>;
+  achievementWall: ProfileAchievementWallItem[];
 };
 
 type RelationFlags = {
@@ -438,6 +441,7 @@ export async function getPublicProfilePageData(input: {
     sessions30,
     buckets30,
     arenaSummary,
+    achievementWall,
   ] = await Promise.all([
     getPricingCatalog(),
     getRelationFlags(input.viewerUserId, user.id),
@@ -500,6 +504,7 @@ export async function getPublicProfilePageData(input: {
       },
     }),
     getAchievementArenaSummary(user.id),
+    getProfileAchievementWall(user.id, 5),
   ]);
 
   const heatmap = buildHeatmap(timezone, sessions365, buckets365);
@@ -543,6 +548,7 @@ export async function getPublicProfilePageData(input: {
     heatmap,
     topTools: buildTopTools(buckets30),
     topModels: buildTopModels(buckets30),
+    achievementWall,
   };
 }
 

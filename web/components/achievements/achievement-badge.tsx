@@ -66,11 +66,17 @@ type AchievementBadgeProps = {
   iconKey: AchievementIconKey;
   tier: AchievementTier;
   locked?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   count?: number;
 };
 
 const sizeClassNames = {
+  xs: {
+    shell: "size-11",
+    icon: "size-3.5",
+    lockIcon: "size-4.5",
+    watermarkIcon: "size-4",
+  },
   sm: {
     shell: "size-12",
     icon: "size-4",
