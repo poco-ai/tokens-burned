@@ -520,7 +520,6 @@
     },
     "profile": {
       "activityTitle": "AI 编程活跃度",
-      "activitySubtitle": "过去 365 天",
       "arenaScore": "Arena Score",
       "arenaLevel": "等级",
       "arenaProgressCaption": "当前分数 {score}，距离 Lv.{nextLevel} 还需 {remaining}",

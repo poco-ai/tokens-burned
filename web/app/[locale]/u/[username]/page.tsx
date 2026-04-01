@@ -184,9 +184,6 @@ export default async function PublicProfilePage({
                 <CardTitle className="text-base leading-tight">
                   {t("activityTitle")}
                 </CardTitle>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {t("activitySubtitle")}
-                </p>
               </div>
               <div className="flex shrink-0 items-baseline gap-1 text-sm">
                 <span className="font-semibold tabular-nums text-foreground">
@@ -281,11 +278,15 @@ export default async function PublicProfilePage({
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            <Card className="bg-card shadow-sm ring-1 ring-border/60">
-              <CardHeader className="border-b border-border/50 pb-3">
-                <CardTitle>{t("topTools")}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
+            <Card className="gap-0 overflow-hidden p-0 shadow-sm ring-1 ring-border/60">
+              <header className="border-b border-border/60 bg-muted/40 px-4 py-2.5 dark:bg-muted/25">
+                <div className="min-w-0">
+                  <CardTitle className="text-base leading-tight">
+                    {t("topTools")}
+                  </CardTitle>
+                </div>
+              </header>
+              <CardContent className="px-4 pb-4 pt-4">
                 <ProfileTopList
                   locale={locale}
                   items={profile.topTools}
@@ -294,11 +295,15 @@ export default async function PublicProfilePage({
               </CardContent>
             </Card>
 
-            <Card className="bg-card shadow-sm ring-1 ring-border/60">
-              <CardHeader className="border-b border-border/50 pb-3">
-                <CardTitle>{t("topModels")}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
+            <Card className="gap-0 overflow-hidden p-0 shadow-sm ring-1 ring-border/60">
+              <header className="border-b border-border/60 bg-muted/40 px-4 py-2.5 dark:bg-muted/25">
+                <div className="min-w-0">
+                  <CardTitle className="text-base leading-tight">
+                    {t("topModels")}
+                  </CardTitle>
+                </div>
+              </header>
+              <CardContent className="px-4 pb-4 pt-4">
                 <ProfileTopList
                   locale={locale}
                   items={profile.topModels}

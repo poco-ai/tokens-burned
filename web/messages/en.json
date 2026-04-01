@@ -520,7 +520,6 @@
     },
     "profile": {
       "activityTitle": "AI Coding Activity",
-      "activitySubtitle": "Past 365 days",
       "arenaScore": "Arena Score",
       "arenaLevel": "Level",
       "arenaProgressCaption": "Score {score} · {remaining} more to Lv.{nextLevel}",

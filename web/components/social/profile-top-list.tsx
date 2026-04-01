@@ -108,11 +108,7 @@ export function ProfileTopList({
   const tTable = useTranslations("usage.breakdowns.table");
 
   if (items.length === 0) {
-    return (
-      <div className="flex min-h-32 items-center rounded-xl border border-dashed px-4 text-sm text-muted-foreground">
-        {emptyLabel}
-      </div>
-    );
+    return <p className="text-sm text-muted-foreground">{emptyLabel}</p>;
   }
 
   const chartData = toChartData(items);
