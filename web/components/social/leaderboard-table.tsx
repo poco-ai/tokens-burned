@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,10 +16,15 @@ import {
   formatTokenCount,
   formatUsdAmount,
 } from "@/lib/usage/format";
+import { cn } from "@/lib/utils";
 
 type LeaderboardTableProps = {
   locale: string;
   title: string;
+  /** Shown on the right side of the card header (e.g. date range). */
+  headerRight?: ReactNode;
+  /** When true, empty state is plain text without a dashed border. */
+  emptyPlain?: boolean;
   emptyLabel: string;
   entries: LeaderboardEntry[];
   viewerEntry?: LeaderboardEntry | null;
@@ -45,6 +50,8 @@ type LeaderboardTableProps = {
 export function LeaderboardTable({
   locale,
   title,
+  headerRight = null,
+  emptyPlain = false,
   emptyLabel,
   entries,
   viewerEntry = null,
@@ -183,13 +190,21 @@ export function LeaderboardTable({
   }
 
   return (
-    <Card className="gap-0 py-3 shadow-sm ring-1 ring-border/60">
-      <CardHeader className="border-b border-border/50 pb-2">
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-2">
+    <Card className="gap-0 overflow-hidden p-0 shadow-sm ring-1 ring-border/60">
+      <header className="flex flex-row flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-border/60 bg-muted/40 px-4 py-2.5 dark:bg-muted/25">
+        <CardTitle className="min-w-0 leading-tight">{title}</CardTitle>
+        {headerRight ? (
+          <div className="flex shrink-0 items-center">{headerRight}</div>
+        ) : null}
+      </header>
+      <CardContent className="px-4 pb-3 pt-3">
         {entries.length === 0 && !pinnedViewerEntry && !pinnedViewerNotice ? (
-          <div className="flex min-h-28 items-center rounded-xl border border-dashed px-4 text-sm text-muted-foreground">
+          <div
+            className={cn(
+              "flex min-h-28 items-center text-sm text-muted-foreground",
+              emptyPlain ? "py-1" : "rounded-xl border border-dashed px-4",
+            )}
+          >
             {emptyLabel}
           </div>
         ) : (

@@ -136,12 +136,6 @@ export default async function LeaderboardPage({
             ))}
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <LeaderboardWindowBadge
-              locale={locale}
-              period={period}
-              windowStart={data.global.windowStart}
-              windowEnd={data.global.windowEnd}
-            />
             <LeaderboardMetricSelect
               value={metric}
               defaultValue={defaultLeaderboardMetric}
@@ -153,6 +147,14 @@ export default async function LeaderboardPage({
         <LeaderboardTable
           locale={locale}
           title={t("globalTitle")}
+          headerRight={
+            <LeaderboardWindowBadge
+              locale={locale}
+              period={period}
+              windowStart={data.global.windowStart}
+              windowEnd={data.global.windowEnd}
+            />
+          }
           emptyLabel={t("emptyGlobal")}
           entries={data.global.entries}
           viewerEntry={data.viewerGlobalEntry}
@@ -183,7 +185,16 @@ export default async function LeaderboardPage({
           <LeaderboardTable
             locale={locale}
             title={t("followingTitle")}
+            headerRight={
+              <LeaderboardWindowBadge
+                locale={locale}
+                period={period}
+                windowStart={data.following.windowStart}
+                windowEnd={data.following.windowEnd}
+              />
+            }
             emptyLabel={t("emptyFollowing")}
+            emptyPlain
             entries={data.following.entries}
             labels={{
               rank: t("table.rank"),

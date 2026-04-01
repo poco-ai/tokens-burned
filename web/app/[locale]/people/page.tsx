@@ -32,9 +32,7 @@ type PeoplePageProps = {
 
 type PeopleTab = "all" | "following" | "followers";
 
-const DEFAULT_PAGE_SIZE = 5;
-const MIN_PAGE_SIZE = 1;
-const MAX_PAGE_SIZE = 100;
+const PEOPLE_PAGE_SIZE = 10;
 
 function buildPageRange(
   current: number,
@@ -79,13 +77,6 @@ function normalizePositiveInteger(value: string | undefined, fallback: number) {
   }
 
   return parsed;
-}
-
-function normalizePageSize(value: string | undefined) {
-  return Math.min(
-    MAX_PAGE_SIZE,
-    Math.max(MIN_PAGE_SIZE, normalizePositiveInteger(value, DEFAULT_PAGE_SIZE)),
-  );
 }
 
 function normalizePeopleTab(
@@ -152,8 +143,7 @@ export default async function PeoplePage({
     firstValue(resolvedSearchParams?.tab),
     Boolean(viewer),
   );
-  const sizeParam = firstValue(resolvedSearchParams?.size);
-  const pageSize = normalizePageSize(sizeParam);
+  const pageSize = PEOPLE_PAGE_SIZE;
   const pageParam = firstValue(resolvedSearchParams?.page);
   const currentPage = normalizePositiveInteger(pageParam, 1);
 
@@ -238,9 +228,6 @@ export default async function PeoplePage({
     if (query) {
       nextQuery.query = query;
     }
-    if (pageSize !== DEFAULT_PAGE_SIZE) {
-      nextQuery.size = pageSize.toString();
-    }
 
     return Object.keys(nextQuery).length > 0
       ? {
@@ -257,9 +244,6 @@ export default async function PeoplePage({
     }
     if (query) {
       params.set("query", query);
-    }
-    if (pageSize !== DEFAULT_PAGE_SIZE) {
-      params.set("size", pageSize.toString());
     }
     if (pageNum > 1) {
       params.set("page", pageNum.toString());
@@ -312,9 +296,6 @@ export default async function PeoplePage({
             {tab !== "all" ? (
               <input type="hidden" name="tab" value={tab} />
             ) : null}
-            {pageSize !== DEFAULT_PAGE_SIZE ? (
-              <input type="hidden" name="size" value={pageSize} />
-            ) : null}
             <Input
               type="search"
               name="query"
@@ -350,126 +331,52 @@ export default async function PeoplePage({
                 />
               ))}
             </div>
-            <div
-              className={cn(
-                "border-t border-border/60 pt-4",
-                totalPages > 1
-                  ? "grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center"
-                  : "flex justify-end",
-              )}
-            >
-              {totalPages > 1 ? (
-                <>
-                  <div aria-hidden className="hidden sm:block" />
-                  <Pagination className="mx-0 w-auto sm:justify-self-center">
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationLink
-                          href={buildPageUrl(1)}
-                          size="default"
-                          aria-label={t("pagination.first")}
-                          className={
-                            validPage <= 1
-                              ? "pointer-events-none opacity-50"
-                              : undefined
-                          }
-                        >
-                          {t("pagination.first")}
-                        </PaginationLink>
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          href={buildPageUrl(validPage - 1)}
-                          text={t("pagination.previous")}
-                          className={
-                            validPage <= 1
-                              ? "pointer-events-none opacity-50"
-                              : undefined
-                          }
-                        />
-                      </PaginationItem>
-                      {pages.map((p) =>
-                        p.type === "ellipsis" ? (
-                          <PaginationItem key={p.key}>
-                            <PaginationEllipsis />
-                          </PaginationItem>
-                        ) : (
-                          <PaginationItem key={p.value}>
-                            <PaginationLink
-                              href={buildPageUrl(p.value)}
-                              isActive={p.value === validPage}
-                            >
-                              {p.value}
-                            </PaginationLink>
-                          </PaginationItem>
-                        ),
-                      )}
-                      <PaginationItem>
-                        <PaginationNext
-                          href={buildPageUrl(validPage + 1)}
-                          text={t("pagination.next")}
-                          className={
-                            validPage >= totalPages
-                              ? "pointer-events-none opacity-50"
-                              : undefined
-                          }
-                        />
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationLink
-                          href={buildPageUrl(totalPages)}
-                          size="default"
-                          aria-label={t("pagination.last")}
-                          className={
-                            validPage >= totalPages
-                              ? "pointer-events-none opacity-50"
-                              : undefined
-                          }
-                        >
-                          {t("pagination.last")}
-                        </PaginationLink>
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </>
-              ) : null}
-
-              <form
-                className={cn(
-                  "flex flex-wrap items-center gap-2",
-                  totalPages > 1
-                    ? "justify-center sm:justify-self-end"
-                    : "justify-end",
-                )}
-              >
-                {tab !== "all" ? (
-                  <input type="hidden" name="tab" value={tab} />
-                ) : null}
-                {query ? (
-                  <input type="hidden" name="query" value={query} />
-                ) : null}
-                <label
-                  htmlFor="people-page-size"
-                  className="text-sm text-muted-foreground"
-                >
-                  {t("pagination.pageSize")}
-                </label>
-                <Input
-                  id="people-page-size"
-                  type="number"
-                  name="size"
-                  min={MIN_PAGE_SIZE}
-                  max={MAX_PAGE_SIZE}
-                  step={1}
-                  inputMode="numeric"
-                  defaultValue={pageSize}
-                  className="h-7 w-20 rounded-md px-2 text-sm"
-                />
-                <Button type="submit" variant="outline" size="sm">
-                  {t("pagination.apply")}
-                </Button>
-              </form>
-            </div>
+            {totalPages > 1 ? (
+              <div className="flex justify-center pt-4">
+                <Pagination className="mx-0 w-auto">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href={buildPageUrl(validPage - 1)}
+                        text={t("pagination.previous")}
+                        className={
+                          validPage <= 1
+                            ? "pointer-events-none opacity-50"
+                            : undefined
+                        }
+                      />
+                    </PaginationItem>
+                    {pages.map((p) =>
+                      p.type === "ellipsis" ? (
+                        <PaginationItem key={p.key}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      ) : (
+                        <PaginationItem key={p.value}>
+                          <PaginationLink
+                            href={buildPageUrl(p.value)}
+                            isActive={p.value === validPage}
+                          >
+                            {p.value}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ),
+                    )}
+                    <PaginationItem>
+                      <PaginationNext
+                        href={buildPageUrl(validPage + 1)}
+                        text={t("pagination.next")}
+                        className={
+                          validPage >= totalPages
+                            ? "pointer-events-none opacity-50"
+                            : undefined
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            ) : null}
           </div>
         ) : (
           <Card

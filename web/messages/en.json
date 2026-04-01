@@ -558,10 +558,6 @@
       "results": "{count} results",
       "empty": "No public profiles found.",
       "pagination": {
-        "pageSize": "Per page",
-        "apply": "Apply",
-        "first": "First",
-        "last": "Last",
         "previous": "Previous",
         "next": "Next"
       }
