@@ -1,4 +1,7 @@
-import { loadConfig } from "../infrastructure/config/manager";
+import {
+  DEFAULT_SYNC_INTERVAL,
+  loadConfig,
+} from "../infrastructure/config/manager";
 import { formatBullet, formatHeader } from "../infrastructure/ui/format";
 import {
   isInteractiveTerminal,
@@ -7,8 +10,6 @@ import {
 import { runSync } from "../services/sync-service";
 import { logger } from "../utils/logger";
 import { runInit } from "./init";
-
-const DEFAULT_INTERVAL = 5 * 60_000; // 5 minutes
 
 function log(msg: string): void {
   const ts = new Date().toLocaleTimeString("en-US", { hour12: false });
@@ -24,7 +25,7 @@ export interface DaemonOptions {
 }
 
 export async function runDaemon(opts: DaemonOptions = {}): Promise<void> {
-  const config = loadConfig();
+  let config = loadConfig();
   if (!config?.apiKey) {
     if (isInteractiveTerminal()) {
       logger.info(
@@ -38,18 +39,27 @@ export async function runDaemon(opts: DaemonOptions = {}): Promise<void> {
         defaultValue: true,
       });
       if (shouldInit) {
-        await runInit();
+        await runInit({ daemon: false });
+        config = loadConfig();
+        if (!config?.apiKey) {
+          logger.info(
+            formatBullet("初始化未完成，已取消启动 daemon。", "warning"),
+          );
+          return;
+        }
+      } else {
+        logger.info(formatBullet("已取消启动 daemon。", "warning"));
         return;
       }
-      logger.info(formatBullet("已取消启动 daemon。", "warning"));
-      return;
     }
-
-    logger.error("Not configured. Run `tokenarena init` first.");
-    process.exit(1);
+    if (!config?.apiKey) {
+      logger.error("Not configured. Run `tokenarena init` first.");
+      process.exit(1);
+    }
   }
 
-  const interval = opts.interval || config.syncInterval || DEFAULT_INTERVAL;
+  const interval =
+    opts.interval || config.syncInterval || DEFAULT_SYNC_INTERVAL;
   const intervalMin = Math.round(interval / 60000);
 
   log(`Daemon started (sync every ${intervalMin}m, Ctrl+C to stop)`);

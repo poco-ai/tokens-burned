@@ -15,7 +15,7 @@ export interface SyncCommandOptions {
 export async function runSyncCommand(
   opts: SyncCommandOptions = {},
 ): Promise<void> {
-  const config = loadConfig();
+  let config = loadConfig();
   if (!config?.apiKey) {
     if (isInteractiveTerminal()) {
       logger.info(
@@ -26,15 +26,21 @@ export async function runSyncCommand(
         defaultValue: true,
       });
       if (shouldInit) {
-        await runInit();
+        await runInit({ daemon: false });
+        config = loadConfig();
+        if (!config?.apiKey) {
+          logger.info(formatBullet("初始化未完成，已取消同步。", "warning"));
+          return;
+        }
+      } else {
+        logger.info(formatBullet("已取消同步。", "warning"));
         return;
       }
-      logger.info(formatBullet("已取消同步。", "warning"));
-      return;
     }
-
-    logger.error("Not configured. Run `tokenarena init` first.");
-    process.exit(1);
+    if (!config?.apiKey) {
+      logger.error("Not configured. Run `tokenarena init` first.");
+      process.exit(1);
+    }
   }
 
   await runSync(config, {

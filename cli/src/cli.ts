@@ -40,6 +40,7 @@ export function createCli(): Command {
     .command("init")
     .description("Initialize configuration with API key")
     .option("--api-url <url>", "Custom API server URL")
+    .option("--no-daemon", "Do not start daemon automatically after init")
     .action(async (opts) => {
       await runInit(opts);
     });
@@ -56,7 +57,7 @@ export function createCli(): Command {
   // daemon command
   program
     .command("daemon")
-    .description("Run continuous sync (every 5 minutes by default)")
+    .description("Run continuous sync (every 2 hours by default)")
     .option("--interval <ms>", "Sync interval in milliseconds", parseInt)
     .action(async (opts) => {
       await runDaemon(opts);

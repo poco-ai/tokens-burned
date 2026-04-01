@@ -1,4 +1,8 @@
-import { getConfigPath, loadConfig } from "../infrastructure/config/manager";
+import {
+  DEFAULT_SYNC_INTERVAL,
+  getConfigPath,
+  loadConfig,
+} from "../infrastructure/config/manager";
 import { loadSyncState } from "../infrastructure/runtime/state";
 import {
   formatBullet,
@@ -39,14 +43,12 @@ export async function runStatus(): Promise<void> {
     logger.info(
       formatKeyValue("API URL", config.apiUrl || "https://token.poco-ai.com"),
     );
-    if (config.syncInterval) {
-      logger.info(
-        formatKeyValue(
-          "同步间隔",
-          `${Math.round(config.syncInterval / 60000)} 分钟`,
-        ),
-      );
-    }
+    logger.info(
+      formatKeyValue(
+        "同步间隔",
+        `${Math.round((config.syncInterval ?? DEFAULT_SYNC_INTERVAL) / 60000)} 分钟`,
+      ),
+    );
   }
 
   logger.info(formatSection("已检测工具"));

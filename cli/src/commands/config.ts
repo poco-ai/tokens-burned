@@ -1,4 +1,5 @@
 import {
+  DEFAULT_SYNC_INTERVAL,
   getDefaultApiUrl,
   isValidConfigKey,
   loadConfig,
@@ -109,9 +110,9 @@ async function promptSyncIntervalValue(
     message: "请选择默认同步间隔",
     choices: [
       {
-        name: "5 分钟",
-        value: String(5 * 60_000),
-        description: "适合作为默认值",
+        name: "120 分钟（2 小时）",
+        value: String(DEFAULT_SYNC_INTERVAL),
+        description: "默认值，适合低打扰后台同步",
       },
       {
         name: "10 分钟",
@@ -127,6 +128,11 @@ async function promptSyncIntervalValue(
         name: "60 分钟",
         value: String(60 * 60_000),
         description: "长周期后台同步",
+      },
+      {
+        name: "5 分钟",
+        value: String(5 * 60_000),
+        description: "更频繁同步，适合调试或高活跃场景",
       },
       {
         name: "自定义（毫秒）",
@@ -233,7 +239,7 @@ function printConfigShow(): void {
       "同步间隔",
       config.syncInterval
         ? `${Math.round(config.syncInterval / 60000)} 分钟 (${config.syncInterval} ms)`
-        : "未设置（daemon 默认 5 分钟）",
+        : `未设置（daemon 默认 ${Math.round(DEFAULT_SYNC_INTERVAL / 60000)} 分钟）`,
     ),
   );
   logger.info(formatKeyValue("日志级别", config.logLevel || "info"));

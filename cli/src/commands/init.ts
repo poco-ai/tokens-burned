@@ -6,6 +6,7 @@ import { dirname, join, posix, win32 } from "node:path";
 import { ApiClient } from "../infrastructure/api/client";
 import {
   type Config,
+  DEFAULT_SYNC_INTERVAL,
   getDefaultApiUrl,
   getOrCreateDeviceId,
   loadConfig,
@@ -20,7 +21,11 @@ import {
   formatSection,
   maskSecret,
 } from "../infrastructure/ui/format";
-import { promptConfirm, promptPassword } from "../infrastructure/ui/prompts";
+import {
+  isInteractiveTerminal,
+  promptConfirm,
+  promptPassword,
+} from "../infrastructure/ui/prompts";
 import { getDetectedTools } from "../services/parser-service";
 import { runSync } from "../services/sync-service";
 import { logger } from "../utils/logger";
@@ -230,6 +235,7 @@ export function resolveShellAliasSetup(
 
 export interface InitOptions {
   apiUrl?: string;
+  daemon?: boolean;
 }
 
 export async function runInit(opts: InitOptions = {}): Promise<void> {
@@ -301,6 +307,7 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   const config: Config = {
     apiKey,
     apiUrl,
+    syncInterval: existing?.syncInterval ?? DEFAULT_SYNC_INTERVAL,
     ...(existing?.deviceId ? { deviceId: existing.deviceId } : {}),
   };
   saveConfig(config);
@@ -331,8 +338,39 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   logger.info(formatSection("初始化完成"));
   logger.info(formatBullet("TokenArena 已准备就绪。", "success"));
   logger.info(formatKeyValue("控制台", `${apiUrl}/usage`));
+  logger.info(
+    formatKeyValue(
+      "Daemon 默认同步间隔",
+      `${Math.round((config.syncInterval ?? DEFAULT_SYNC_INTERVAL) / 60000)} 分钟`,
+    ),
+  );
 
   await setupShellAlias();
+
+  if (opts.daemon === false || !isInteractiveTerminal()) {
+    return;
+  }
+
+  const shouldStartDaemon = await promptConfirm({
+    message: "是否立即启动 daemon？",
+    defaultValue: true,
+  });
+
+  if (!shouldStartDaemon) {
+    logger.info(
+      formatBullet("已跳过 daemon 启动，可稍后手动运行 tokenarena daemon。"),
+    );
+    return;
+  }
+
+  logger.info(
+    formatBullet(
+      `正在启动 daemon（默认每 ${Math.round((config.syncInterval ?? DEFAULT_SYNC_INTERVAL) / 60000)} 分钟同步一次）。`,
+      "success",
+    ),
+  );
+  const { runDaemon } = await import("./daemon");
+  await runDaemon({ interval: config.syncInterval });
 }
 
 async function setupShellAlias(): Promise<void> {

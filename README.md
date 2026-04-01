@@ -10,9 +10,7 @@
 - 输入、输出、reasoning、缓存的比例是多少？
 - 一天里什么时候最活跃？
 
-**Token Arena 是一个开源的 AI 用量追踪平台**
-
-它能自动采集本地 AI coding CLI 的使用数据，让你在简洁的 Web 仪表盘中一目了然地看到每天的 token 消耗、会话活跃度和多维度分析。
+**Token Arena 是一个开源的 AI 用量追踪平台**。它能自动采集本地 AI coding CLI 的使用数据，让你在简洁的 Web 仪表盘中一目了然地看到每天的 token 消耗、会话活跃度和多维度分析。
 
 ## 功能概览
 
@@ -29,17 +27,28 @@
 
 1. **注册账号** — 访问 `https://token.poco-ai.com` 注册并登录
 2. **创建 API Key** — 在 Settings 中生成 API key
-3. **下载**
+3. **下载 CLI**
     ```shell
     npm install -g @poco-ai/tokenarena
     ```
 4. **初始化 CLI** — 运行 `tokenarena init`，输入 API key
-5. **查看分析** — 打开 `/usage` 页面查看你的 token 用量分析
+5. **查看分析** — 返回 `https://token.poco-ai.com/usage` 查看你的 token 用量分析
 
 > [!TIP]
->
+> init 执行后会自动执行同步，并启动持续同步。如果你需要手动同步，可以执行 `tokenarena init --no-daemon` 后使用下面两种方式进行同步。
 > - **手动同步**：运行 `tokenarena sync`，手动将本地数据上传至 Web 端。
-> - **持续同步**：运行 `tokenarena daemon`，保持 CLI 运行，实现数据定时自动同步（默认每 5 分钟）。
+> - **持续同步**：运行 `tokenarena daemon`，保持 CLI 运行，实现数据定时自动同步（默认每 2 小时）。
+
+## 技术栈
+
+| 层 | 技术 |
+|----|------|
+| CLI | TypeScript, Commander |
+| Web | Next.js (App Router), React, shadcn/ui |
+| 数据库 | PostgreSQL, Prisma |
+| 认证 | better-auth |
+| 构建 | pnpm monorepo |
+| 部署 | Docker Compose |
 
 ## 本地部署
 
@@ -74,7 +83,7 @@ docker compose down -v           # 停止并删除数据
 > 使用 `docker compose` / `./start.sh` 时，请修改仓库根目录的 `.env`。
 > 此时 `DATABASE_URL` 的主机名应为 `db`，不要写 `localhost`。
 
-### 本地开发
+### 本地开发常用指令
 
 ```bash
 pnpm install
@@ -135,17 +144,6 @@ git add --renormalize .
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
 - `LINUXDO_CLIENT_ID` / `LINUXDO_CLIENT_SECRET`
 - `WATCHA_CLIENT_ID` / `WATCHA_CLIENT_SECRET`
-
-## 技术栈
-
-| 层 | 技术 |
-|----|------|
-| CLI | TypeScript, Commander |
-| Web | Next.js (App Router), React, shadcn/ui |
-| 数据库 | PostgreSQL, Prisma |
-| 认证 | better-auth |
-| 构建 | pnpm monorepo |
-| 部署 | Docker Compose |
 
 ## 致谢
 
