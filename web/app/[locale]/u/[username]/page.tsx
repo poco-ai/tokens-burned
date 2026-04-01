@@ -1,8 +1,10 @@
+import { Users } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { FollowButton } from "@/components/social/follow-button";
+import { ProfileAchievementWall } from "@/components/social/profile-achievement-wall";
 import { ProfileArenaLevelBar } from "@/components/social/profile-arena-level";
+import { ProfileFollowAction } from "@/components/social/profile-follow-action";
 import { ProfileHeatmap } from "@/components/social/profile-heatmap";
 import { ProfileTopList } from "@/components/social/profile-top-list";
 import { SocialShell } from "@/components/social/social-shell";
@@ -108,14 +110,10 @@ export default async function PublicProfilePage({
                       <Badge variant="secondary">{t("mutual")}</Badge>
                     ) : null}
                   </div>
-                  <p className="flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
-                    <span>@{profile.username}</span>
-                    <span className="text-muted-foreground/50">·</span>
-                    <span>
-                      {t("joined", {
-                        date: formatJoinedDate(profile.createdAt, locale),
-                      })}
-                    </span>
+                  <p className="text-sm text-muted-foreground">
+                    {t("joined", {
+                      date: formatJoinedDate(profile.createdAt, locale),
+                    })}
                   </p>
                 </div>
 
@@ -126,48 +124,53 @@ export default async function PublicProfilePage({
                 ) : null}
               </div>
 
+              {profile.isSelf ? (
+                <Button
+                  asChild
+                  className="w-full"
+                  type="button"
+                  variant="outline"
+                >
+                  <Link href="/settings/account">{t("editProfile")}</Link>
+                </Button>
+              ) : (
+                <ProfileFollowAction
+                  locale={locale}
+                  username={profile.username}
+                  initialFollowing={profile.isFollowing}
+                  initialTag={profile.followTag}
+                  isAuthenticated={Boolean(viewer)}
+                  canFollow={profile.publicProfileEnabled}
+                />
+              )}
+
+              <div className="flex flex-wrap items-center gap-x-1.5 text-sm">
+                <Users
+                  className="size-4 shrink-0 text-muted-foreground"
+                  aria-hidden
+                />
+                <span className="font-semibold tabular-nums text-foreground">
+                  {profile.followerCount.toLocaleString(locale)}
+                </span>
+                <span className="text-muted-foreground">{t("followers")}</span>
+                <span className="text-muted-foreground/50">·</span>
+                <span className="font-semibold tabular-nums text-foreground">
+                  {profile.followingCount.toLocaleString(locale)}
+                </span>
+                <span className="text-muted-foreground">{t("following")}</span>
+              </div>
+
               <ProfileArenaLevelBar
                 locale={locale}
                 score={profile.overview.arenaScore}
               />
 
-              <div className="grid grid-cols-3 gap-2 border-t border-border/50 pt-4 text-center">
-                <div className="space-y-0.5">
-                  <div className="text-lg font-semibold tabular-nums leading-none text-foreground">
-                    {profile.followingCount.toLocaleString(locale)}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {t("following")}
-                  </div>
-                </div>
-                <div className="space-y-0.5">
-                  <div className="text-lg font-semibold tabular-nums leading-none text-foreground">
-                    {profile.followerCount.toLocaleString(locale)}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {t("followers")}
-                  </div>
-                </div>
-                <div className="space-y-0.5">
-                  <div className="text-lg font-semibold tabular-nums leading-none text-foreground">
-                    {profile.overview.activeDays.toLocaleString(locale)}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {t("activeDays")}
-                  </div>
-                </div>
-              </div>
-
-              {!profile.isSelf ? (
-                <div className="flex flex-wrap gap-2">
-                  <FollowButton
-                    locale={locale}
-                    username={profile.username}
-                    initialFollowing={profile.isFollowing}
-                    initialTag={profile.followTag}
-                    isAuthenticated={Boolean(viewer)}
-                    canFollow={profile.publicProfileEnabled}
-                  />
+              {profile.achievementWall.length > 0 ? (
+                <div className="space-y-2 border-t border-border/50 pt-4">
+                  <h2 className="text-left text-sm font-semibold text-foreground">
+                    {t("achievementWallTitle")}
+                  </h2>
+                  <ProfileAchievementWall items={profile.achievementWall} />
                 </div>
               ) : null}
             </CardContent>
@@ -175,16 +178,24 @@ export default async function PublicProfilePage({
         </aside>
 
         <div className="flex min-w-0 flex-col gap-6">
-          <Card className="bg-card shadow-sm ring-1 ring-border/60">
-            <CardHeader className="border-b border-border/50 pb-3">
-              <CardTitle>
-                {t("activityTitle")}
-                <span className="ml-2 font-normal text-muted-foreground">
+          <Card className="gap-0 overflow-hidden p-0 shadow-sm ring-1 ring-border/60">
+            <header className="flex flex-row flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-border/60 bg-muted/40 px-4 py-2.5 dark:bg-muted/25">
+              <div className="min-w-0">
+                <CardTitle className="text-base leading-tight">
+                  {t("activityTitle")}
+                </CardTitle>
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {t("activitySubtitle")}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-baseline gap-1 text-sm">
+                <span className="font-semibold tabular-nums text-foreground">
+                  {profile.overview.activeDays.toLocaleString(locale)}
                 </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4 pt-4">
+                <span className="text-muted-foreground">{t("activeDays")}</span>
+              </div>
+            </header>
+            <CardContent className="flex flex-col gap-4 px-4 pb-4 pt-4">
               {hasActivity ? null : (
                 <p className="text-sm text-muted-foreground">
                   {t("noActivity")}

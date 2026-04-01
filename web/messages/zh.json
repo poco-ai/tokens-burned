@@ -533,6 +533,7 @@
       "topTools": "常用工具",
       "topModels": "常用模型",
       "joined": "加入于 {date}",
+      "editProfile": "编辑资料",
       "followers": "粉丝",
       "following": "关注",
       "follow": "关注",
@@ -547,7 +548,8 @@
       "noTopTools": "还没有工具使用记录。",
       "noTopModels": "还没有模型使用记录。",
       "less": "少",
-      "more": "多"
+      "more": "多",
+      "achievementWallTitle": "成就勋章"
     },
     "people": {
       "title": "用户",

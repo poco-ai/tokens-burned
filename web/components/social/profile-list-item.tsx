@@ -100,15 +100,16 @@ export function ProfileListItem({
               </p>
             ) : null}
 
-            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-              <span>
-                {labels.followers}:{" "}
+            <div className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+              <span className="tabular-nums">
                 {profile.followerCount.toLocaleString(locale)}
               </span>
-              <span>
-                {labels.following}:{" "}
+              <span>{labels.followers}</span>
+              <span className="text-muted-foreground/50">·</span>
+              <span className="tabular-nums">
                 {profile.followingCount.toLocaleString(locale)}
               </span>
+              <span>{labels.following}</span>
             </div>
           </div>
         </div>

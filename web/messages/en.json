@@ -533,6 +533,7 @@
       "topTools": "Top Tools",
       "topModels": "Top Models",
       "joined": "Joined {date}",
+      "editProfile": "Edit profile",
       "followers": "followers",
       "following": "following",
       "follow": "Follow",
@@ -547,7 +548,8 @@
       "noTopTools": "No tool usage yet.",
       "noTopModels": "No model usage yet.",
       "less": "Less",
-      "more": "More"
+      "more": "More",
+      "achievementWallTitle": "Achievements"
     },
     "people": {
       "title": "People",
@@ -571,8 +573,8 @@
       "emptyFollowers": "No followers yet."
     },
     "card": {
-      "followers": "Followers",
-      "following": "Following",
+      "followers": "followers",
+      "following": "following",
       "mutual": "Mutual",
       "private": "Private",
       "you": "You",
