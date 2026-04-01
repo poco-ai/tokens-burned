@@ -547,7 +547,12 @@
       "noTopModels": "还没有模型使用记录。",
       "less": "少",
       "more": "多",
-      "achievementWallTitle": "成就勋章"
+      "achievementWallTitle": "成就勋章",
+      "linkedProfileAria": {
+        "github": "在 GitHub 上查看主页",
+        "linuxdo": "在 Linux.do 上查看主页",
+        "watcha": "在观猹（Watcha）上查看主页"
+      }
     },
     "people": {
       "title": "用户",

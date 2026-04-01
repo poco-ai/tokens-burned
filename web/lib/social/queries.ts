@@ -9,6 +9,12 @@ import {
 } from "@/lib/pricing/resolve";
 import { prisma } from "@/lib/prisma";
 import {
+  LINKED_PROFILE_PROVIDER_IDS,
+  type LinkedProfileProviderId,
+  pickLinkedAccount,
+  resolveLinkedProfileUrl,
+} from "@/lib/social/linked-provider-profile";
+import {
   groupByHourOrDay,
   listRangeBuckets,
   resolveDashboardRange,
@@ -115,6 +121,10 @@ export type PublicProfilePageData = {
     share: number;
   }>;
   achievementWall: ProfileAchievementWallItem[];
+  linkedIdentity: {
+    providerId: LinkedProfileProviderId;
+    profileUrl: string;
+  } | null;
 };
 
 type RelationFlags = {
@@ -436,6 +446,7 @@ export async function getPublicProfilePageData(input: {
   const [
     catalog,
     relationFlags,
+    linkedAccounts,
     sessions365,
     buckets365,
     sessions30,
@@ -445,6 +456,13 @@ export async function getPublicProfilePageData(input: {
   ] = await Promise.all([
     getPricingCatalog(),
     getRelationFlags(input.viewerUserId, user.id),
+    prisma.account.findMany({
+      where: {
+        userId: user.id,
+        providerId: { in: [...LINKED_PROFILE_PROVIDER_IDS] },
+      },
+      select: { providerId: true, accountId: true },
+    }),
     prisma.usageSession.findMany({
       where: {
         userId: user.id,
@@ -507,6 +525,21 @@ export async function getPublicProfilePageData(input: {
     getProfileAchievementWall(user.id, 5),
   ]);
 
+  const pickedLinked = pickLinkedAccount(linkedAccounts);
+  let linkedIdentity: PublicProfilePageData["linkedIdentity"] = null;
+  if (pickedLinked) {
+    const profileUrl = await resolveLinkedProfileUrl(
+      pickedLinked.providerId,
+      pickedLinked.accountId,
+    );
+    if (profileUrl) {
+      linkedIdentity = {
+        providerId: pickedLinked.providerId,
+        profileUrl,
+      };
+    }
+  }
+
   const heatmap = buildHeatmap(timezone, sessions365, buckets365);
   const activeDays = heatmap
     .slice(-30)
@@ -549,6 +582,7 @@ export async function getPublicProfilePageData(input: {
     topTools: buildTopTools(buckets30),
     topModels: buildTopModels(buckets30),
     achievementWall,
+    linkedIdentity,
   };
 }
 

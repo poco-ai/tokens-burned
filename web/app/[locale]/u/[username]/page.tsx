@@ -6,6 +6,7 @@ import { ProfileAchievementWall } from "@/components/social/profile-achievement-
 import { ProfileArenaLevelBar } from "@/components/social/profile-arena-level";
 import { ProfileFollowAction } from "@/components/social/profile-follow-action";
 import { ProfileHeatmap } from "@/components/social/profile-heatmap";
+import { ProfileLinkedIdentityLink } from "@/components/social/profile-linked-identity";
 import { ProfileTopList } from "@/components/social/profile-top-list";
 import { SocialShell } from "@/components/social/social-shell";
 import { Badge } from "@/components/ui/badge";
@@ -99,15 +100,26 @@ export default async function PublicProfilePage({
                 )}
 
                 <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-baseline gap-2">
-                    <h1 className="text-xl font-semibold tracking-tight">
-                      {profile.name}
-                    </h1>
-                    {!profile.publicProfileEnabled ? (
-                      <Badge variant="outline">{t("privateBadge")}</Badge>
-                    ) : null}
-                    {profile.isFollowing && profile.followsYou ? (
-                      <Badge variant="secondary">{t("mutual")}</Badge>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-2">
+                      <h1 className="text-xl font-semibold tracking-tight">
+                        {profile.name}
+                      </h1>
+                      {!profile.publicProfileEnabled ? (
+                        <Badge variant="outline">{t("privateBadge")}</Badge>
+                      ) : null}
+                      {profile.isFollowing && profile.followsYou ? (
+                        <Badge variant="secondary">{t("mutual")}</Badge>
+                      ) : null}
+                    </div>
+                    {profile.linkedIdentity ? (
+                      <ProfileLinkedIdentityLink
+                        providerId={profile.linkedIdentity.providerId}
+                        profileUrl={profile.linkedIdentity.profileUrl}
+                        ariaLabel={t(
+                          `linkedProfileAria.${profile.linkedIdentity.providerId}`,
+                        )}
+                      />
                     ) : null}
                   </div>
                   <p className="text-sm text-muted-foreground">

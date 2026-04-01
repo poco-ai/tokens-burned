@@ -547,7 +547,12 @@
       "noTopModels": "No model usage yet.",
       "less": "Less",
       "more": "More",
-      "achievementWallTitle": "Achievements"
+      "achievementWallTitle": "Achievements",
+      "linkedProfileAria": {
+        "github": "Open GitHub profile",
+        "linuxdo": "Open Linux.do profile",
+        "watcha": "Open Watcha profile"
+      }
     },
     "people": {
       "title": "People",
