@@ -60,7 +60,7 @@ async function loadBuckets(input: {
   range: DashboardRange;
   filters: UsageFilters;
 }) {
-  return prisma.usageBucket.findMany({
+  const rows = await prisma.usageBucket.findMany({
     where: applyBucketFilters(
       {
         userId: input.userId,
@@ -73,6 +73,15 @@ async function loadBuckets(input: {
     ),
     orderBy: { bucketStart: "asc" },
   });
+
+  return rows.map((bucket) => ({
+    ...bucket,
+    totalTokens: tokenCountToNumber(bucket.totalTokens),
+    inputTokens: tokenCountToNumber(bucket.inputTokens),
+    outputTokens: tokenCountToNumber(bucket.outputTokens),
+    reasoningTokens: tokenCountToNumber(bucket.reasoningTokens),
+    cachedTokens: tokenCountToNumber(bucket.cachedTokens),
+  }));
 }
 
 async function loadSessions(input: {

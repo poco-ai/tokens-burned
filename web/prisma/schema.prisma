@@ -204,11 +204,11 @@ model UsageBucket {
   projectKey            String
   projectLabel          String
   bucketStart           DateTime
-  inputTokens           Int
-  outputTokens          Int
-  reasoningTokens       Int      @default(0)
-  cachedTokens          Int
-  totalTokens           Int
+  inputTokens           BigInt
+  outputTokens          BigInt
+  reasoningTokens       BigInt   @default(0)
+  cachedTokens          BigInt
+  totalTokens           BigInt
   estimatedCostUsd      Float?
   estimatedInputUsd     Float?
   estimatedOutputUsd    Float?

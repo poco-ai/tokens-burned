@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { tokenCountToBigInt } from "@/lib/token-counts";
+import { tokenCountToBigInt, tokenCountToNumber } from "@/lib/token-counts";
 import { getShanghaiDateKey, startOfShanghaiDay } from "./date";
 
 type LeaderboardAggregateWriteClient = Pick<
@@ -167,11 +167,11 @@ export async function recomputeLeaderboardUserDays(
 
   for (const bucket of buckets) {
     const row = ensureAccumulator(rows, bucket.bucketStart);
-    row.inputTokens += bucket.inputTokens;
-    row.outputTokens += bucket.outputTokens;
-    row.reasoningTokens += bucket.reasoningTokens;
-    row.cachedTokens += bucket.cachedTokens;
-    row.totalTokens += bucket.totalTokens;
+    row.inputTokens += tokenCountToNumber(bucket.inputTokens);
+    row.outputTokens += tokenCountToNumber(bucket.outputTokens);
+    row.reasoningTokens += tokenCountToNumber(bucket.reasoningTokens);
+    row.cachedTokens += tokenCountToNumber(bucket.cachedTokens);
+    row.totalTokens += tokenCountToNumber(bucket.totalTokens);
   }
 
   for (const session of sessions) {

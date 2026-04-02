@@ -7,6 +7,7 @@ import {
   resolveOfficialPricingMatch,
 } from "@/lib/pricing/resolve";
 import { prisma } from "@/lib/prisma";
+import { tokenCountToNumber } from "@/lib/token-counts";
 import { resolveDashboardRange } from "@/lib/usage/date-range";
 import { formatDateInput } from "@/lib/usage/format";
 import { getUsagePreference } from "@/lib/usage/preferences";
@@ -127,6 +128,35 @@ function buildDistinctTimeline(
         key: row.key ?? "",
       })),
   );
+}
+
+function normalizeUsageBucketTokenFields<
+  T extends {
+    totalTokens?: number | bigint | null;
+    inputTokens?: number | bigint | null;
+    outputTokens?: number | bigint | null;
+    reasoningTokens?: number | bigint | null;
+    cachedTokens?: number | bigint | null;
+  },
+>(bucket: T) {
+  return {
+    ...bucket,
+    ...(bucket.totalTokens === undefined
+      ? {}
+      : { totalTokens: tokenCountToNumber(bucket.totalTokens) }),
+    ...(bucket.inputTokens === undefined
+      ? {}
+      : { inputTokens: tokenCountToNumber(bucket.inputTokens) }),
+    ...(bucket.outputTokens === undefined
+      ? {}
+      : { outputTokens: tokenCountToNumber(bucket.outputTokens) }),
+    ...(bucket.reasoningTokens === undefined
+      ? {}
+      : { reasoningTokens: tokenCountToNumber(bucket.reasoningTokens) }),
+    ...(bucket.cachedTokens === undefined
+      ? {}
+      : { cachedTokens: tokenCountToNumber(bucket.cachedTokens) }),
+  };
 }
 
 function buildAllTimeMetrics(input: {
@@ -455,9 +485,10 @@ async function loadAchievementMetrics(userId: string) {
       }),
       getPricingCatalog(),
     ]);
+  const normalizedBuckets = buckets.map(normalizeUsageBucketTokenFields);
 
   const costTimeline = sortIsoAsc(
-    buckets.map((bucket) => ({
+    normalizedBuckets.map((bucket) => ({
       at: bucket.bucketStart.toISOString(),
       value: estimateBucketCostUsd(bucket, catalog),
     })),
@@ -474,7 +505,7 @@ async function loadAchievementMetrics(userId: string) {
 
   return buildAllTimeMetrics({
     timezone: preference.timezone,
-    buckets,
+    buckets: normalizedBuckets,
     sessions,
     following,
     followers,

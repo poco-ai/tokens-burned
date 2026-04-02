@@ -60,6 +60,17 @@ function buildUsageSessionWriteInput(input: NormalizedSessionUsage) {
   };
 }
 
+function buildUsageBucketWriteInput(bucket: IngestPayload["buckets"][number]) {
+  return {
+    projectLabel: bucket.projectLabel,
+    inputTokens: tokenCountToBigInt(bucket.inputTokens),
+    outputTokens: tokenCountToBigInt(bucket.outputTokens),
+    reasoningTokens: tokenCountToBigInt(bucket.reasoningTokens),
+    cachedTokens: tokenCountToBigInt(bucket.cachedTokens),
+    totalTokens: tokenCountToBigInt(bucket.totalTokens),
+  };
+}
+
 function normalizeSessionUsage(
   session: IngestPayload["sessions"][number],
   catalog: Awaited<ReturnType<typeof getPricingCatalog>>,
@@ -182,8 +193,10 @@ export async function upsertBuckets(
   input: IngestUsagePayloadInput,
 ) {
   await Promise.all(
-    input.payload.buckets.map((bucket) =>
-      db.usageBucket.upsert({
+    input.payload.buckets.map((bucket) => {
+      const bucketWrite = buildUsageBucketWriteInput(bucket);
+
+      return db.usageBucket.upsert({
         where: {
           userId_deviceId_source_model_projectKey_bucketStart: {
             userId: input.userId,
@@ -196,12 +209,7 @@ export async function upsertBuckets(
         },
         update: {
           apiKeyId: input.apiKeyId ?? undefined,
-          projectLabel: bucket.projectLabel,
-          inputTokens: bucket.inputTokens,
-          outputTokens: bucket.outputTokens,
-          reasoningTokens: bucket.reasoningTokens,
-          cachedTokens: bucket.cachedTokens,
-          totalTokens: bucket.totalTokens,
+          ...bucketWrite,
         },
         create: {
           userId: input.userId,
@@ -210,16 +218,11 @@ export async function upsertBuckets(
           source: bucket.source,
           model: bucket.model,
           projectKey: bucket.projectKey,
-          projectLabel: bucket.projectLabel,
           bucketStart: new Date(bucket.bucketStart),
-          inputTokens: bucket.inputTokens,
-          outputTokens: bucket.outputTokens,
-          reasoningTokens: bucket.reasoningTokens,
-          cachedTokens: bucket.cachedTokens,
-          totalTokens: bucket.totalTokens,
+          ...bucketWrite,
         },
-      }),
-    ),
+      });
+    }),
   );
 }
 

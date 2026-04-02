@@ -62,11 +62,11 @@ type UsageBucketCostGroupRow = {
   userId: string;
   model: string;
   _sum: {
-    inputTokens: number | null;
-    outputTokens: number | null;
-    reasoningTokens: number | null;
-    cachedTokens: number | null;
-    totalTokens: number | null;
+    inputTokens: number | bigint | null;
+    outputTokens: number | bigint | null;
+    reasoningTokens: number | bigint | null;
+    cachedTokens: number | bigint | null;
+    totalTokens: number | bigint | null;
   };
 };
 

@@ -14,6 +14,7 @@ import {
   pickLinkedAccount,
   resolveLinkedProfileUrl,
 } from "@/lib/social/linked-provider-profile";
+import { tokenCountToNumber } from "@/lib/token-counts";
 import {
   groupByHourOrDay,
   listRangeBuckets,
@@ -332,7 +333,11 @@ export async function getActivityHeatmap365(input: {
     }),
   ]);
 
-  return buildHeatmap(input.timezone, sessions365, buckets365);
+  return buildHeatmap(
+    input.timezone,
+    sessions365,
+    buckets365.map(normalizeUsageBucketTokenFields),
+  );
 }
 
 function buildTopTools(
@@ -416,6 +421,35 @@ function estimateBucketCostUsd(
   return estimate?.totalUsd ?? 0;
 }
 
+function normalizeUsageBucketTokenFields<
+  T extends {
+    totalTokens?: number | bigint | null;
+    inputTokens?: number | bigint | null;
+    outputTokens?: number | bigint | null;
+    reasoningTokens?: number | bigint | null;
+    cachedTokens?: number | bigint | null;
+  },
+>(bucket: T) {
+  return {
+    ...bucket,
+    ...(bucket.totalTokens === undefined
+      ? {}
+      : { totalTokens: tokenCountToNumber(bucket.totalTokens) }),
+    ...(bucket.inputTokens === undefined
+      ? {}
+      : { inputTokens: tokenCountToNumber(bucket.inputTokens) }),
+    ...(bucket.outputTokens === undefined
+      ? {}
+      : { outputTokens: tokenCountToNumber(bucket.outputTokens) }),
+    ...(bucket.reasoningTokens === undefined
+      ? {}
+      : { reasoningTokens: tokenCountToNumber(bucket.reasoningTokens) }),
+    ...(bucket.cachedTokens === undefined
+      ? {}
+      : { cachedTokens: tokenCountToNumber(bucket.cachedTokens) }),
+  };
+}
+
 export async function getPublicProfilePageData(input: {
   username: string;
   viewerUserId?: string | null;
@@ -448,9 +482,9 @@ export async function getPublicProfilePageData(input: {
     relationFlags,
     linkedAccounts,
     sessions365,
-    buckets365,
+    rawBuckets365,
     sessions30,
-    buckets30,
+    rawBuckets30,
     arenaSummary,
     achievementWall,
   ] = await Promise.all([
@@ -524,6 +558,8 @@ export async function getPublicProfilePageData(input: {
     getAchievementArenaSummary(user.id),
     getProfileAchievementWall(user.id, 5),
   ]);
+  const buckets365 = rawBuckets365.map(normalizeUsageBucketTokenFields);
+  const buckets30 = rawBuckets30.map(normalizeUsageBucketTokenFields);
 
   const pickedLinked = pickLinkedAccount(linkedAccounts);
   let linkedIdentity: PublicProfilePageData["linkedIdentity"] = null;
