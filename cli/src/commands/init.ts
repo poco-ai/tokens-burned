@@ -1,4 +1,4 @@
-import { execFileSync, spawn } from "node:child_process";
+import { execFileSync, execSync, spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { homedir, platform } from "node:os";
@@ -333,6 +333,33 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   logger.info(formatKeyValue("控制台", `${apiUrl}/usage`));
 
   await setupShellAlias();
+  await setupSystemdService();
+}
+
+async function setupSystemdService(): Promise<void> {
+  const currentPlatform = platform();
+  if (currentPlatform !== "linux") {
+    return;
+  }
+
+  try {
+    execSync("which systemctl", { stdio: "ignore" });
+  } catch {
+    return;
+  }
+
+  const shouldSetup = await promptConfirm({
+    message: "是否设置 systemd 服务以自动运行 daemon？",
+    defaultValue: true,
+  });
+
+  if (!shouldSetup) {
+    logger.info(formatBullet("已跳过 systemd 服务设置。"));
+    return;
+  }
+
+  const { runInstallService } = await import("./install-service");
+  await runInstallService({ action: "setup", skipPrompt: true });
 }
 
 async function setupShellAlias(): Promise<void> {
