@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, sep } from "node:path";
+import { join } from "node:path";
 import { aggregateToBuckets } from "../domain/aggregator";
 import { extractSessions } from "../domain/session-extractor";
 import type {
@@ -65,6 +65,10 @@ function getPathLeaf(value: string): string {
   return leaf || "unknown";
 }
 
+function normalizeForPrefix(value: string): string {
+  return value.replace(/\\/g, "/").replace(/\/+$/, "");
+}
+
 function getUsageNumber(usage: PiUsage, ...keys: Array<keyof PiUsage>): number {
   for (const key of keys) {
     const value = usage[key];
@@ -85,13 +89,16 @@ export function extractPiProjectFromDir(
   filePath: string,
   sessionsDir = DEFAULT_SESSIONS_DIR,
 ): string {
-  const prefix = sessionsDir + sep;
-  if (!filePath.startsWith(prefix)) {
+  const normalizedFilePath = normalizeForPrefix(filePath);
+  const normalizedSessionsDir = normalizeForPrefix(sessionsDir);
+  const prefix = `${normalizedSessionsDir}/`;
+
+  if (!normalizedFilePath.startsWith(prefix)) {
     return "unknown";
   }
 
-  const relativePath = filePath.slice(prefix.length);
-  const firstSegment = relativePath.split(sep)[0];
+  const relativePath = normalizedFilePath.slice(prefix.length);
+  const firstSegment = relativePath.split("/")[0];
   if (!firstSegment) {
     return "unknown";
   }

@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, sep } from "node:path";
+import { join } from "node:path";
 import { aggregateToBuckets } from "../domain/aggregator";
 import { extractSessions } from "../domain/session-extractor";
 import type {
@@ -58,6 +58,10 @@ function getPathLeaf(value: string): string {
   return leaf || "unknown";
 }
 
+function normalizeForPrefix(value: string): string {
+  return value.replace(/\\/g, "/").replace(/\/+$/, "");
+}
+
 function findSessionFiles(baseDir: string): string[] {
   const results: string[] = [];
   if (!existsSync(baseDir)) return results;
@@ -95,13 +99,16 @@ export function resolveQwenProject(
     return getPathLeaf(cwd);
   }
 
-  const prefix = dataDir + sep;
-  if (!filePath.startsWith(prefix)) {
+  const normalizedFilePath = normalizeForPrefix(filePath);
+  const normalizedDataDir = normalizeForPrefix(dataDir);
+  const prefix = `${normalizedDataDir}/`;
+
+  if (!normalizedFilePath.startsWith(prefix)) {
     return "unknown";
   }
 
-  const relativePath = filePath.slice(prefix.length);
-  const projectId = relativePath.split(sep)[0];
+  const relativePath = normalizedFilePath.slice(prefix.length);
+  const projectId = relativePath.split("/")[0];
   return projectId || "unknown";
 }
 
