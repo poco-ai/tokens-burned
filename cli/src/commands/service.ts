@@ -105,7 +105,7 @@ async function setupService(skipPrompt = false): Promise<void> {
     );
   } catch (err) {
     logger.error(`设置服务失败: ${(err as Error).message}`);
-    process.exit(1);
+    throw err;
   }
 }
 
@@ -127,7 +127,7 @@ async function startService(): Promise<void> {
     logger.info(formatBullet("服务已启动", "success"));
   } catch (err) {
     logger.error(`启动服务失败: ${(err as Error).message}`);
-    process.exit(1);
+    throw err;
   }
 }
 
@@ -149,7 +149,7 @@ async function stopService(): Promise<void> {
     logger.info(formatBullet("服务已停止", "success"));
   } catch (err) {
     logger.error(`停止服务失败: ${(err as Error).message}`);
-    process.exit(1);
+    throw err;
   }
 }
 
@@ -171,7 +171,7 @@ async function restartService(): Promise<void> {
     logger.info(formatBullet("服务已重启", "success"));
   } catch (err) {
     logger.error(`重启服务失败: ${(err as Error).message}`);
-    process.exit(1);
+    throw err;
   }
 }
 
@@ -224,7 +224,7 @@ async function uninstallService(): Promise<void> {
     logger.info(formatBullet("服务已停用并删除", "success"));
   } catch (err) {
     logger.error(`卸载服务失败: ${(err as Error).message}`);
-    process.exit(1);
+    throw err;
   }
 }
 
