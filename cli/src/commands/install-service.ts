@@ -2,7 +2,6 @@ import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { join } from "node:path";
-import { getConfigPath } from "../infrastructure/config/manager";
 import {
   formatBullet,
   formatHeader,
@@ -10,6 +9,7 @@ import {
   formatSection,
 } from "../infrastructure/ui/format";
 import { promptConfirm } from "../infrastructure/ui/prompts";
+import { isCommandAvailable } from "../utils/command";
 import { logger } from "../utils/logger";
 
 export interface InstallServiceOptions {
@@ -22,25 +22,7 @@ function isLinux(): boolean {
 }
 
 function hasSystemctl(): boolean {
-  try {
-    execSync("which systemctl", { stdio: "ignore" });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function isSystemdAvailable(): boolean {
-  return isLinux() && hasSystemctl();
-}
-
-function getTokenArenaPath(): string {
-  try {
-    return execSync("which tokenarena", { encoding: "utf-8" }).trim();
-  } catch {
-    const npmRoot = execSync("npm root -g", { encoding: "utf-8" }).trim();
-    return join(npmRoot, "@poco-ai", "tokenarena", "dist", "index.js");
-  }
+  return isCommandAvailable("systemctl");
 }
 
 function getServiceDir(): string {
@@ -52,9 +34,19 @@ function getServiceFile(): string {
 }
 
 function generateServiceContent(): string {
-  const execStart = getTokenArenaPath();
-  const configPath = getConfigPath();
+  const execPath = process.execPath;
+  const scriptPath = process.argv[1];
   const path = process.env.PATH || "/usr/local/bin:/usr/bin:/bin";
+  const isDev = process.env.TOKEN_ARENA_DEV === "1";
+  const xdgConfigHome = process.env.XDG_CONFIG_HOME;
+
+  let envVars = `Environment="PATH=${path}"`;
+  if (isDev) {
+    envVars += `\nEnvironment="TOKEN_ARENA_DEV=1"`;
+  }
+  if (xdgConfigHome) {
+    envVars += `\nEnvironment="XDG_CONFIG_HOME=${xdgConfigHome}"`;
+  }
 
   return `[Unit]
 Description=TokenArena Daemon - AI Usage Tracker
@@ -63,11 +55,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=${execStart} daemon
+ExecStart="${execPath}" "${scriptPath}" daemon
 Restart=always
 RestartSec=10
-Environment=PATH=${path}
-Environment=TOKENARENA_CONFIG=${configPath}
+${envVars}
 
 [Install]
 WantedBy=default.target
@@ -199,8 +190,9 @@ async function statusService(): Promise<void> {
 
   try {
     execSystemctl(["status", "tokenarena"]);
-  } catch (err) {
-    console.log((err as Error).message);
+  } catch {
+    // systemctl status exits non-zero for inactive/failed services.
+    // Output is already shown via stdio inherit, no need to print error.
   }
 }
 
@@ -225,8 +217,8 @@ async function uninstallService(): Promise<void> {
   try {
     execSystemctl(["stop", "tokenarena"]);
     execSystemctl(["disable", "tokenarena"]);
-    execSystemctl(["daemon-reload"]);
     rmSync(serviceFile);
+    execSystemctl(["daemon-reload"]);
 
     logger.info(formatSection("服务已卸载"));
     logger.info(formatBullet("服务已停用并删除", "success"));
@@ -250,9 +242,16 @@ function printUsage(): void {
 export async function runInstallService(
   opts: InstallServiceOptions,
 ): Promise<void> {
-  if (!isSystemdAvailable()) {
+  if (!isLinux()) {
     logger.info(
       formatBullet("systemd 不可用。此功能仅在 Linux 系统上支持。", "warning"),
+    );
+    return;
+  }
+
+  if (!hasSystemctl()) {
+    logger.info(
+      formatBullet("systemd 不可用。未检测到 systemctl。", "warning"),
     );
     return;
   }

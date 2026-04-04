@@ -1,4 +1,4 @@
-import { execFileSync, execSync, spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { homedir, platform } from "node:os";
@@ -23,6 +23,7 @@ import {
 import { promptConfirm, promptPassword } from "../infrastructure/ui/prompts";
 import { getDetectedTools } from "../services/parser-service";
 import { runSync } from "../services/sync-service";
+import { isCommandAvailable } from "../utils/command";
 import { logger } from "../utils/logger";
 
 interface BrowserLaunchCommand {
@@ -342,9 +343,7 @@ async function setupSystemdService(): Promise<void> {
     return;
   }
 
-  try {
-    execSync("which systemctl", { stdio: "ignore" });
-  } catch {
+  if (!isCommandAvailable("systemctl")) {
     return;
   }
 
