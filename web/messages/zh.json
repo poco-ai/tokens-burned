@@ -507,6 +507,13 @@
     "badges": {
       "button": "Badge",
       "title": "Badge",
+      "styleLabel": "样式",
+      "styles": {
+        "flat": "Flat",
+        "flat-square": "Square",
+        "plastic": "Plastic",
+        "for-the-badge": "Badge"
+      },
       "privateHint": "公开主页未开启，当前会显示 private 占位。",
       "actions": {
         "copyMarkdown": "复制 Md"

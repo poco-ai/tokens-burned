@@ -62,11 +62,18 @@ type BadgeStyleSpec = {
   height: number;
   fontSize: number;
   fontWeight: string;
+  fontFamily: string;
   paddingX: number;
   charWidth: number;
   labelCharWidth: number;
+  labelSafetyPadding: number;
   dividerOpacity: number;
   addGloss: boolean;
+  logoBlockWidth: number;
+  gapAfterLogo: number;
+  minLabelWidth: number;
+  minValueWidth: number;
+  logoScale: number;
 };
 
 export const TOKEN_ARENA_LOGO_PATHS = {
@@ -90,50 +97,78 @@ function getBadgeStyleSpec(style: PublicBadgeStyle): BadgeStyleSpec {
     case "flat-square":
       return {
         radius: 0,
-        height: 30,
-        fontSize: 12,
+        height: 20,
+        fontSize: 11,
         fontWeight: "600",
-        paddingX: 11,
-        charWidth: 7,
-        labelCharWidth: 6.5,
-        dividerOpacity: 0.12,
+        fontFamily: "Verdana,Geneva,DejaVu Sans,sans-serif",
+        paddingX: 5,
+        charWidth: 6.1,
+        labelCharWidth: 5.7,
+        labelSafetyPadding: 8,
+        dividerOpacity: 0.1,
         addGloss: false,
+        logoBlockWidth: 13,
+        gapAfterLogo: 3,
+        minLabelWidth: 34,
+        minValueWidth: 22,
+        logoScale: 0.012,
       };
     case "plastic":
       return {
-        radius: 8,
-        height: 30,
-        fontSize: 12,
+        radius: 4,
+        height: 18,
+        fontSize: 11,
         fontWeight: "600",
-        paddingX: 11,
-        charWidth: 7,
-        labelCharWidth: 6.5,
+        fontFamily: "Verdana,Geneva,DejaVu Sans,sans-serif",
+        paddingX: 5,
+        charWidth: 6,
+        labelCharWidth: 5.6,
+        labelSafetyPadding: 8,
         dividerOpacity: 0.12,
         addGloss: true,
+        logoBlockWidth: 12,
+        gapAfterLogo: 3,
+        minLabelWidth: 33,
+        minValueWidth: 22,
+        logoScale: 0.0115,
       };
     case "for-the-badge":
       return {
-        radius: 8,
-        height: 34,
-        fontSize: 11,
+        radius: 0,
+        height: 28,
+        fontSize: 10,
         fontWeight: "700",
-        paddingX: 13,
-        charWidth: 7.5,
-        labelCharWidth: 6.6,
-        dividerOpacity: 0.14,
+        fontFamily: "Verdana,Geneva,DejaVu Sans,sans-serif",
+        paddingX: 8,
+        charWidth: 6.7,
+        labelCharWidth: 6.1,
+        labelSafetyPadding: 10,
+        dividerOpacity: 0.1,
         addGloss: false,
+        logoBlockWidth: 18,
+        gapAfterLogo: 5,
+        minLabelWidth: 42,
+        minValueWidth: 30,
+        logoScale: 0.016,
       };
     default:
       return {
-        radius: 8,
-        height: 30,
-        fontSize: 12,
+        radius: 3,
+        height: 20,
+        fontSize: 11,
         fontWeight: "600",
-        paddingX: 11,
-        charWidth: 7,
-        labelCharWidth: 6.5,
-        dividerOpacity: 0.12,
+        fontFamily: "Verdana,Geneva,DejaVu Sans,sans-serif",
+        paddingX: 5,
+        charWidth: 6.1,
+        labelCharWidth: 5.7,
+        labelSafetyPadding: 8,
+        dividerOpacity: 0.1,
         addGloss: false,
+        logoBlockWidth: 13,
+        gapAfterLogo: 3,
+        minLabelWidth: 34,
+        minValueWidth: 22,
+        logoScale: 0.012,
       };
   }
 }
@@ -424,15 +459,14 @@ export function renderBadgeSvg(
         };
 
   const styleSpec = getBadgeStyleSpec(config.style);
-  const logoBlockWidth = config.style === "for-the-badge" ? 28 : 26;
-  const gapAfterLogo = 8;
+  const { gapAfterLogo, logoBlockWidth } = styleSpec;
   const labelWidth = Math.ceil(measureLabelText(label, styleSpec));
   const leftWidth = Math.max(
-    config.style === "for-the-badge" ? 96 : 88,
-    logoBlockWidth + gapAfterLogo + labelWidth,
+    styleSpec.minLabelWidth,
+    logoBlockWidth + gapAfterLogo + labelWidth + styleSpec.labelSafetyPadding,
   );
   const rightWidth = Math.max(
-    config.style === "for-the-badge" ? 66 : 62,
+    styleSpec.minValueWidth,
     Math.ceil(measureBadgeText(value, styleSpec)),
   );
   const width = leftWidth + rightWidth;
@@ -440,7 +474,7 @@ export function renderBadgeSvg(
   const height = styleSpec.height;
   const rightTextX = leftWidth + Math.round(rightWidth / 2);
   const textY = Math.round(height / 2);
-  const logoScale = height >= 32 ? 0.021 : 0.0185;
+  const logoScale = styleSpec.logoScale;
   const logoCenterX = styleSpec.paddingX + Math.round(logoBlockWidth / 2);
   const logoCenterY = Math.round(height / 2);
   const labelX = styleSpec.paddingX + logoBlockWidth + gapAfterLogo;
@@ -477,10 +511,10 @@ export function renderBadgeSvg(
     <path d="${TOKEN_ARENA_LOGO_PATHS.secondary}" fill="${palette.logoSecondary}"/>
     <path d="${TOKEN_ARENA_LOGO_PATHS.primary}" fill="${palette.logoPrimary}"/>
   </g>
-  <text x="${labelX}" y="${textY}" dominant-baseline="middle" fill="${palette.leftText}" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="${styleSpec.fontSize}" font-weight="${styleSpec.fontWeight}" text-anchor="start">${escapeXml(
+  <text x="${labelX}" y="${textY}" dominant-baseline="middle" fill="${palette.leftText}" font-family="${styleSpec.fontFamily}" font-size="${styleSpec.fontSize}" font-weight="${styleSpec.fontWeight}" text-anchor="start">${escapeXml(
     label,
   )}</text>
-  <text x="${rightTextX}" y="${textY}" dominant-baseline="middle" fill="${palette.rightText}" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="${styleSpec.fontSize}" font-weight="${styleSpec.fontWeight}" text-anchor="middle">${escapeXml(
+  <text x="${rightTextX}" y="${textY}" dominant-baseline="middle" fill="${palette.rightText}" font-family="${styleSpec.fontFamily}" font-size="${styleSpec.fontSize}" font-weight="${styleSpec.fontWeight}" text-anchor="middle">${escapeXml(
     value,
   )}</text>
 </svg>`;

@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, Check, Copy, Lock, Share2, XIcon } from "lucide-react";
+import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ type ShareBadgesDialogProps = {
 };
 
 type BadgeMetric = "streak" | "tokens" | "active_time" | "cost";
+type BadgeStyle = "flat" | "flat-square" | "plastic" | "for-the-badge";
 
 type CopyFeedback = { metric: BadgeMetric; kind: "success" | "error" } | null;
 
@@ -48,8 +50,23 @@ const badgeDefinitions: BadgeDefinition[] = [
   },
 ];
 
-function buildBadgeUrl(appUrl: string, username: string, metric: BadgeMetric) {
-  return `${appUrl}/api/badges/${encodeURIComponent(username)}?metric=${metric}`;
+const badgeStyles: BadgeStyle[] = [
+  "flat",
+  "flat-square",
+  "plastic",
+  "for-the-badge",
+];
+
+function buildBadgeUrl(
+  appUrl: string,
+  username: string,
+  metric: BadgeMetric,
+  style: BadgeStyle,
+) {
+  const url = new URL(`/api/badges/${encodeURIComponent(username)}`, appUrl);
+  url.searchParams.set("metric", metric);
+  url.searchParams.set("style", style);
+  return url.toString();
 }
 
 function buildMarkdown(url: string, alt: string) {
@@ -63,18 +80,24 @@ export function ShareBadgesDialog({
 }: ShareBadgesDialogProps) {
   const t = useTranslations("usage.badges");
   const [copyFeedback, setCopyFeedback] = useState<CopyFeedback>(null);
+  const [selectedStyle, setSelectedStyle] = useState<BadgeStyle>("flat");
 
   const items = useMemo(
     () =>
       badgeDefinitions.map((definition) => {
-        const url = buildBadgeUrl(appUrl, username, definition.metric);
+        const url = buildBadgeUrl(
+          appUrl,
+          username,
+          definition.metric,
+          selectedStyle,
+        );
         return {
           ...definition,
           url,
           markdown: buildMarkdown(url, definition.alt),
         };
       }),
-    [appUrl, username],
+    [appUrl, selectedStyle, username],
   );
 
   const copy = async (value: string, metric: BadgeMetric) => {
@@ -98,7 +121,7 @@ export function ShareBadgesDialog({
       </DialogTrigger>
       <DialogContent
         showCloseButton={false}
-        className="flex max-h-[92vh] max-w-2xl flex-col border border-border/70 bg-card p-0 shadow-2xl"
+        className="flex max-h-[92vh] w-[min(96vw,52rem)] max-w-[52rem] flex-col border border-border/70 bg-card p-0 shadow-2xl"
       >
         <DialogHeader className="border-b border-border/60 px-6 pt-6 pb-4">
           <div className="flex min-w-0 items-center justify-between gap-4">
@@ -121,6 +144,43 @@ export function ShareBadgesDialog({
         </DialogHeader>
 
         <div className="min-h-0 space-y-4 overflow-y-auto p-5">
+          <div>
+            <div className="grid w-full grid-cols-2 rounded-2xl border border-border/60 bg-muted/25 p-1 shadow-sm">
+              {badgeStyles.map((style) => {
+                const isActive = style === selectedStyle;
+
+                return (
+                  <button
+                    key={style}
+                    type="button"
+                    className={cn(
+                      "relative z-10 inline-flex min-w-0 items-center justify-center rounded-xl px-2 py-2 text-[10px] font-medium transition-colors sm:px-2.5 sm:text-xs",
+                      isActive
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    onClick={() => setSelectedStyle(style)}
+                  >
+                    {isActive ? (
+                      <motion.span
+                        layoutId="badge-style-highlight"
+                        className="absolute inset-0 rounded-xl border border-border/70 bg-background shadow-sm"
+                        transition={{
+                          type: "spring",
+                          stiffness: 380,
+                          damping: 30,
+                        }}
+                      />
+                    ) : null}
+                    <span className="relative whitespace-nowrap">
+                      {t(`styles.${style}`)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {!publicProfileEnabled ? (
             <div className="rounded-2xl border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
               <div className="flex items-start gap-2">
@@ -129,7 +189,7 @@ export function ShareBadgesDialog({
               </div>
             </div>
           ) : null}
-          <div className="grid gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {items.map((item) => {
               const success =
                 copyFeedback?.metric === item.metric &&
@@ -154,7 +214,10 @@ export function ShareBadgesDialog({
                       <img
                         src={item.url}
                         alt={item.alt}
-                        className="h-8 max-w-full"
+                        className={cn(
+                          "w-auto max-w-full",
+                          selectedStyle === "for-the-badge" ? "h-7" : "h-5",
+                        )}
                         loading="lazy"
                       />
                     </div>
@@ -164,7 +227,7 @@ export function ShareBadgesDialog({
                       variant="outline"
                       size="icon-sm"
                       className={cn(
-                        "size-9 shrink-0 rounded-xl border-border/70 bg-background/70",
+                        "size-8 shrink-0 rounded-lg border-border/70 bg-background/70",
                         error &&
                           "border-destructive/55 bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive dark:border-destructive/50 dark:bg-destructive/15",
                       )}
@@ -173,11 +236,11 @@ export function ShareBadgesDialog({
                       onClick={() => copy(item.markdown, item.metric)}
                     >
                       {success ? (
-                        <Check className="size-4" aria-hidden />
+                        <Check className="size-3.5" aria-hidden />
                       ) : error ? (
-                        <AlertCircle className="size-4" aria-hidden />
+                        <AlertCircle className="size-3.5" aria-hidden />
                       ) : (
-                        <Copy className="size-4" aria-hidden />
+                        <Copy className="size-3.5" aria-hidden />
                       )}
                     </Button>
                   </div>

@@ -507,6 +507,13 @@
     "badges": {
       "button": "badges",
       "title": "Badges",
+      "styleLabel": "Style",
+      "styles": {
+        "flat": "Flat",
+        "flat-square": "Square",
+        "plastic": "Plastic",
+        "for-the-badge": "Badge"
+      },
       "privateHint": "Public profile is off, so these render as private placeholders.",
       "actions": {
         "copyMarkdown": "Copy Md"

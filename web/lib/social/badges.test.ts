@@ -157,10 +157,39 @@ describe("social badges", () => {
     expect(svg).toContain("TokenArena tokens: 1.3M");
     expect(svg).toContain(">tokens<");
     expect(svg).toContain("1.3M");
-    expect(svg).toContain('height="34"');
+    expect(svg).toContain('height="28"');
     expect(svg).toContain(TOKEN_ARENA_LOGO_PATHS.primary.slice(0, 40));
     expect(parsePublicBadgeStyle("plastic")).toBe("plastic");
     expect(parsePublicBadgeStyle("flat-square")).toBe("flat-square");
     expect(parsePublicBadgeStyle("rounded")).toBe("flat");
+  });
+
+  it("matches shields-like compact sizing for flat badges", async () => {
+    const { renderBadgeSvg } = await import("@/lib/social/badges");
+
+    const svg = renderBadgeSvg(
+      {
+        kind: "ok",
+        data: {
+          username: "alice",
+          publicProfileEnabled: true,
+          totalTokens: 123,
+          estimatedCostUsd: 1.2,
+          activeSeconds: 3600,
+          totalSeconds: 3600,
+          sessions: 1,
+          currentStreakDays: 3,
+        },
+      },
+      {
+        metric: "tokens",
+        theme: "dark",
+        style: "flat",
+      },
+    );
+
+    expect(svg).toContain('height="20"');
+    const width = Number(svg.match(/width="([0-9]+)"/)?.[1] ?? "0");
+    expect(width).toBeGreaterThanOrEqual(96);
   });
 });
