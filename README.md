@@ -40,6 +40,21 @@
 >
 > - **手动同步**：运行 `tokenarena sync`，手动将本地数据上传至 Web 端。
 > - **持续同步**：运行 `tokenarena daemon`，保持 CLI 运行，实现数据定时自动同步（默认每 5 分钟）。
+> - **后台服务（Linux）**：运行 `tokenarena service setup`，将 daemon 注册为 systemd 用户服务，开机自启、崩溃自动重启。
+
+**systemd 服务管理（仅 Linux）**
+
+```bash
+tokenarena service setup      # 创建并启用服务
+tokenarena service start      # 启动服务
+tokenarena service stop       # 停止服务
+tokenarena service restart    # 重启服务
+tokenarena service status     # 查看服务状态
+tokenarena service uninstall  # 卸载服务
+```
+
+> [!NOTE]
+> `service` 仅在 Linux 且系统存在 `systemctl` 时可用。服务以用户级 systemd 单元运行（`~/.config/systemd/user/tokenarena.service`），无需 root 权限。`tokenarena init` 在 Linux 上会自动询问是否设置此服务。
 
 ## 本地部署
 

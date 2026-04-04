@@ -23,6 +23,7 @@ import {
 import { promptConfirm, promptPassword } from "../infrastructure/ui/prompts";
 import { getDetectedTools } from "../services/parser-service";
 import { runSync } from "../services/sync-service";
+import { isCommandAvailable } from "../utils/command";
 import { logger } from "../utils/logger";
 
 interface BrowserLaunchCommand {
@@ -333,6 +334,35 @@ export async function runInit(opts: InitOptions = {}): Promise<void> {
   logger.info(formatKeyValue("控制台", `${apiUrl}/usage`));
 
   await setupShellAlias();
+  await setupSystemdService();
+}
+
+async function setupSystemdService(): Promise<void> {
+  const currentPlatform = platform();
+  if (currentPlatform !== "linux") {
+    return;
+  }
+
+  if (!isCommandAvailable("systemctl")) {
+    return;
+  }
+
+  const shouldSetup = await promptConfirm({
+    message: "是否设置 systemd 服务以自动运行 daemon？",
+    defaultValue: true,
+  });
+
+  if (!shouldSetup) {
+    logger.info(formatBullet("已跳过 systemd 服务设置。"));
+    return;
+  }
+
+  try {
+    const { runInstallService } = await import("./service");
+    await runInstallService({ action: "setup", skipPrompt: true });
+  } catch (err) {
+    logger.warn(`systemd 服务设置失败: ${(err as Error).message}`);
+  }
 }
 
 async function setupShellAlias(): Promise<void> {
