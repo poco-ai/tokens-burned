@@ -37,8 +37,12 @@ const mocks = vi.hoisted(() => ({
   EmptyState: vi.fn(() =>
     React.createElement("div", { "data-slot": "empty-state" }),
   ),
-  FiltersBar: vi.fn(() =>
-    React.createElement("div", { "data-slot": "filters-bar" }),
+  FiltersBar: vi.fn(({ badgesSlot }: { badgesSlot?: React.ReactNode }) =>
+    React.createElement(
+      "div",
+      { "data-slot": "filters-bar" },
+      badgesSlot ?? null,
+    ),
   ),
   KpiGrid: vi.fn(() => React.createElement("div", { "data-slot": "kpi-grid" })),
   UsagePageShell: vi.fn(({ children }: { children: React.ReactNode }) =>
@@ -58,6 +62,9 @@ const mocks = vi.hoisted(() => ({
   ),
   ProfileHeatmap: vi.fn(() =>
     React.createElement("div", { "data-slot": "profile-heatmap" }),
+  ),
+  ShareBadgesDialog: vi.fn(() =>
+    React.createElement("div", { "data-slot": "share-badges-dialog" }),
   ),
 }));
 
@@ -84,6 +91,10 @@ vi.mock("@/components/usage/account-menu", () => ({
 
 vi.mock("@/components/social/profile-heatmap", () => ({
   ProfileHeatmap: mocks.ProfileHeatmap,
+}));
+
+vi.mock("@/components/social/share-badges-dialog", () => ({
+  ShareBadgesDialog: mocks.ShareBadgesDialog,
 }));
 
 vi.mock("@/lib/social/queries", () => ({
@@ -130,6 +141,10 @@ vi.mock("@/lib/session", () => ({
   getSessionOrRedirect: mocks.getSessionOrRedirect,
 }));
 
+vi.mock("@/lib/site-url", () => ({
+  getAppOrigin: () => "https://token.poco-ai.com",
+}));
+
 vi.mock("@/lib/usage/date-range", () => ({
   resolveDashboardRange: mocks.resolveDashboardRange,
 }));
@@ -167,6 +182,7 @@ describe("UsagePage", () => {
       theme: "system",
       timezone: "Asia/Shanghai",
       projectMode: "hashed",
+      publicProfileEnabled: true,
     });
     mocks.resolveDashboardRange.mockReturnValue({
       from: new Date("2026-03-19T00:00:00.000Z"),
@@ -250,6 +266,14 @@ describe("UsagePage", () => {
     });
     expect(mocks.ProfileHeatmap).toHaveBeenCalledOnce();
     expect(mocks.TokenTrendCard).toHaveBeenCalledOnce();
+    expect(mocks.ShareBadgesDialog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        username: "test_user",
+        publicProfileEnabled: true,
+        appUrl: "https://token.poco-ai.com",
+      }),
+      undefined,
+    );
     expect(mocks.SessionsSection).toHaveBeenCalledOnce();
     expect(mocks.getSessionRows).toHaveBeenCalledOnce();
     expect(mocks.KpiGrid).toHaveBeenCalledWith(
@@ -259,6 +283,7 @@ describe("UsagePage", () => {
       undefined,
     );
     expect(markup).toContain('data-slot="profile-heatmap"');
+    expect(markup).toContain('data-slot="share-badges-dialog"');
     expect(markup).toContain('data-slot="token-trend-card"');
     expect(markup).toContain('data-slot="sessions-section"');
   });

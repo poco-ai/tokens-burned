@@ -98,7 +98,7 @@ export function SettingsDialog({
         )}
       </DialogTrigger>
       <DialogContent className="flex max-h-[90vh] max-w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden border border-border/70 bg-card p-0 shadow-2xl sm:max-w-4xl">
-        <DialogHeader className="border-b border-border/60 bg-card px-6 py-5">
+        <DialogHeader className="border-b border-border/60 bg-card py-5 ps-6">
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>

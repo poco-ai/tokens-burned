@@ -503,6 +503,19 @@
         "sessionCount": "你在这个视图里打开了 {count} 个会话",
         "activeTime": "你一共保持活跃 {value}"
       }
+    },
+    "badges": {
+      "button": "Badge",
+      "title": "Badge",
+      "privateHint": "公开主页未开启，当前会显示 private 占位。",
+      "actions": {
+        "copyMarkdown": "复制 Md"
+      },
+      "status": {
+        "copiedUrl": "URL 已复制",
+        "copiedMarkdown": "Md 已复制",
+        "failed": "复制失败，请重试。"
+      }
     }
   },
   "social": {

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,8 @@ type FiltersBarProps = {
   filters: UsageFilters;
   options: UsageFilterOptions;
   lastSyncedText?: string;
+  /** Rendered on the right side of the bar (e.g. share badges). */
+  badgesSlot?: ReactNode;
 };
 
 const ALL_VALUE = "__all__";
@@ -131,6 +133,7 @@ export function FiltersBar({
   filters,
   options,
   lastSyncedText,
+  badgesSlot,
 }: FiltersBarProps) {
   const t = useTranslations("usage.filters");
   const router = useRouter();
@@ -393,10 +396,15 @@ export function FiltersBar({
           ) : null}
         </div>
 
-        {lastSyncedText ? (
-          <p className="text-sm text-muted-foreground xl:text-right">
-            {lastSyncedText}
-          </p>
+        {lastSyncedText || badgesSlot ? (
+          <div className="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+            {lastSyncedText ? (
+              <p className="text-sm text-muted-foreground sm:text-right">
+                {lastSyncedText}
+              </p>
+            ) : null}
+            {badgesSlot}
+          </div>
         ) : null}
       </div>
     </div>

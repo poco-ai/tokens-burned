@@ -240,7 +240,7 @@ export function UsageShareDialog({ data }: UsageShareDialogProps) {
           </Button>
         </DialogTrigger>
         <DialogContent className="max-h-[92vh] max-w-[calc(100vw-1.5rem)] gap-0 overflow-hidden border border-border/70 bg-card p-0 shadow-2xl sm:max-w-6xl">
-          <DialogHeader className="border-b border-border/60 px-6 py-5">
+          <DialogHeader className="border-b border-border/60 py-5 ps-6">
             <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>{t("description")}</DialogDescription>
           </DialogHeader>

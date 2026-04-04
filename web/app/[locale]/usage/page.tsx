@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { AppShell } from "@/components/app/app-shell";
 import { ProfileHeatmap } from "@/components/social/profile-heatmap";
+import { ShareBadgesDialog } from "@/components/social/share-badges-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BreakdownGrid } from "@/components/usage/breakdown-grid";
@@ -16,6 +17,7 @@ import { TokenTrendCard } from "@/components/usage/token-trend-card";
 import { Link } from "@/i18n/navigation";
 import { redirectIfUsernameSetupNeeded } from "@/lib/account-setup";
 import { getSessionOrRedirect } from "@/lib/session";
+import { getAppOrigin } from "@/lib/site-url";
 import { getActivityHeatmap365 } from "@/lib/social/queries";
 import { dashboardQuerySchema } from "@/lib/usage/contracts";
 import { resolveDashboardRange } from "@/lib/usage/date-range";
@@ -143,6 +145,7 @@ export default async function UsagePage({
       })
     : t("noSyncYet");
   const hasKeys = filterOptions.apiKeys.length > 0;
+  const appUrl = getAppOrigin() ?? "http://localhost:3000";
 
   return (
     <AppShell
@@ -186,6 +189,13 @@ export default async function UsagePage({
             filters={filters}
             options={filterOptions}
             lastSyncedText={lastSyncedText}
+            badgesSlot={
+              <ShareBadgesDialog
+                username={session.user.username}
+                publicProfileEnabled={preference.publicProfileEnabled}
+                appUrl={appUrl}
+              />
+            }
           />
 
           {hasData ? (

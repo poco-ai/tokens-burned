@@ -181,7 +181,7 @@
       "createFirstKey": "Create your first key"
     },
     "filters": {
-      "sectionTitle": "Usage statistics",
+      "sectionTitle": "Usage",
       "custom": "Custom",
       "filters": "Filters",
       "customRangeTitle": "Custom range",
@@ -502,6 +502,19 @@
         "modelVariety": "You actively switched between {count} models",
         "sessionCount": "You opened {count} sessions in this view",
         "activeTime": "You stayed active for {value}"
+      }
+    },
+    "badges": {
+      "button": "badges",
+      "title": "Badges",
+      "privateHint": "Public profile is off, so these render as private placeholders.",
+      "actions": {
+        "copyMarkdown": "Copy Md"
+      },
+      "status": {
+        "copiedUrl": "URL copied",
+        "copiedMarkdown": "Md copied",
+        "failed": "Could not copy to clipboard."
       }
     }
   },
