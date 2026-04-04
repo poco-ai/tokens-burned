@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import { join } from "node:path";
@@ -66,7 +66,7 @@ WantedBy=default.target
 }
 
 function execSystemctl(args: string[]): void {
-  execSync(`systemctl --user ${args.join(" ")}`, {
+  execFileSync("systemctl", ["--user", ...args], {
     stdio: "inherit",
   });
 }

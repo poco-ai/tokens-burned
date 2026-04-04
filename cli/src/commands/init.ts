@@ -357,8 +357,12 @@ async function setupSystemdService(): Promise<void> {
     return;
   }
 
-  const { runInstallService } = await import("./service");
-  await runInstallService({ action: "setup", skipPrompt: true });
+  try {
+    const { runInstallService } = await import("./service");
+    await runInstallService({ action: "setup", skipPrompt: true });
+  } catch (err) {
+    logger.warn(`systemd 服务设置失败: ${(err as Error).message}`);
+  }
 }
 
 async function setupShellAlias(): Promise<void> {
