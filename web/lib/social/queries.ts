@@ -572,7 +572,7 @@ export async function getPublicProfilePageData(input: {
         userId: user.id,
         providerId: { in: [...LINKED_PROFILE_PROVIDER_IDS] },
       },
-      select: { providerId: true, accountId: true },
+      select: { providerId: true, accountId: true, accessToken: true },
     }),
     prisma.usageSession.findMany({
       where: {
@@ -644,6 +644,7 @@ export async function getPublicProfilePageData(input: {
     const profileUrl = await resolveLinkedProfileUrl(
       pickedLinked.providerId,
       pickedLinked.accountId,
+      pickedLinked.accessToken,
     );
     if (profileUrl) {
       linkedIdentity = {
