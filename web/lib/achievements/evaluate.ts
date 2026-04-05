@@ -1,4 +1,5 @@
 import type { UsageShareCardPersona } from "@/lib/usage/share-card";
+import { getArenaLevelFromScore } from "./arena-level";
 import { achievementDefinitionMap } from "./catalog";
 import type {
   AchievementCategorySection,
@@ -528,58 +529,65 @@ export function buildAchievementStatuses(
     createStatus({
       code: "models_3",
       current: new Set(metrics.modelTimeline.map((point) => point.key)).size,
-      target: 3,
-      unit: "count",
-      unlockedAt: distinctThresholdDate(metrics.modelTimeline, 3),
-    }),
-    createStatus({
-      code: "models_5",
-      current: new Set(metrics.modelTimeline.map((point) => point.key)).size,
       target: 5,
       unit: "count",
       unlockedAt: distinctThresholdDate(metrics.modelTimeline, 5),
     }),
     createStatus({
+      code: "models_5",
+      current: new Set(metrics.modelTimeline.map((point) => point.key)).size,
+      target: 10,
+      unit: "count",
+      unlockedAt: distinctThresholdDate(metrics.modelTimeline, 10),
+    }),
+    createStatus({
+      code: "models_20",
+      current: new Set(metrics.modelTimeline.map((point) => point.key)).size,
+      target: 20,
+      unit: "count",
+      unlockedAt: distinctThresholdDate(metrics.modelTimeline, 20),
+    }),
+    createStatus({
       code: "tools_2",
       current: new Set(metrics.toolTimeline.map((point) => point.key)).size,
-      target: 2,
+      target: 3,
       unit: "count",
-      unlockedAt: distinctThresholdDate(metrics.toolTimeline, 2),
+      unlockedAt: distinctThresholdDate(metrics.toolTimeline, 3),
     }),
     createStatus({
       code: "tools_4",
       current: new Set(metrics.toolTimeline.map((point) => point.key)).size,
-      target: 4,
+      target: 8,
       unit: "count",
-      unlockedAt: distinctThresholdDate(metrics.toolTimeline, 4),
+      unlockedAt: distinctThresholdDate(metrics.toolTimeline, 8),
     }),
     createStatus({
       code: "projects_5",
       current: new Set(metrics.projectTimeline.map((point) => point.key)).size,
-      target: 5,
+      target: 10,
       unit: "count",
-      unlockedAt: distinctThresholdDate(metrics.projectTimeline, 5),
+      unlockedAt: distinctThresholdDate(metrics.projectTimeline, 10),
     }),
     createStatus({
       code: "projects_15",
       current: new Set(metrics.projectTimeline.map((point) => point.key)).size,
-      target: 15,
+      target: 50,
       unit: "count",
-      unlockedAt: distinctThresholdDate(metrics.projectTimeline, 15),
+      unlockedAt: distinctThresholdDate(metrics.projectTimeline, 50),
     }),
     createStatus({
       code: "devices_2",
       current: new Set(metrics.deviceTimeline.map((point) => point.key)).size,
-      target: 2,
+      target: 3,
       unit: "count",
-      unlockedAt: distinctThresholdDate(metrics.deviceTimeline, 2),
+      unlockedAt: distinctThresholdDate(metrics.deviceTimeline, 3),
     }),
     createStatus({
       code: "devices_3",
       current: new Set(metrics.deviceTimeline.map((point) => point.key)).size,
-      target: 3,
+      target: 5,
       unit: "count",
-      unlockedAt: distinctThresholdDate(metrics.deviceTimeline, 3),
+      unlockedAt: distinctThresholdDate(metrics.deviceTimeline, 5),
     }),
     createStatus({
       code: "first_follow",
@@ -732,7 +740,7 @@ export function buildAchievementsPageDataFromStatuses(input: {
     (sum, achievement) => sum + achievement.points * achievement.awardCount,
     0,
   );
-  const level = 1 + Math.floor(score / 100);
+  const level = getArenaLevelFromScore(score);
   const sections: AchievementCategorySection[] = achievementCategories.map(
     (category) => {
       const rows = achievements.filter(

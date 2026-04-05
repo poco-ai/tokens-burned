@@ -543,6 +543,7 @@
       "arenaScore": "Arena Score",
       "arenaLevel": "Level",
       "arenaProgressCaption": "Score {score} · {remaining} more to Lv.{nextLevel}",
+      "arenaMaxLevelCaption": "Score {score} · Max level reached (Lv.10)",
       "totalTokens": "Total Tokens",
       "estimatedCost": "Est. Cost",
       "activeTime": "Active Time",
@@ -903,36 +904,40 @@
         "description": "At least 90% of your last 30 days of tokens were concentrated in one project."
       },
       "models_3": {
-        "title": "Model Dilettante",
-        "description": "Use 3 different models over time."
-      },
-      "models_5": {
-        "title": "Model Polyglot",
+        "title": "Model Trial Run",
         "description": "Use 5 different models over time."
       },
+      "models_5": {
+        "title": "Model Collector",
+        "description": "Use 10 different models over time."
+      },
+      "models_20": {
+        "title": "Model Encyclopedia",
+        "description": "Use 20 different models over time."
+      },
       "tools_2": {
-        "title": "Two-Tool Tango",
-        "description": "Use 2 different AI tool sources."
+        "title": "Toolbelt Starter",
+        "description": "Use 3 different AI tool sources."
       },
       "tools_4": {
-        "title": "Full Stack of Vibes",
-        "description": "Use 4 different AI tool sources."
+        "title": "Toolchain Maximalist",
+        "description": "Use 8 different AI tool sources."
       },
       "projects_5": {
-        "title": "Project Hopper",
-        "description": "Work across 5 projects."
+        "title": "Project Wanderer",
+        "description": "Work across 10 projects."
       },
       "projects_15": {
-        "title": "15 Projects — Collector Edition",
-        "description": "Work across 15 projects."
+        "title": "Parallel Builder",
+        "description": "Work across 50 projects."
       },
       "devices_2": {
-        "title": "Two-Device Lifestyle",
-        "description": "Be active from 2 different devices."
+        "title": "Multi-Device Mode",
+        "description": "Be active from 3 different devices."
       },
       "devices_3": {
-        "title": "Three-Device Chaos",
-        "description": "Be active from 3 different devices."
+        "title": "Cross-Screen Operator",
+        "description": "Be active from 5 different devices."
       },
       "first_follow": {
         "title": "First Follow — W",

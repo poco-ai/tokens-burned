@@ -543,10 +543,11 @@
       "arenaScore": "Arena Score",
       "arenaLevel": "等级",
       "arenaProgressCaption": "当前分数 {score}，距离 Lv.{nextLevel} 还需 {remaining}",
+      "arenaMaxLevelCaption": "当前分数 {score}，已达到最高等级 Lv.10",
       "totalTokens": "总 Tokens",
-      "estimatedCost": "预估费用",
-      "activeTime": "活跃时长",
-      "sessions": "会话数",
+      "estimatedCost": "总预估费用",
+      "activeTime": "总活跃时长",
+      "sessions": "总会话数",
       "activeDays": "活跃天数",
       "topTools": "常用工具",
       "topModels": "常用模型",
@@ -637,7 +638,7 @@
         "totalTokens": "总 Tokens",
         "estimatedCost": "总费用"
       },
-      "globalTitle": "全站排行榜",
+      "globalTitle": "巅峰 100 榜单",
       "followingTitle": "关注排行榜",
       "emptyGlobal": "还没有公开的使用数据。",
       "emptyFollowing": "你的关注网络里在这个窗口内还没有排行榜数据。",
@@ -903,36 +904,40 @@
         "description": "最近 30 天里，至少 90% 的 tokens 集中在同一个项目。"
       },
       "models_3": {
-        "title": "海王式试模",
-        "description": "累计使用过 3 个模型。"
+        "title": "模型试炼场",
+        "description": "累计使用过 5 个模型。"
       },
       "models_5": {
-        "title": "五等分的模型",
-        "description": "累计使用过 5 个不同模型。"
+        "title": "模型收藏家",
+        "description": "累计使用过 10 个不同模型。"
+      },
+      "models_20": {
+        "title": "模型图鉴大师",
+        "description": "累计使用过 20 个不同模型。"
       },
       "tools_2": {
-        "title": "左右互搏",
-        "description": "累计使用过 2 个 AI 工具来源。"
+        "title": "多端兵器谱",
+        "description": "累计使用过 3 个 AI 工具来源。"
       },
       "tools_4": {
-        "title": "全家桶玩家",
-        "description": "累计使用过 4 个 AI 工具来源。"
+        "title": "全栈工具控",
+        "description": "累计使用过 8 个 AI 工具来源。"
       },
       "projects_5": {
-        "title": "项目太多，先开五个",
-        "description": "累计使用过 5 个项目。"
+        "title": "项目漫游者",
+        "description": "累计使用过 10 个项目。"
       },
       "projects_15": {
-        "title": "十五个坑都在填",
-        "description": "累计在 15 个项目中活跃。"
+        "title": "多线开工",
+        "description": "累计在 50 个项目中活跃。"
       },
       "devices_2": {
-        "title": "双机位直播",
-        "description": "累计在 2 台设备上活跃。"
+        "title": "多端作战",
+        "description": "累计在 3 台设备上活跃。"
       },
       "devices_3": {
-        "title": "三端无缝切",
-        "description": "累计在 3 台设备上活跃。"
+        "title": "跨屏游侠",
+        "description": "累计在 5 台设备上活跃。"
       },
       "first_follow": {
         "title": "第一个关注位",

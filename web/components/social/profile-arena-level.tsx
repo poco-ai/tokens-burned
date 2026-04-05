@@ -15,17 +15,20 @@ export async function ProfileArenaLevelBar({
   className,
 }: ProfileArenaLevelBarProps) {
   const t = await getTranslations({ locale, namespace: "social.profile" });
-  const { level, nextLevel, ratio, remainingToNext } =
+  const { level, nextLevel, ratio, remainingToNext, isMaxLevel } =
     getArenaLevelProgressFromScore(score);
 
   const scoreLabel = formatTokenCount(score, locale);
   const remainingLabel = remainingToNext.toLocaleString(locale);
-
-  const caption = t("arenaProgressCaption", {
-    score: scoreLabel,
-    remaining: remainingLabel,
-    nextLevel: nextLevel.toLocaleString(locale),
-  });
+  const caption = isMaxLevel
+    ? t("arenaMaxLevelCaption", {
+        score: scoreLabel,
+      })
+    : t("arenaProgressCaption", {
+        score: scoreLabel,
+        remaining: remainingLabel,
+        nextLevel: nextLevel.toLocaleString(locale),
+      });
 
   const pct = Math.round(ratio * 100);
 
