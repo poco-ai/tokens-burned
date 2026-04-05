@@ -20,7 +20,7 @@
 - **多维度分析** — 按设备、工具、模型、项目分组查看数据
 - **详细指标** — 总 token、输入、输出、reasoning、缓存命中、活跃时长、会话数、消息数
 - **多工具支持** — 支持采集多种本地 AI CLI 的 usage 数据
-- **Oauth2 登录** — 支持 GitHub、Google、Linux.do、观猹平台登录
+- **Oauth2 登录** — 支持 Discord、GitHub、Google、Linux.do、观猹平台登录
 - **社区与排行榜** - 关注你感兴趣的人，查看他们的 token 用量排行榜
 - **多语言 & 深色模式** — 支持中英文切换和主题切换
 - **隐私优先** — 项目名称默认按 hash 匿名上传，你自行决定是否公开
@@ -146,6 +146,7 @@ git add --renormalize .
 
 当 `AUTH_MODE=production` 时，还需要按需配置以下 OAuth 变量：
 
+- `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET`
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
 - `LINUXDO_CLIENT_ID` / `LINUXDO_CLIENT_SECRET`

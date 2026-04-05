@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { SiGithub, SiGoogle } from "react-icons/si";
+import { SiDiscord, SiGithub, SiGoogle } from "react-icons/si";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
@@ -18,6 +18,8 @@ type SocialLoginFormProps = {
 
 function renderProviderIcon(providerId: LoginProvider["id"]): ReactNode {
   switch (providerId) {
+    case "discord":
+      return <SiDiscord className="h-4 w-4 shrink-0" />;
     case "github":
       return <SiGithub className="h-4 w-4 shrink-0" />;
     case "google":

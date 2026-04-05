@@ -4,7 +4,7 @@ export type AuthMode = "self-hosted" | "production";
  * Authentication mode configuration.
  *
  * - `self-hosted`: Email/password authentication only, for self-deployed instances
- * - `production`: OAuth-only authentication (GitHub/Google/Linux.do/Watcha), for cloud-hosted service
+ * - `production`: OAuth-only authentication (Discord/GitHub/Google/Linux.do/Watcha), for cloud-hosted service
  *
  * Defaults to `self-hosted` if not set.
  */

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { SiGithub, SiGoogle } from "react-icons/si";
+import { SiDiscord, SiGithub, SiGoogle } from "react-icons/si";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
@@ -59,6 +59,8 @@ function ProviderIcon({
   }
 
   switch (providerId) {
+    case "discord":
+      return <SiDiscord className="h-5 w-5 shrink-0" aria-hidden />;
     case "github":
       return <SiGithub className="h-5 w-5 shrink-0" aria-hidden />;
     case "google":

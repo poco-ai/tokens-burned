@@ -134,6 +134,12 @@ export const auth = betterAuth({
     },
   },
   socialProviders: {
+    discord: {
+      clientId: process.env.DISCORD_CLIENT_ID || "",
+      clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
+      scope: ["identify", "email"],
+      enabled: isProduction && isSocialProviderEnabled("discord"),
+    },
     github: {
       clientId: process.env.GITHUB_CLIENT_ID || "",
       clientSecret: process.env.GITHUB_CLIENT_SECRET || "",

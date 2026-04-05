@@ -2,6 +2,8 @@ import type { OAuth2Tokens, OAuth2UserInfo } from "better-auth/oauth2";
 import type { GenericOAuthConfig } from "better-auth/plugins/generic-oauth";
 
 type ProviderEnvName =
+  | "DISCORD_CLIENT_ID"
+  | "DISCORD_CLIENT_SECRET"
   | "GITHUB_CLIENT_ID"
   | "GITHUB_CLIENT_SECRET"
   | "GOOGLE_CLIENT_ID"
@@ -22,7 +24,7 @@ type ProviderBase = {
 };
 
 type SocialProviderDefinition = ProviderBase & {
-  id: "github" | "google";
+  id: "discord" | "github" | "google";
   kind: "social";
 };
 
@@ -70,6 +72,15 @@ async function getWatchaUserInfo(tokens: OAuth2Tokens) {
 }
 
 const socialProviderDefinitions: readonly SocialProviderDefinition[] = [
+  {
+    id: "discord",
+    kind: "social",
+    label: "Discord",
+    credentials: {
+      clientId: "DISCORD_CLIENT_ID",
+      clientSecret: "DISCORD_CLIENT_SECRET",
+    },
+  },
   {
     id: "github",
     kind: "social",
@@ -170,7 +181,7 @@ export function getEnabledLoginProviders(env = process.env): LoginProvider[] {
 }
 
 export function isSocialProviderEnabled(
-  providerId: "github" | "google",
+  providerId: "discord" | "github" | "google",
   env = process.env,
 ): boolean {
   const provider = socialProviderDefinitions.find(

@@ -31,6 +31,8 @@ SHADOW_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/token_arena_sh
 当 `AUTH_MODE=production` 时，还需要按需配置 OAuth 提供商环境变量：
 
 ```bash
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 GOOGLE_CLIENT_ID=
