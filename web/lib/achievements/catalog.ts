@@ -297,6 +297,13 @@ export const achievementDefinitions: AchievementDefinition[] = [
     order: 320,
   }),
   define({
+    code: "models_20",
+    category: "exploration",
+    tier: "gold",
+    iconKey: "orbit",
+    order: 325,
+  }),
+  define({
     code: "tools_2",
     category: "exploration",
     tier: "bronze",

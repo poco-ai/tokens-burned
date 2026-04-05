@@ -83,6 +83,7 @@ export type AchievementCode =
   | "project_focus_90"
   | "models_3"
   | "models_5"
+  | "models_20"
   | "tools_2"
   | "tools_4"
   | "projects_5"
