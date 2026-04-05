@@ -1,10 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { tokenCountToBigInt, tokenCountToNumber } from "@/lib/token-counts";
+import {
+  buildDeviceDedupeIndex,
+  dedupeRowsByDeviceGroup,
+} from "@/lib/usage/device-dedupe";
 import { getShanghaiDateKey, startOfShanghaiDay } from "./date";
 
 type LeaderboardAggregateWriteClient = Pick<
   typeof prisma,
-  "usageBucket" | "usageSession" | "leaderboardUserDay" | "leaderboardSnapshot"
+  | "device"
+  | "usageBucket"
+  | "usageSession"
+  | "leaderboardUserDay"
+  | "leaderboardSnapshot"
 >;
 
 type LeaderboardAccumulator = {
@@ -76,21 +84,21 @@ export async function findExistingSessionStartDates(
   db: Pick<typeof prisma, "usageSession">,
   input: {
     userId: string;
-    deviceId: string;
+    deviceIds: string[];
     sessions: Array<{
       source: string;
       sessionHash: string;
     }>;
   },
 ) {
-  if (input.sessions.length === 0) {
+  if (input.sessions.length === 0 || input.deviceIds.length === 0) {
     return [];
   }
 
   const existing = await db.usageSession.findMany({
     where: {
       userId: input.userId,
-      deviceId: input.deviceId,
+      deviceId: { in: input.deviceIds },
       OR: input.sessions.map((session) => ({
         source: session.source,
         sessionHash: session.sessionHash,
@@ -138,12 +146,17 @@ export async function recomputeLeaderboardUserDays(
         },
       },
       select: {
+        deviceId: true,
+        source: true,
+        model: true,
+        projectKey: true,
         bucketStart: true,
         inputTokens: true,
         outputTokens: true,
         reasoningTokens: true,
         cachedTokens: true,
         totalTokens: true,
+        updatedAt: true,
       },
     }),
     db.usageSession.findMany({
@@ -155,17 +168,50 @@ export async function recomputeLeaderboardUserDays(
         },
       },
       select: {
+        deviceId: true,
+        source: true,
+        sessionHash: true,
         firstMessageAt: true,
         activeSeconds: true,
         messageCount: true,
         userMessageCount: true,
+        updatedAt: true,
       },
     }),
   ]);
+  const deviceIndex = buildDeviceDedupeIndex(
+    await db.device.findMany({
+      where: { userId: input.userId },
+      select: {
+        deviceId: true,
+        hostname: true,
+        deviceFingerprint: true,
+        firstSeenAt: true,
+      },
+    }),
+  );
+  const dedupedBuckets = dedupeRowsByDeviceGroup(
+    buckets,
+    deviceIndex,
+    (bucket, deviceGroupKey) =>
+      [
+        deviceGroupKey,
+        bucket.source,
+        bucket.model,
+        bucket.projectKey,
+        bucket.bucketStart.toISOString(),
+      ].join("|"),
+  );
+  const dedupedSessions = dedupeRowsByDeviceGroup(
+    sessions,
+    deviceIndex,
+    (session, deviceGroupKey) =>
+      [deviceGroupKey, session.source, session.sessionHash].join("|"),
+  );
 
   const rows = new Map<string, LeaderboardAccumulator>();
 
-  for (const bucket of buckets) {
+  for (const bucket of dedupedBuckets) {
     const row = ensureAccumulator(rows, bucket.bucketStart);
     row.inputTokens += tokenCountToNumber(bucket.inputTokens);
     row.outputTokens += tokenCountToNumber(bucket.outputTokens);
@@ -174,7 +220,7 @@ export async function recomputeLeaderboardUserDays(
     row.totalTokens += tokenCountToNumber(bucket.totalTokens);
   }
 
-  for (const session of sessions) {
+  for (const session of dedupedSessions) {
     const row = ensureAccumulator(rows, session.firstMessageAt);
     row.activeSeconds += session.activeSeconds;
     row.sessions += 1;

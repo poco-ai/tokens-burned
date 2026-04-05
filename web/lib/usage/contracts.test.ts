@@ -42,6 +42,8 @@ describe("ingestRequestSchema", () => {
       device: {
         deviceId: "device-1234",
         hostname: "macbook-pro",
+        deviceFingerprint:
+          "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
       },
       buckets: [
         {

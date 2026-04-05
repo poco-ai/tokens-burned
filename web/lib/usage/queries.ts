@@ -11,6 +11,12 @@ import {
   groupByHourOrDay,
   listRangeBuckets,
 } from "./date-range";
+import {
+  buildDeviceDedupeIndex,
+  buildDeviceDisplayLabels,
+  dedupeRowsByDeviceGroup,
+  resolveDeviceFilterIds,
+} from "./device-dedupe";
 import type {
   ActivityTrendPoint,
   BreakdownRow,
@@ -30,11 +36,12 @@ import type {
 function applyBucketFilters<T extends Record<string, unknown>>(
   input: T,
   filters: UsageFilters,
+  deviceIds?: string[],
 ) {
   return {
     ...input,
     ...(filters.apiKeyId ? { apiKeyId: filters.apiKeyId } : {}),
-    ...(filters.deviceId ? { deviceId: filters.deviceId } : {}),
+    ...(deviceIds ? { deviceId: { in: deviceIds } } : {}),
     ...(filters.source ? { source: filters.source } : {}),
     ...(filters.model ? { model: filters.model } : {}),
     ...(filters.projectKey ? { projectKey: filters.projectKey } : {}),
@@ -44,22 +51,42 @@ function applyBucketFilters<T extends Record<string, unknown>>(
 function applySessionFilters<T extends Record<string, unknown>>(
   input: T,
   filters: UsageFilters,
+  deviceIds?: string[],
 ) {
   // Note: UsageSession doesn't have a `model` field, so we exclude it here
   return {
     ...input,
     ...(filters.apiKeyId ? { apiKeyId: filters.apiKeyId } : {}),
-    ...(filters.deviceId ? { deviceId: filters.deviceId } : {}),
+    ...(deviceIds ? { deviceId: { in: deviceIds } } : {}),
     ...(filters.source ? { source: filters.source } : {}),
     ...(filters.projectKey ? { projectKey: filters.projectKey } : {}),
   };
+}
+
+async function loadDeviceIndex(userId: string) {
+  const devices = await prisma.device.findMany({
+    where: { userId },
+    select: {
+      deviceId: true,
+      hostname: true,
+      deviceFingerprint: true,
+      firstSeenAt: true,
+    },
+  });
+
+  return buildDeviceDedupeIndex(devices);
 }
 
 async function loadBuckets(input: {
   userId: string;
   range: DashboardRange;
   filters: UsageFilters;
+  deviceIndex: Awaited<ReturnType<typeof loadDeviceIndex>>;
 }) {
+  const filterDeviceIds = resolveDeviceFilterIds(
+    input.deviceIndex,
+    input.filters.deviceId,
+  );
   const rows = await prisma.usageBucket.findMany({
     where: applyBucketFilters(
       {
@@ -70,11 +97,50 @@ async function loadBuckets(input: {
         },
       },
       input.filters,
+      filterDeviceIds,
     ),
     orderBy: { bucketStart: "asc" },
+    select: {
+      id: true,
+      userId: true,
+      apiKeyId: true,
+      deviceId: true,
+      source: true,
+      model: true,
+      projectKey: true,
+      projectLabel: true,
+      bucketStart: true,
+      inputTokens: true,
+      outputTokens: true,
+      reasoningTokens: true,
+      cachedTokens: true,
+      totalTokens: true,
+      estimatedCostUsd: true,
+      estimatedInputUsd: true,
+      estimatedOutputUsd: true,
+      estimatedReasoningUsd: true,
+      estimatedCacheUsd: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
 
-  return rows.map((bucket) => ({
+  const dedupedRows = dedupeRowsByDeviceGroup(
+    rows,
+    input.deviceIndex,
+    (bucket, deviceGroupKey) =>
+      [
+        deviceGroupKey,
+        bucket.source,
+        bucket.model,
+        bucket.projectKey,
+        bucket.bucketStart.toISOString(),
+      ].join("|"),
+  ).sort(
+    (left, right) => left.bucketStart.getTime() - right.bucketStart.getTime(),
+  );
+
+  return dedupedRows.map((bucket) => ({
     ...bucket,
     totalTokens: tokenCountToNumber(bucket.totalTokens),
     inputTokens: tokenCountToNumber(bucket.inputTokens),
@@ -88,8 +154,13 @@ async function loadSessions(input: {
   userId: string;
   range: DashboardRange;
   filters: UsageFilters;
+  deviceIndex: Awaited<ReturnType<typeof loadDeviceIndex>>;
 }) {
-  return prisma.usageSession.findMany({
+  const filterDeviceIds = resolveDeviceFilterIds(
+    input.deviceIndex,
+    input.filters.deviceId,
+  );
+  const rows = await prisma.usageSession.findMany({
     where: applySessionFilters(
       {
         userId: input.userId,
@@ -99,9 +170,45 @@ async function loadSessions(input: {
         },
       },
       input.filters,
+      filterDeviceIds,
     ),
     orderBy: { firstMessageAt: "asc" },
+    select: {
+      id: true,
+      userId: true,
+      apiKeyId: true,
+      deviceId: true,
+      source: true,
+      projectKey: true,
+      projectLabel: true,
+      sessionHash: true,
+      firstMessageAt: true,
+      lastMessageAt: true,
+      durationSeconds: true,
+      activeSeconds: true,
+      inputTokens: true,
+      outputTokens: true,
+      reasoningTokens: true,
+      cachedTokens: true,
+      totalTokens: true,
+      primaryModel: true,
+      estimatedCostUsd: true,
+      messageCount: true,
+      userMessageCount: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
+
+  return dedupeRowsByDeviceGroup(
+    rows,
+    input.deviceIndex,
+    (session, deviceGroupKey) =>
+      [deviceGroupKey, session.source, session.sessionHash].join("|"),
+  ).sort(
+    (left, right) =>
+      left.firstMessageAt.getTime() - right.firstMessageAt.getTime(),
+  );
 }
 
 type UsageBucketRecord = Awaited<ReturnType<typeof loadBuckets>>[number];
@@ -236,12 +343,13 @@ export async function getOverviewMetrics(input: {
   filters: UsageFilters;
 }) {
   const previousRange = getPreviousRange(input.range);
+  const deviceIndex = await loadDeviceIndex(input.userId);
   const [currentBuckets, currentSessions, previousBuckets, previousSessions] =
     await Promise.all([
-      loadBuckets(input),
-      loadSessions(input),
-      loadBuckets({ ...input, range: previousRange }),
-      loadSessions({ ...input, range: previousRange }),
+      loadBuckets({ ...input, deviceIndex }),
+      loadSessions({ ...input, deviceIndex }),
+      loadBuckets({ ...input, range: previousRange, deviceIndex }),
+      loadSessions({ ...input, range: previousRange, deviceIndex }),
     ]);
 
   return toOverview(
@@ -255,10 +363,11 @@ export async function getTokenTrend(input: {
   range: DashboardRange;
   filters: UsageFilters;
 }) {
+  const deviceIndex = await loadDeviceIndex(input.userId);
   const [catalog, buckets, sessions] = await Promise.all([
     getPricingCatalog(),
-    loadBuckets(input),
-    loadSessions(input),
+    loadBuckets({ ...input, deviceIndex }),
+    loadSessions({ ...input, deviceIndex }),
   ]);
   const seeded = new Map<string, TokenTrendPoint>(
     listRangeBuckets(input.range).map((bucket) => [
@@ -312,7 +421,8 @@ export async function getActivityTrend(input: {
   range: DashboardRange;
   filters: UsageFilters;
 }) {
-  const sessions = await loadSessions(input);
+  const deviceIndex = await loadDeviceIndex(input.userId);
+  const sessions = await loadSessions({ ...input, deviceIndex });
   const seeded = new Map<string, ActivityTrendPoint>(
     listRangeBuckets(input.range).map((bucket) => [
       bucket.key,
@@ -392,45 +502,19 @@ function ensureBreakdownRow(
   return next;
 }
 
-function buildDeviceDisplayLabels(
-  devices: Array<{ deviceId: string; hostname: string }>,
-) {
-  const hostnameCounts = new Map<string, number>();
-
-  for (const device of devices) {
-    hostnameCounts.set(
-      device.hostname,
-      (hostnameCounts.get(device.hostname) ?? 0) + 1,
-    );
-  }
-
-  return new Map(
-    devices.map((device) => [
-      device.deviceId,
-      (hostnameCounts.get(device.hostname) ?? 0) > 1
-        ? `${device.hostname} · ${device.deviceId.slice(0, 8)}`
-        : device.hostname,
-    ]),
-  );
-}
-
 export async function getBreakdowns(input: {
   userId: string;
   range: DashboardRange;
   filters: UsageFilters;
 }): Promise<UsageBreakdowns> {
-  const [catalog, buckets, sessions, devices] = await Promise.all([
+  const deviceIndex = await loadDeviceIndex(input.userId);
+  const [catalog, buckets, sessions] = await Promise.all([
     getPricingCatalog(),
-    loadBuckets(input),
-    loadSessions(input),
-    prisma.device.findMany({
-      where: {
-        userId: input.userId,
-      },
-    }),
+    loadBuckets({ ...input, deviceIndex }),
+    loadSessions({ ...input, deviceIndex }),
   ]);
 
-  const deviceLabels = buildDeviceDisplayLabels(devices);
+  const deviceLabels = buildDeviceDisplayLabels(deviceIndex.canonicalDevices);
   const byDevice = new Map<string, BreakdownRow>();
   const byTool = new Map<string, BreakdownRow>();
   const byModel = new Map<string, BreakdownRow>();
@@ -631,10 +715,11 @@ export async function getPricingSummaryAndRows(input: {
   modelPricingRows: ModelPricingRow[];
 }> {
   const previousRange = getPreviousRange(input.range);
+  const deviceIndex = await loadDeviceIndex(input.userId);
   const [catalog, currentBuckets, previousBuckets] = await Promise.all([
     getPricingCatalog(),
-    loadBuckets(input),
-    loadBuckets({ ...input, range: previousRange }),
+    loadBuckets({ ...input, deviceIndex }),
+    loadBuckets({ ...input, range: previousRange, deviceIndex }),
   ]);
 
   const modelPricingRows = buildModelPricingRows(currentBuckets, catalog);
@@ -651,52 +736,20 @@ export async function getSessionRows(input: {
   range: DashboardRange;
   filters: UsageFilters;
 }): Promise<UsageSessionRow[]> {
-  const [sessions, devices] = await Promise.all([
-    prisma.usageSession.findMany({
-      where: applySessionFilters(
-        {
-          userId: input.userId,
-          firstMessageAt: {
-            gte: input.range.from,
-            lte: input.range.to,
-          },
-        },
-        input.filters,
-      ),
-      orderBy: [{ firstMessageAt: "desc" }, { lastMessageAt: "desc" }],
-      select: {
-        id: true,
-        sessionHash: true,
-        source: true,
-        projectKey: true,
-        projectLabel: true,
-        deviceId: true,
-        firstMessageAt: true,
-        lastMessageAt: true,
-        durationSeconds: true,
-        activeSeconds: true,
-        inputTokens: true,
-        outputTokens: true,
-        reasoningTokens: true,
-        cachedTokens: true,
-        totalTokens: true,
-        primaryModel: true,
-        estimatedCostUsd: true,
-        messageCount: true,
-        userMessageCount: true,
-      },
-    }),
-    prisma.device.findMany({
-      where: {
-        userId: input.userId,
-      },
-      select: {
-        deviceId: true,
-        hostname: true,
-      },
-    }),
-  ]);
-  const deviceLabels = buildDeviceDisplayLabels(devices);
+  const deviceIndex = await loadDeviceIndex(input.userId);
+  const sessions = (await loadSessions({ ...input, deviceIndex })).sort(
+    (left, right) => {
+      const byFirstMessage =
+        right.firstMessageAt.getTime() - left.firstMessageAt.getTime();
+
+      if (byFirstMessage !== 0) {
+        return byFirstMessage;
+      }
+
+      return right.lastMessageAt.getTime() - left.lastMessageAt.getTime();
+    },
+  );
+  const deviceLabels = buildDeviceDisplayLabels(deviceIndex.canonicalDevices);
 
   return sessions.map((session) => ({
     id: session.id,
@@ -725,16 +778,12 @@ export async function getSessionRows(input: {
 export async function getFilterOptions(
   userId: string,
 ): Promise<UsageFilterOptions> {
-  const [apiKeys, devices, usageBuckets] = await Promise.all([
+  const deviceIndex = await loadDeviceIndex(userId);
+  const [apiKeys, usageBuckets] = await Promise.all([
     prisma.usageApiKey.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
       select: { id: true, name: true, status: true },
-    }),
-    prisma.device.findMany({
-      where: { userId },
-      orderBy: { lastSeenAt: "desc" },
-      select: { deviceId: true, hostname: true },
     }),
     prisma.usageBucket.findMany({
       where: { userId },
@@ -746,7 +795,7 @@ export async function getFilterOptions(
       },
     }),
   ]);
-  const deviceLabels = buildDeviceDisplayLabels(devices);
+  const deviceLabels = buildDeviceDisplayLabels(deviceIndex.canonicalDevices);
 
   const sources = new Map<string, FilterOption>();
   const models = new Map<string, FilterOption>();
@@ -763,7 +812,7 @@ export async function getFilterOptions(
 
   return {
     apiKeys,
-    devices: devices.map((device) => ({
+    devices: deviceIndex.canonicalDevices.map((device) => ({
       value: device.deviceId,
       label: deviceLabels.get(device.deviceId) ?? device.hostname,
     })),

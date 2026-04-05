@@ -9,6 +9,10 @@ import {
 import { prisma } from "@/lib/prisma";
 import { tokenCountToNumber } from "@/lib/token-counts";
 import { resolveDashboardRange } from "@/lib/usage/date-range";
+import {
+  buildDeviceDedupeIndex,
+  dedupeRowsByDeviceGroup,
+} from "@/lib/usage/device-dedupe";
 import { formatDateInput } from "@/lib/usage/format";
 import { getUsagePreference } from "@/lib/usage/preferences";
 import type { UsageShareCardPersona } from "@/lib/usage/share-card";
@@ -429,7 +433,7 @@ function normalizeStoredAchievementRecord(row: {
 
 async function loadAchievementMetrics(userId: string) {
   const preference = await getUsagePreference(userId);
-  const [user, buckets, sessions, following, followers, catalog] =
+  const [user, devices, buckets, sessions, following, followers, catalog] =
     await Promise.all([
       prisma.user.findUniqueOrThrow({
         where: { id: userId },
@@ -440,6 +444,15 @@ async function loadAchievementMetrics(userId: string) {
               updatedAt: true,
             },
           },
+        },
+      }),
+      prisma.device.findMany({
+        where: { userId },
+        select: {
+          deviceId: true,
+          hostname: true,
+          deviceFingerprint: true,
+          firstSeenAt: true,
         },
       }),
       prisma.usageBucket.findMany({
@@ -455,6 +468,7 @@ async function loadAchievementMetrics(userId: string) {
           source: true,
           projectKey: true,
           deviceId: true,
+          updatedAt: true,
         },
         orderBy: { bucketStart: "asc" },
       }),
@@ -464,6 +478,9 @@ async function loadAchievementMetrics(userId: string) {
           firstMessageAt: true,
           activeSeconds: true,
           deviceId: true,
+          source: true,
+          sessionHash: true,
+          updatedAt: true,
         },
         orderBy: { firstMessageAt: "asc" },
       }),
@@ -485,7 +502,29 @@ async function loadAchievementMetrics(userId: string) {
       }),
       getPricingCatalog(),
     ]);
-  const normalizedBuckets = buckets.map(normalizeUsageBucketTokenFields);
+  const deviceIndex = buildDeviceDedupeIndex(devices);
+  const normalizedBuckets = dedupeRowsByDeviceGroup(
+    buckets,
+    deviceIndex,
+    (bucket, deviceGroupKey) =>
+      [
+        deviceGroupKey,
+        bucket.source,
+        bucket.model,
+        bucket.projectKey,
+        bucket.bucketStart.toISOString(),
+      ].join("|"),
+  ).map(normalizeUsageBucketTokenFields);
+  const dedupedSessions = dedupeRowsByDeviceGroup(
+    sessions,
+    deviceIndex,
+    (session, deviceGroupKey) =>
+      [deviceGroupKey, session.source, session.sessionHash].join("|"),
+  ).map((session) => ({
+    firstMessageAt: session.firstMessageAt,
+    activeSeconds: session.activeSeconds,
+    deviceId: session.deviceId,
+  }));
 
   const costTimeline = sortIsoAsc(
     normalizedBuckets.map((bucket) => ({
@@ -506,7 +545,7 @@ async function loadAchievementMetrics(userId: string) {
   return buildAllTimeMetrics({
     timezone: preference.timezone,
     buckets: normalizedBuckets,
-    sessions,
+    sessions: dedupedSessions,
     following,
     followers,
     publicProfileEnabled,

@@ -19,6 +19,7 @@ import {
   type Config,
   getOrCreateDeviceId,
 } from "../infrastructure/config/manager";
+import { getDeviceFingerprint } from "../infrastructure/device/fingerprint";
 import {
   describeExistingSyncLock,
   tryAcquireSyncLock,
@@ -104,9 +105,12 @@ export interface SyncResult {
 }
 
 function toDeviceMetadata(config: Config): DeviceMetadata {
+  const deviceFingerprint = getDeviceFingerprint();
+
   return {
     deviceId: getOrCreateDeviceId(config),
     hostname: hostname().replace(/\.local$/, ""),
+    ...(deviceFingerprint ? { deviceFingerprint } : {}),
   };
 }
 

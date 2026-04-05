@@ -180,18 +180,20 @@ model UsageApiKey {
 }
 
 model Device {
-  id           String   @id @default(cuid())
-  userId       String
-  deviceId     String
-  hostname     String
-  firstSeenAt  DateTime @default(now())
-  lastSeenAt   DateTime @default(now())
-  lastApiKeyId String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String   @id @default(cuid())
+  userId            String
+  deviceId          String
+  hostname          String
+  deviceFingerprint String?
+  firstSeenAt       DateTime @default(now())
+  lastSeenAt        DateTime @default(now())
+  lastApiKeyId      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, deviceId])
+  @@index([userId, deviceFingerprint])
 }
 
 model UsageBucket {

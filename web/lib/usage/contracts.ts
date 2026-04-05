@@ -101,6 +101,7 @@ export const ingestRequestSchema = z.object({
   device: z.object({
     deviceId: z.string().min(8),
     hostname: z.string().min(1),
+    deviceFingerprint: z.string().trim().min(16).max(128).optional(),
   }),
   buckets: z.array(ingestBucketSchema),
   sessions: z.array(ingestSessionSchema),

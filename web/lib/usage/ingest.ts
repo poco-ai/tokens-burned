@@ -29,6 +29,7 @@ type UpsertDeviceInput = {
   userId: string;
   apiKeyId?: string | null;
   device: IngestPayload["device"];
+  canonicalDeviceId: string;
   seenAt: Date;
 };
 
@@ -47,6 +48,19 @@ type NormalizedSessionUsage = {
   primaryModel: string;
   estimatedCostUsd: number | null;
 };
+
+function compareCanonicalDevices(
+  left: { deviceId: string; firstSeenAt: Date },
+  right: { deviceId: string; firstSeenAt: Date },
+) {
+  const byFirstSeen = left.firstSeenAt.getTime() - right.firstSeenAt.getTime();
+
+  if (byFirstSeen !== 0) {
+    return byFirstSeen;
+  }
+
+  return left.deviceId.localeCompare(right.deviceId);
+}
 
 function buildUsageSessionWriteInput(input: NormalizedSessionUsage) {
   return {
@@ -166,31 +180,136 @@ export async function upsertDevice(
   db: UsageWriteClient,
   input: UpsertDeviceInput,
 ) {
+  if (
+    input.device.deviceFingerprint &&
+    input.device.deviceId !== input.canonicalDeviceId
+  ) {
+    const existingAlias = await db.device.findUnique({
+      where: {
+        userId_deviceId: {
+          userId: input.userId,
+          deviceId: input.device.deviceId,
+        },
+      },
+      select: {
+        deviceFingerprint: true,
+      },
+    });
+
+    if (
+      existingAlias &&
+      existingAlias.deviceFingerprint !== input.device.deviceFingerprint
+    ) {
+      await db.device.update({
+        where: {
+          userId_deviceId: {
+            userId: input.userId,
+            deviceId: input.device.deviceId,
+          },
+        },
+        data: {
+          deviceFingerprint: input.device.deviceFingerprint,
+        },
+      });
+    }
+  }
+
   return db.device.upsert({
     where: {
       userId_deviceId: {
         userId: input.userId,
-        deviceId: input.device.deviceId,
+        deviceId: input.canonicalDeviceId,
       },
     },
     update: {
       hostname: input.device.hostname,
+      deviceFingerprint: input.device.deviceFingerprint ?? undefined,
       lastSeenAt: input.seenAt,
       lastApiKeyId: input.apiKeyId ?? undefined,
     },
     create: {
       userId: input.userId,
-      deviceId: input.device.deviceId,
+      deviceId: input.canonicalDeviceId,
       hostname: input.device.hostname,
+      deviceFingerprint: input.device.deviceFingerprint ?? undefined,
       lastSeenAt: input.seenAt,
       lastApiKeyId: input.apiKeyId ?? undefined,
     },
   });
 }
 
+async function resolveCanonicalDeviceId(
+  db: UsageWriteClient,
+  input: {
+    userId: string;
+    device: IngestPayload["device"];
+  },
+) {
+  if (!input.device.deviceFingerprint) {
+    return input.device.deviceId;
+  }
+
+  const matches = await db.device.findMany({
+    where: {
+      userId: input.userId,
+      OR: [
+        { deviceId: input.device.deviceId },
+        { deviceFingerprint: input.device.deviceFingerprint },
+      ],
+    },
+    select: {
+      deviceId: true,
+      firstSeenAt: true,
+    },
+  });
+
+  return (
+    matches.sort(compareCanonicalDevices)[0]?.deviceId ?? input.device.deviceId
+  );
+}
+
+async function findRelatedDeviceIds(
+  db: UsageWriteClient,
+  input: {
+    userId: string;
+    device: IngestPayload["device"];
+    canonicalDeviceId: string;
+  },
+) {
+  const deviceIds = new Set<string>([
+    input.canonicalDeviceId,
+    input.device.deviceId,
+  ]);
+
+  if (!input.device.deviceFingerprint) {
+    return Array.from(deviceIds);
+  }
+
+  const matches = await db.device.findMany({
+    where: {
+      userId: input.userId,
+      OR: [
+        { deviceId: input.canonicalDeviceId },
+        { deviceId: input.device.deviceId },
+        { deviceFingerprint: input.device.deviceFingerprint },
+      ],
+    },
+    select: {
+      deviceId: true,
+    },
+  });
+
+  for (const match of matches) {
+    deviceIds.add(match.deviceId);
+  }
+
+  return Array.from(deviceIds);
+}
+
 export async function upsertBuckets(
   db: UsageWriteClient,
   input: IngestUsagePayloadInput,
+  canonicalDeviceId: string,
 ) {
   await Promise.all(
     input.payload.buckets.map((bucket) => {
@@ -200,7 +319,7 @@ export async function upsertBuckets(
         where: {
           userId_deviceId_source_model_projectKey_bucketStart: {
             userId: input.userId,
-            deviceId: input.payload.device.deviceId,
+            deviceId: canonicalDeviceId,
             source: bucket.source,
             model: bucket.model,
             projectKey: bucket.projectKey,
@@ -214,7 +333,7 @@ export async function upsertBuckets(
         create: {
           userId: input.userId,
           apiKeyId: input.apiKeyId ?? undefined,
-          deviceId: input.payload.device.deviceId,
+          deviceId: canonicalDeviceId,
           source: bucket.source,
           model: bucket.model,
           projectKey: bucket.projectKey,
@@ -230,6 +349,7 @@ export async function upsertSessions(
   db: UsageWriteClient,
   input: IngestUsagePayloadInput,
   catalog: Awaited<ReturnType<typeof getPricingCatalog>>,
+  canonicalDeviceId: string,
 ) {
   await Promise.all(
     input.payload.sessions.map((session) => {
@@ -243,7 +363,7 @@ export async function upsertSessions(
         where: {
           userId_deviceId_source_sessionHash: {
             userId: input.userId,
-            deviceId: input.payload.device.deviceId,
+            deviceId: canonicalDeviceId,
             source: session.source,
             sessionHash: session.sessionHash,
           },
@@ -263,7 +383,7 @@ export async function upsertSessions(
         create: {
           userId: input.userId,
           apiKeyId: input.apiKeyId ?? undefined,
-          deviceId: input.payload.device.deviceId,
+          deviceId: canonicalDeviceId,
           source: session.source,
           projectKey: session.projectKey,
           projectLabel: session.projectLabel,
@@ -294,10 +414,21 @@ export async function ingestUsagePayload(input: IngestUsagePayloadInput) {
   const catalog = await getPricingCatalog();
 
   const result = await prisma.$transaction(async (tx) => {
+    const canonicalDeviceId = await resolveCanonicalDeviceId(tx, {
+      userId: input.userId,
+      device: input.payload.device,
+    });
+    const relatedDeviceIds = await findRelatedDeviceIds(tx, {
+      userId: input.userId,
+      device: input.payload.device,
+      canonicalDeviceId,
+    });
+
     await upsertDevice(tx, {
       userId: input.userId,
       apiKeyId: input.apiKeyId,
       device: input.payload.device,
+      canonicalDeviceId,
       seenAt,
     });
 
@@ -310,15 +441,15 @@ export async function ingestUsagePayload(input: IngestUsagePayloadInput) {
 
     const existingSessionStarts = await findExistingSessionStartDates(tx, {
       userId: input.userId,
-      deviceId: input.payload.device.deviceId,
+      deviceIds: relatedDeviceIds,
       sessions: input.payload.sessions.map((session) => ({
         source: session.source,
         sessionHash: session.sessionHash,
       })),
     });
 
-    await upsertBuckets(tx, input);
-    await upsertSessions(tx, input, catalog);
+    await upsertBuckets(tx, input, canonicalDeviceId);
+    await upsertSessions(tx, input, catalog, canonicalDeviceId);
 
     const affectedDates = collectAffectedLeaderboardDates({
       bucketStarts: input.payload.buckets.map((bucket) => bucket.bucketStart),
@@ -340,7 +471,7 @@ export async function ingestUsagePayload(input: IngestUsagePayloadInput) {
       ok: true,
       bucketCount: input.payload.buckets.length,
       sessionCount: input.payload.sessions.length,
-      deviceId: input.payload.device.deviceId,
+      deviceId: canonicalDeviceId,
     };
   });
 

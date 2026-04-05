@@ -137,6 +137,7 @@ export interface ApiSettings {
 export interface DeviceMetadata {
   deviceId: string;
   hostname: string;
+  deviceFingerprint?: string;
 }
 
 /**

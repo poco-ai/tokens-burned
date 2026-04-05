@@ -88,6 +88,8 @@ describe("getBreakdowns", () => {
         outputTokens: 200,
         reasoningTokens: 40,
         cachedTokens: 40,
+        bucketStart: new Date("2026-03-24T10:00:00.000Z"),
+        updatedAt: new Date("2026-03-24T10:05:00.000Z"),
       },
       {
         deviceId: "22222222-beta",
@@ -100,6 +102,8 @@ describe("getBreakdowns", () => {
         outputTokens: 150,
         reasoningTokens: 30,
         cachedTokens: 50,
+        bucketStart: new Date("2026-03-25T10:00:00.000Z"),
+        updatedAt: new Date("2026-03-25T10:05:00.000Z"),
       },
     ]);
 
@@ -154,6 +158,32 @@ describe("getFilterOptions", () => {
       },
     ]);
   });
+
+  it("collapses duplicate device ids that share the same fingerprint", async () => {
+    mocks.deviceFindMany.mockResolvedValue([
+      {
+        deviceId: "11111111-alpha",
+        hostname: "Huawei-Matebook-Pro",
+        deviceFingerprint: "fp-shared",
+        firstSeenAt: new Date("2026-03-20T00:00:00.000Z"),
+      },
+      {
+        deviceId: "22222222-beta",
+        hostname: "Huawei-Matebook-Pro",
+        deviceFingerprint: "fp-shared",
+        firstSeenAt: new Date("2026-03-21T00:00:00.000Z"),
+      },
+    ]);
+
+    const options = await getFilterOptions("user_123");
+
+    expect(options.devices).toEqual([
+      {
+        value: "11111111-alpha",
+        label: "Huawei-Matebook-Pro",
+      },
+    ]);
+  });
 });
 
 describe("getSessionRows", () => {
@@ -200,6 +230,10 @@ describe("getSessionRows", () => {
         estimatedCostUsd: 0.012,
         messageCount: 10,
         userMessageCount: 4,
+        updatedAt: new Date("2026-03-25T12:30:00.000Z"),
+        createdAt: new Date("2026-03-25T12:25:00.000Z"),
+        userId: "user_123",
+        apiKeyId: "key_123",
       },
     ]);
 
@@ -233,6 +267,89 @@ describe("getSessionRows", () => {
         primaryModel: "claude-sonnet-4-20250514",
       },
     ]);
+  });
+
+  it("deduplicates sessions uploaded by multiple device ids from the same physical device", async () => {
+    mocks.deviceFindMany.mockResolvedValue([
+      {
+        deviceId: "11111111-alpha",
+        hostname: "Huawei-Matebook-Pro",
+        deviceFingerprint: "fp-shared",
+        firstSeenAt: new Date("2026-03-20T00:00:00.000Z"),
+      },
+      {
+        deviceId: "22222222-beta",
+        hostname: "Huawei-Matebook-Pro",
+        deviceFingerprint: "fp-shared",
+        firstSeenAt: new Date("2026-03-21T00:00:00.000Z"),
+      },
+    ]);
+    mocks.usageSessionFindMany.mockResolvedValue([
+      {
+        id: "session_old",
+        userId: "user_123",
+        apiKeyId: "key_a",
+        sessionHash: "hash_2",
+        source: "codex",
+        projectKey: "project-b",
+        projectLabel: "project-b",
+        deviceId: "11111111-alpha",
+        firstMessageAt: new Date("2026-03-25T12:00:00.000Z"),
+        lastMessageAt: new Date("2026-03-25T12:20:00.000Z"),
+        durationSeconds: 1200,
+        activeSeconds: 900,
+        inputTokens: 1000,
+        outputTokens: 500,
+        reasoningTokens: 200,
+        cachedTokens: 100,
+        totalTokens: 1800,
+        primaryModel: "claude-sonnet-4-20250514",
+        estimatedCostUsd: 0.012,
+        messageCount: 10,
+        userMessageCount: 4,
+        createdAt: new Date("2026-03-25T12:30:00.000Z"),
+        updatedAt: new Date("2026-03-25T12:30:00.000Z"),
+      },
+      {
+        id: "session_new",
+        userId: "user_123",
+        apiKeyId: "key_b",
+        sessionHash: "hash_2",
+        source: "codex",
+        projectKey: "project-b",
+        projectLabel: "project-b",
+        deviceId: "22222222-beta",
+        firstMessageAt: new Date("2026-03-25T12:00:00.000Z"),
+        lastMessageAt: new Date("2026-03-25T12:20:00.000Z"),
+        durationSeconds: 1200,
+        activeSeconds: 900,
+        inputTokens: 1000,
+        outputTokens: 500,
+        reasoningTokens: 200,
+        cachedTokens: 100,
+        totalTokens: 1800,
+        primaryModel: "claude-sonnet-4-20250514",
+        estimatedCostUsd: 0.012,
+        messageCount: 10,
+        userMessageCount: 4,
+        createdAt: new Date("2026-03-25T12:35:00.000Z"),
+        updatedAt: new Date("2026-03-25T12:35:00.000Z"),
+      },
+    ]);
+
+    const sessions = await getSessionRows({
+      userId: "user_123",
+      range,
+      filters: {},
+    });
+
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0]).toMatchObject({
+      id: "session_new",
+      deviceId: "11111111-alpha",
+      deviceLabel: "Huawei-Matebook-Pro",
+      sessionHash: "hash_2",
+    });
   });
 });
 
@@ -274,8 +391,28 @@ describe("getTokenTrend", () => {
     ]);
     mocks.usageSessionFindMany.mockResolvedValue([
       {
+        deviceId: "11111111-alpha",
+        source: "codex",
+        projectKey: "project-a",
+        projectLabel: "project-a",
+        updatedAt: new Date("2026-03-25T00:10:00.000Z"),
+        createdAt: new Date("2026-03-25T00:05:00.000Z"),
+        userId: "user_123",
+        apiKeyId: "key_123",
+        sessionHash: "session-1",
         firstMessageAt: new Date("2026-03-25T12:00:00.000Z"),
+        lastMessageAt: new Date("2026-03-25T12:20:00.000Z"),
+        activeSeconds: 900,
         durationSeconds: 1200,
+        inputTokens: 100,
+        outputTokens: 200,
+        reasoningTokens: 50,
+        cachedTokens: 25,
+        totalTokens: 375,
+        primaryModel: "gpt-5",
+        estimatedCostUsd: 1.5,
+        messageCount: 10,
+        userMessageCount: 4,
       },
     ]);
 
