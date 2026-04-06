@@ -1,8 +1,8 @@
-![tokenarena](assets/banner.png)
+[![tokenarena](assets/banner.png)](https://token.poco-ai.com)
 
 [![Docker Image](https://img.shields.io/badge/Docker%20Image-tokenarena%3Alatest-blue?logo=docker&logoColor=white)](https://github.com/poco-ai/tokenarena/pkgs/container/tokenarena) [![pnpm](https://img.shields.io/badge/pnpm-monorepo-blue?logo=pnpm)](https://pnpm.io/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/poco-ai/tokenarena/pulls) [![License](https://img.shields.io/github/license/poco-ai/tokenarena)](LICENSE)
 
-用 Cursor、Claude Code、Copilot 这些工具写代码很爽，但你有没有好奇过：
+你有没有好奇过：
 
 - **每天到底花了多少 token？**
 - 哪个项目最费 token？
@@ -20,20 +20,21 @@
 - **详细指标** — 总 token、输入、输出、reasoning、缓存命中、活跃时长、会话数、消息数
 - **多工具支持** — 支持采集多种本地 AI CLI 的 usage 数据
 - **Oauth2 登录** — 支持 Discord、GitHub、Google、Linux.do、观猹平台登录
+- **Badge 分享** — 支持分享 token 使用、预计消耗、使用时长以及使用热力图
 - **社区与排行榜** - 关注你感兴趣的人，查看他们的 token 用量排行榜
 - **多语言 & 深色模式** — 支持中英文切换和主题切换
 - **隐私优先** — 项目名称默认按 hash 匿名上传，你自行决定是否公开
 
 ## Quick Start
 
-1. **注册账号** — 访问 `https://token.poco-ai.com` 注册并登录
-2. **创建 API Key** — 在 Settings 中生成 API key
+1. **注册账号** — 访问 [Token Arena](https://token.poco-ai.com) 注册并登录
+2. **创建 API Key** — 在 [Settings](https://token.poco-ai.com/zh/settings/cli-keys) 中生成 API key
 3. **下载**
     ```shell
     npm install -g @poco-ai/tokenarena
     ```
 4. **初始化 CLI** — 运行 `tokenarena init`，输入 API key
-5. **查看分析** — 打开 `/usage` 页面查看你的 token 用量分析
+5. **查看分析** — 打开 [Usage](https://token.poco-ai.com/zh/usage) 页面查看你的 token 用量分析
 
 > [!TIP]
 >
