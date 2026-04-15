@@ -2,6 +2,7 @@
 import "./parsers/claude-code.js";
 import "./parsers/codex.js";
 import "./parsers/gemini-cli.js";
+import "./parsers/hermes.js";
 import "./parsers/copilot-cli.js";
 import "./parsers/opencode.js";
 import "./parsers/openclaw.js";

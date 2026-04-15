@@ -11,17 +11,15 @@ import type {
 import { registerParser } from "./registry";
 import type { IParser, ToolDefinition } from "./types";
 
-const POSSIBLE_ROOTS = [
-  join(homedir(), ".openclaw"),
-  join(homedir(), ".clawdbot"),
-  join(homedir(), ".moltbot"),
-  join(homedir(), ".moldbot"),
-];
+const TOOL_ID = "openclaw";
+const TOOL_NAME = "OpenClaw";
+const DEFAULT_DATA_DIR = join(homedir(), ".openclaw");
+const LEGACY_ROOT_NAMES = [".clawdbot", ".moltbot", ".moldbot"];
 
 const TOOL: ToolDefinition = {
-  id: "openclaw",
-  name: "OpenClaw",
-  dataDir: POSSIBLE_ROOTS[0], // Primary data dir for detection
+  id: TOOL_ID,
+  name: TOOL_NAME,
+  dataDir: DEFAULT_DATA_DIR,
 };
 
 interface OpenClawMessage {
@@ -62,14 +60,39 @@ function getTokens(
   return 0;
 }
 
-class OpenClawParser implements IParser {
+export function getOpenClawRoots(homeDir = homedir()): string[] {
+  const roots = [join(homeDir, ".openclaw")];
+
+  try {
+    const profileRoots = readdirSync(homeDir, { withFileTypes: true })
+      .filter(
+        (entry) => entry.isDirectory() && /^\.openclaw-.+/.test(entry.name),
+      )
+      .map((entry) => join(homeDir, entry.name))
+      .sort((left, right) => left.localeCompare(right));
+
+    roots.push(...profileRoots);
+  } catch {
+    // Ignore unreadable home directories and fall back to well-known roots.
+  }
+
+  roots.push(...LEGACY_ROOT_NAMES.map((name) => join(homeDir, name)));
+
+  return Array.from(new Set(roots));
+}
+
+export class OpenClawParser implements IParser {
   readonly tool = TOOL;
+
+  constructor(
+    private readonly resolveRoots: () => string[] = getOpenClawRoots,
+  ) {}
 
   async parse(): Promise<ParseResult> {
     const entries: TokenUsageEntry[] = [];
     const sessionEvents: SessionEvent[] = [];
 
-    for (const root of POSSIBLE_ROOTS) {
+    for (const root of this.resolveRoots()) {
       const agentsDir = join(root, "agents");
       if (!existsSync(agentsDir)) continue;
 
@@ -123,7 +146,7 @@ class OpenClawParser implements IParser {
 
               sessionEvents.push({
                 sessionId: filePath,
-                source: "openclaw",
+                source: TOOL_ID,
                 project,
                 timestamp: ts,
                 role: msg.role === "user" ? "user" : "assistant",
@@ -135,7 +158,7 @@ class OpenClawParser implements IParser {
 
               entries.push({
                 sessionId: filePath,
-                source: "openclaw",
+                source: TOOL_ID,
                 model: msg.model || obj.model || "unknown",
                 project,
                 timestamp: ts,
@@ -175,9 +198,8 @@ class OpenClawParser implements IParser {
     };
   }
 
-  /** Check if any of the possible roots exist */
   isInstalled(): boolean {
-    return POSSIBLE_ROOTS.some((root) => existsSync(join(root, "agents")));
+    return this.resolveRoots().some((root) => existsSync(join(root, "agents")));
   }
 }
 
