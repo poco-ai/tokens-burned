@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
-import { join } from "node:path";
+import { posix } from "node:path";
 import { isCommandAvailable } from "../../utils/command";
 import { logger } from "../../utils/logger";
 import {
@@ -27,11 +27,11 @@ export interface SystemdServiceDefinitionOptions {
 }
 
 export function getLinuxSystemdServiceDir(homePath = homedir()): string {
-  return join(homePath, ".config/systemd/user");
+  return posix.join(homePath, ".config", "systemd", "user");
 }
 
 export function getLinuxSystemdServiceFile(homePath = homedir()): string {
-  return join(
+  return posix.join(
     getLinuxSystemdServiceDir(homePath),
     `${SYSTEMD_SERVICE_NAME}.service`,
   );

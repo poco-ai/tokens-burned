@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, platform } from "node:os";
-import { join } from "node:path";
+import { posix } from "node:path";
 import { isCommandAvailable } from "../../utils/command";
 import { logger } from "../../utils/logger";
 import { ensureAppDirs, getStateDir } from "../runtime/paths";
@@ -35,11 +35,14 @@ function getCurrentUid(): number | null {
 }
 
 export function getMacosLaunchAgentDir(homePath = homedir()): string {
-  return join(homePath, "Library/LaunchAgents");
+  return posix.join(homePath, "Library", "LaunchAgents");
 }
 
 export function getMacosLaunchAgentFile(homePath = homedir()): string {
-  return join(getMacosLaunchAgentDir(homePath), `${MACOS_LAUNCHD_LABEL}.plist`);
+  return posix.join(
+    getMacosLaunchAgentDir(homePath),
+    `${MACOS_LAUNCHD_LABEL}.plist`,
+  );
 }
 
 export function getMacosLaunchdDomain(uid = getCurrentUid()): string {
@@ -59,8 +62,8 @@ export function getMacosLaunchdLogPaths(stateDir = getStateDir()): {
   stderrPath: string;
 } {
   return {
-    stdoutPath: join(stateDir, "launchd.stdout.log"),
-    stderrPath: join(stateDir, "launchd.stderr.log"),
+    stdoutPath: posix.join(stateDir, "launchd.stdout.log"),
+    stderrPath: posix.join(stateDir, "launchd.stderr.log"),
   };
 }
 
