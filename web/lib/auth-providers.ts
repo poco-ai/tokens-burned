@@ -6,6 +6,9 @@ type ProviderEnvName =
   | "DISCORD_CLIENT_SECRET"
   | "GITHUB_CLIENT_ID"
   | "GITHUB_CLIENT_SECRET"
+  | "GITLAB_BASE_URL"
+  | "GITLAB_CLIENT_ID"
+  | "GITLAB_CLIENT_SECRET"
   | "GOOGLE_CLIENT_ID"
   | "GOOGLE_CLIENT_SECRET"
   | "LINUXDO_CLIENT_ID"
@@ -29,15 +32,19 @@ type SocialProviderDefinition = ProviderBase & {
 };
 
 type OAuth2ProviderDefinition = ProviderBase & {
-  id: "linuxdo" | "watcha";
+  id: "gitlab" | "linuxdo" | "watcha";
   kind: "oauth2";
-  authorizationUrl: string;
-  tokenUrl: string;
-  userInfoUrl: string;
   scopes: string[];
+  baseUrl?: ProviderEnvName;
+  authorizationUrl?: string;
+  tokenUrl?: string;
+  userInfoUrl?: string;
   redirectURI?: string;
   pkce?: boolean;
-  getUserInfo?: (tokens: OAuth2Tokens) => Promise<OAuth2UserInfo | null>;
+  getUserInfo?: (
+    tokens: OAuth2Tokens,
+    env?: NodeJS.ProcessEnv,
+  ) => Promise<OAuth2UserInfo | null>;
 };
 
 export type LoginProvider = Pick<
@@ -68,6 +75,49 @@ async function getWatchaUserInfo(tokens: OAuth2Tokens) {
     image: data.data.avatar_url || undefined,
     email: `${data.data.user_id}@watcha.local`,
     emailVerified: true,
+  };
+}
+
+async function getGitLabUserInfo(tokens: OAuth2Tokens, env = process.env) {
+  const baseUrl = getEnvValue("GITLAB_BASE_URL", env)?.replace(/\/+$/, "");
+  if (!baseUrl) {
+    return null;
+  }
+
+  const response = await fetch(`${baseUrl}/api/v4/user`, {
+    headers: {
+      Authorization: `Bearer ${tokens.accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = (await response.json()) as {
+    id: number | string;
+    name?: string | null;
+    username?: string | null;
+    avatar_url?: string | null;
+    email?: string | null;
+    public_email?: string | null;
+    confirmed_at?: string | null;
+  };
+
+  const id = String(data.id);
+  const email =
+    data.email ||
+    data.public_email ||
+    (data.username ? `${data.username}@gitlab.local` : `${id}@gitlab.local`);
+
+  return {
+    id,
+    name: data.name || data.username || "GitLab User",
+    image: data.avatar_url || undefined,
+    email,
+    emailVerified: Boolean(
+      data.confirmed_at || data.email || data.public_email,
+    ),
   };
 }
 
@@ -102,6 +152,18 @@ const socialProviderDefinitions: readonly SocialProviderDefinition[] = [
 ] as const;
 
 const oauth2ProviderDefinitions: readonly OAuth2ProviderDefinition[] = [
+  {
+    id: "gitlab",
+    kind: "oauth2",
+    label: "GitLab",
+    credentials: {
+      clientId: "GITLAB_CLIENT_ID",
+      clientSecret: "GITLAB_CLIENT_SECRET",
+    },
+    baseUrl: "GITLAB_BASE_URL",
+    scopes: ["read_user"],
+    getUserInfo: getGitLabUserInfo,
+  },
   {
     id: "linuxdo",
     kind: "oauth2",
@@ -153,6 +215,37 @@ function hasProviderCredentials(
   );
 }
 
+function resolveProviderBaseUrl(
+  name: ProviderEnvName | undefined,
+  env = process.env,
+): string | null {
+  if (!name) {
+    return null;
+  }
+
+  const value = getEnvValue(name, env)?.trim();
+  return value ? value.replace(/\/+$/, "") : null;
+}
+
+function hasOAuth2ProviderConfig(
+  provider: OAuth2ProviderDefinition,
+  env = process.env,
+): boolean {
+  if (!hasProviderCredentials(provider.credentials, env)) {
+    return false;
+  }
+
+  if (provider.baseUrl) {
+    return Boolean(resolveProviderBaseUrl(provider.baseUrl, env));
+  }
+
+  return Boolean(
+    provider.authorizationUrl?.trim() &&
+      provider.tokenUrl?.trim() &&
+      provider.userInfoUrl?.trim(),
+  );
+}
+
 function getProviderCredentials(
   credentials: ProviderCredentials,
   env = process.env,
@@ -172,7 +265,11 @@ function getProviderCredentials(
 
 export function getEnabledLoginProviders(env = process.env): LoginProvider[] {
   return providerDefinitions
-    .filter((provider) => hasProviderCredentials(provider.credentials, env))
+    .filter((provider) =>
+      provider.kind === "social"
+        ? hasProviderCredentials(provider.credentials, env)
+        : hasOAuth2ProviderConfig(provider, env),
+    )
     .map(({ id, kind, label }) => ({
       id,
       kind,
@@ -195,24 +292,37 @@ export function getEnabledOAuth2ProviderConfigs(
   env = process.env,
 ): GenericOAuthConfig[] {
   return oauth2ProviderDefinitions.flatMap((provider) => {
-    const credentials = getProviderCredentials(provider.credentials, env);
+    if (!hasOAuth2ProviderConfig(provider, env)) {
+      return [];
+    }
 
+    const credentials = getProviderCredentials(provider.credentials, env);
+    const baseUrl = resolveProviderBaseUrl(provider.baseUrl, env);
     if (!credentials) {
       return [];
     }
 
+    const authorizationUrl =
+      provider.authorizationUrl ?? `${baseUrl}/oauth/authorize`;
+    const tokenUrl = provider.tokenUrl ?? `${baseUrl}/oauth/token`;
+    const userInfoUrl = provider.userInfoUrl ?? `${baseUrl}/api/v4/user`;
+    const getUserInfoFn = provider.getUserInfo;
+    const getUserInfo = getUserInfoFn
+      ? (tokens: OAuth2Tokens) => getUserInfoFn(tokens, env)
+      : undefined;
+
     return [
       {
         providerId: provider.id,
-        authorizationUrl: provider.authorizationUrl,
-        tokenUrl: provider.tokenUrl,
-        userInfoUrl: provider.userInfoUrl,
+        authorizationUrl,
+        tokenUrl,
+        userInfoUrl,
         clientId: credentials.clientId,
         clientSecret: credentials.clientSecret,
         scopes: provider.scopes,
         redirectURI: provider.redirectURI,
         pkce: provider.pkce,
-        getUserInfo: provider.getUserInfo,
+        getUserInfo,
       } satisfies GenericOAuthConfig,
     ];
   });
