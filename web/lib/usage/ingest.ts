@@ -38,6 +38,11 @@ type IngestUsagePayloadInput = {
   payload: IngestPayload;
 };
 
+type DeleteUsageDeviceSnapshotInput = {
+  userId: string;
+  deviceId: string;
+};
+
 type NormalizedSessionUsage = {
   inputTokens: number;
   outputTokens: number;
@@ -287,6 +292,72 @@ export async function upsertSessions(
       });
     }),
   );
+}
+
+export async function deleteUsageDeviceSnapshot(
+  input: DeleteUsageDeviceSnapshotInput,
+) {
+  const result = await prisma.$transaction(async (tx) => {
+    const [existingBuckets, existingSessions] = await Promise.all([
+      tx.usageBucket.findMany({
+        where: {
+          userId: input.userId,
+          deviceId: input.deviceId,
+        },
+        select: {
+          bucketStart: true,
+        },
+      }),
+      tx.usageSession.findMany({
+        where: {
+          userId: input.userId,
+          deviceId: input.deviceId,
+        },
+        select: {
+          firstMessageAt: true,
+        },
+      }),
+    ]);
+
+    const affectedDates = collectAffectedLeaderboardDates({
+      bucketStarts: existingBuckets.map((bucket) => bucket.bucketStart),
+      sessionStarts: existingSessions.map((session) => session.firstMessageAt),
+    });
+
+    const [deletedBuckets, deletedSessions] = await Promise.all([
+      tx.usageBucket.deleteMany({
+        where: {
+          userId: input.userId,
+          deviceId: input.deviceId,
+        },
+      }),
+      tx.usageSession.deleteMany({
+        where: {
+          userId: input.userId,
+          deviceId: input.deviceId,
+        },
+      }),
+    ]);
+
+    if (affectedDates.length > 0) {
+      await recomputeLeaderboardUserDays(tx, {
+        userId: input.userId,
+        dates: affectedDates,
+      });
+      await invalidateLeaderboardSnapshots(tx);
+    }
+
+    return {
+      deletedBuckets: deletedBuckets.count,
+      deletedSessions: deletedSessions.count,
+    };
+  });
+
+  if (result.deletedBuckets > 0 || result.deletedSessions > 0) {
+    await synchronizeAchievementsForUser(input.userId, "ingest");
+  }
+
+  return result;
 }
 
 export async function ingestUsagePayload(input: IngestUsagePayloadInput) {

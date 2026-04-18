@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   dashboardQuerySchema,
   ingestRequestSchema,
+  usageDeleteQuerySchema,
   usagePreferenceUpdateSchema,
 } from "./contracts";
 
@@ -105,5 +106,18 @@ describe("ingestRequestSchema", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("requires a device id when deleting a device snapshot", () => {
+    expect(
+      usageDeleteQuerySchema.safeParse({
+        deviceId: "device-1234",
+      }).success,
+    ).toBe(true);
+    expect(
+      usageDeleteQuerySchema.safeParse({
+        deviceId: "",
+      }).success,
+    ).toBe(false);
   });
 });

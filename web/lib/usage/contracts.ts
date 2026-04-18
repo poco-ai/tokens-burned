@@ -52,6 +52,10 @@ export const usageSettingsSchema = z.object({
   timezone: z.string().trim().min(1),
 });
 
+export const usageDeleteQuerySchema = z.object({
+  deviceId: z.string().trim().min(8),
+});
+
 export const ingestBucketSchema = z.object({
   source: z.string(),
   model: z.string(),
