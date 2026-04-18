@@ -19,7 +19,7 @@
 - **多维度分析** — 按设备、工具、模型、项目分组查看数据
 - **详细指标** — 总 token、输入、输出、reasoning、缓存命中、活跃时长、会话数、消息数
 - **多工具支持** — 支持采集多种本地 AI CLI 的 usage 数据
-- **Oauth2 登录** — 支持 Discord、GitHub、Google、Linux.do、观猹平台登录
+- **Oauth2 登录** — 支持 Discord、GitHub、GitLab、Google、Linux.do、观猹平台登录
 - **Badge 分享** — 支持分享 token 使用、预计消耗、使用时长以及使用热力图
 - **社区与排行榜** - 关注你感兴趣的人，查看他们的 token 用量排行榜
 - **多语言 & 深色模式** — 支持中英文切换和主题切换
@@ -145,14 +145,20 @@ git add --renormalize .
 | `POSTGRES_USER` | PostgreSQL 用户名 | `postgres` |
 | `POSTGRES_PASSWORD` | PostgreSQL 密码 | `postgres` |
 | `POSTGRES_DB` | PostgreSQL 数据库名 | `token_arena` |
+| `GITLAB_BASE_URL` | GitLab 实例地址，支持 `gitlab.com` 或自建实例 | `https://gitlab.example.com` |
+| `GITLAB_CLIENT_ID` | GitLab OAuth Application Client ID | `glapp-xxxxx` |
+| `GITLAB_CLIENT_SECRET` | GitLab OAuth Application Client Secret | `secret` |
 
 当 `AUTH_MODE=production` 时，还需要按需配置以下 OAuth 变量：
 
 - `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET`
 - `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`
+- `GITLAB_BASE_URL` / `GITLAB_CLIENT_ID` / `GITLAB_CLIENT_SECRET`
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
 - `LINUXDO_CLIENT_ID` / `LINUXDO_CLIENT_SECRET`
 - `WATCHA_CLIENT_ID` / `WATCHA_CLIENT_SECRET`
+
+`GITLAB_BASE_URL` 可指向 `https://gitlab.com` 或你的自建 GitLab；GitLab OAuth 回调地址为 `/api/auth/oauth2/callback/gitlab`。
 
 ## 技术栈
 

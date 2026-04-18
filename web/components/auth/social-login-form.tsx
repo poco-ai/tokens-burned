@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { SiDiscord, SiGithub, SiGoogle } from "react-icons/si";
+import { SiDiscord, SiGithub, SiGitlab, SiGoogle } from "react-icons/si";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
@@ -22,6 +22,8 @@ function renderProviderIcon(providerId: LoginProvider["id"]): ReactNode {
       return <SiDiscord className="h-4 w-4 shrink-0" />;
     case "github":
       return <SiGithub className="h-4 w-4 shrink-0" />;
+    case "gitlab":
+      return <SiGitlab className="h-4 w-4 shrink-0" />;
     case "google":
       return <SiGoogle className="h-4 w-4 shrink-0" />;
     case "linuxdo":
