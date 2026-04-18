@@ -228,17 +228,13 @@ export class ApiClient {
     });
   }
 
-  /**
-   * Delete all usage data for the authenticated user
-   */
-  async deleteAllData(opts?: {
-    hostname?: string;
-  }): Promise<{ deleted: number }> {
+  async deleteDeviceData(deviceId: string): Promise<{
+    deletedBuckets: number;
+    deletedSessions: number;
+  }> {
     return new Promise((resolve, reject) => {
       const url = new URL("/api/usage/ingest", this.apiUrl);
-      if (opts?.hostname) {
-        url.searchParams.set("hostname", opts.hostname);
-      }
+      url.searchParams.set("deviceId", deviceId);
       const mod = url.protocol === "https:" ? https : http;
 
       const req = mod.request(

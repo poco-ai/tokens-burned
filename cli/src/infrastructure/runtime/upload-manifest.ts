@@ -1,5 +1,8 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import type { UploadManifest } from "../../domain/upload-manifest";
+import type {
+  UploadManifest,
+  UploadManifestScope,
+} from "../../domain/upload-manifest";
 import { ensureAppDirs, getUploadManifestPath } from "./paths";
 
 function isRecordOfStrings(value: unknown): value is Record<string, string> {
@@ -10,12 +13,18 @@ function isRecordOfStrings(value: unknown): value is Record<string, string> {
   return Object.values(value).every((entry) => typeof entry === "string");
 }
 
-function isUploadManifest(value: unknown): value is UploadManifest {
+type ParsedUploadManifest = Omit<UploadManifest, "scope"> & {
+  scope: Omit<UploadManifestScope, "snapshotProtocolVersion"> & {
+    snapshotProtocolVersion?: number;
+  };
+};
+
+function isUploadManifest(value: unknown): value is ParsedUploadManifest {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return false;
   }
 
-  const manifest = value as Partial<UploadManifest>;
+  const manifest = value as Partial<ParsedUploadManifest>;
 
   return (
     manifest.version === 1 &&
@@ -26,6 +35,8 @@ function isUploadManifest(value: unknown): value is UploadManifest {
     typeof manifest.scope.deviceId === "string" &&
     typeof manifest.scope.projectMode === "string" &&
     typeof manifest.scope.projectHashSaltHash === "string" &&
+    (manifest.scope.snapshotProtocolVersion === undefined ||
+      typeof manifest.scope.snapshotProtocolVersion === "number") &&
     typeof manifest.updatedAt === "string" &&
     isRecordOfStrings(manifest.buckets) &&
     isRecordOfStrings(manifest.sessions)
@@ -40,7 +51,17 @@ export function loadUploadManifest(): UploadManifest | null {
 
   try {
     const parsed = JSON.parse(readFileSync(path, "utf-8")) as unknown;
-    return isUploadManifest(parsed) ? parsed : null;
+    if (!isUploadManifest(parsed)) {
+      return null;
+    }
+
+    return {
+      ...parsed,
+      scope: {
+        ...parsed.scope,
+        snapshotProtocolVersion: parsed.scope.snapshotProtocolVersion ?? 0,
+      },
+    };
   } catch {
     return null;
   }
