@@ -6,6 +6,7 @@ import type {
 } from "./types";
 
 const MANIFEST_VERSION = 1 as const;
+const SNAPSHOT_PROTOCOL_VERSION = 1 as const;
 
 function shortHash(value: string): string {
   return createHash("sha256").update(value).digest("hex").slice(0, 16);
@@ -21,6 +22,7 @@ export interface UploadManifestScope {
   deviceId: string;
   projectHashSaltHash: string;
   projectMode: ApiSettings["projectMode"];
+  snapshotProtocolVersion: number;
 }
 
 export interface UploadManifest {
@@ -45,6 +47,7 @@ export interface UploadManifestDiff {
 export type UploadManifestScopeChange =
   | "device_id"
   | "project_identity"
+  | "snapshot_protocol"
   | "server_or_api_key";
 
 export function buildUploadManifestScope(input: {
@@ -59,6 +62,7 @@ export function buildUploadManifestScope(input: {
     deviceId: input.deviceId,
     projectHashSaltHash: shortHash(input.settings.projectHashSalt),
     projectMode: input.settings.projectMode,
+    snapshotProtocolVersion: SNAPSHOT_PROTOCOL_VERSION,
   };
 }
 
@@ -84,6 +88,10 @@ export function describeUploadManifestScopeChanges(
     previous.projectHashSaltHash !== current.projectHashSaltHash
   ) {
     changes.push("project_identity");
+  }
+
+  if (previous.snapshotProtocolVersion !== current.snapshotProtocolVersion) {
+    changes.push("snapshot_protocol");
   }
 
   return changes;

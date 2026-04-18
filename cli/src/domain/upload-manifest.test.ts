@@ -10,6 +10,7 @@ import {
   diffUploadManifest,
   getUploadBucketManifestKey,
   getUploadSessionManifestKey,
+  type UploadManifest,
 } from "./upload-manifest";
 
 const settings: ApiSettings = {
@@ -230,5 +231,40 @@ describe("diffUploadManifest", () => {
     expect(diff.unchangedSessions).toBe(0);
     expect(diff.removedBuckets).toBe(0);
     expect(diff.removedSessions).toBe(0);
+  });
+
+  it("treats a legacy manifest as a snapshot protocol change", () => {
+    const scope = buildUploadManifestScope({
+      apiKey: "ta_test_1",
+      apiUrl: "https://token.poco-ai.com",
+      deviceId: "device-1",
+      settings,
+    });
+    const currentBuckets = [makeBucket()];
+    const currentSessions = [makeSession()];
+    const previous = createUploadManifest({
+      buckets: currentBuckets,
+      scope,
+      sessions: currentSessions,
+    });
+    const legacyPrevious = JSON.parse(
+      JSON.stringify(previous),
+    ) as UploadManifest & {
+      scope: UploadManifest["scope"] & {
+        snapshotProtocolVersion?: number;
+      };
+    };
+    delete legacyPrevious.scope.snapshotProtocolVersion;
+
+    const diff = diffUploadManifest({
+      buckets: currentBuckets,
+      previous: legacyPrevious as UploadManifest,
+      scope,
+      sessions: currentSessions,
+    });
+
+    expect(diff.scopeChangedReasons).toEqual(["snapshot_protocol"]);
+    expect(diff.bucketsToUpload).toEqual(currentBuckets);
+    expect(diff.sessionsToUpload).toEqual(currentSessions);
   });
 });
