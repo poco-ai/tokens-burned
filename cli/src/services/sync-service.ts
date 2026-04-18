@@ -76,7 +76,31 @@ function formatScopeChangeReason(reason: UploadManifestScopeChange): string {
       return "device ID";
     case "project_identity":
       return "project identity settings";
+    case "snapshot_protocol":
+      return "snapshot sync protocol";
   }
+}
+
+export function resolveSnapshotResetDeviceId(input: {
+  previous: UploadManifest | null;
+  scopeChangedReasons: UploadManifestScopeChange[];
+}): string | null {
+  if (!input.previous) {
+    return null;
+  }
+
+  if (input.scopeChangedReasons.includes("server_or_api_key")) {
+    return null;
+  }
+
+  if (
+    input.scopeChangedReasons.includes("project_identity") ||
+    input.scopeChangedReasons.includes("snapshot_protocol")
+  ) {
+    return input.previous.scope.deviceId;
+  }
+
+  return null;
 }
 
 function persistUploadManifest(manifest: UploadManifest, quiet: boolean): void {
@@ -292,19 +316,33 @@ export async function runSync(
     });
     const uploadBuckets = toUploadBuckets(allBuckets, settings, device);
     const uploadSessions = toUploadSessions(allSessions, settings, device);
+    const previousManifest = loadUploadManifest();
     const uploadDiff = diffUploadManifest({
       buckets: uploadBuckets,
-      previous: loadUploadManifest(),
+      previous: previousManifest,
       scope: manifestScope,
       sessions: uploadSessions,
     });
     const changedBuckets = uploadDiff.bucketsToUpload;
     const changedSessions = uploadDiff.sessionsToUpload;
+    const snapshotResetDeviceId = resolveSnapshotResetDeviceId({
+      previous: previousManifest,
+      scopeChangedReasons: uploadDiff.scopeChangedReasons,
+    });
 
     if (!quiet && uploadDiff.scopeChangedReasons.length > 0) {
-      logger.warn(
-        `Upload scope changed (${uploadDiff.scopeChangedReasons.map(formatScopeChangeReason).join(", ")}). TokenArena will upload the current snapshot again, but existing remote records from the previous scope will not be deleted automatically.`,
-      );
+      const scopeReasons = uploadDiff.scopeChangedReasons
+        .map(formatScopeChangeReason)
+        .join(", ");
+      if (snapshotResetDeviceId) {
+        logger.warn(
+          `Upload scope changed (${scopeReasons}). TokenArena will replace the previous remote snapshot for this device before uploading the current snapshot again.`,
+        );
+      } else {
+        logger.warn(
+          `Upload scope changed (${scopeReasons}). TokenArena will upload the current snapshot again, but existing remote records from the previous scope will not be deleted automatically.`,
+        );
+      }
     }
 
     if (
@@ -321,6 +359,25 @@ export async function runSync(
       logger.warn(
         `Detected ${parts.join(" + ")} that were present in the previous local snapshot but are missing now. Remote deletions are not supported yet, so renamed projects or removed local logs may leave stale data online.`,
       );
+    }
+
+    if (snapshotResetDeviceId) {
+      const deleted = await apiClient.deleteDeviceData(snapshotResetDeviceId);
+      if (!quiet) {
+        const deletedParts: string[] = [];
+        if (deleted.deletedBuckets > 0) {
+          deletedParts.push(`${deleted.deletedBuckets} buckets`);
+        }
+        if (deleted.deletedSessions > 0) {
+          deletedParts.push(`${deleted.deletedSessions} sessions`);
+        }
+
+        logger.info(
+          deletedParts.length > 0
+            ? `Cleared ${deletedParts.join(" + ")} from the previous remote snapshot before re-uploading.`
+            : "Previous remote snapshot was already empty before re-uploading.",
+        );
+      }
     }
 
     if (changedBuckets.length === 0 && changedSessions.length === 0) {
