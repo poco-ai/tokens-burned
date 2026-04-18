@@ -1,21 +1,31 @@
 import { NextResponse } from "next/server";
 
 import { findUsageApiKeyByRaw } from "@/lib/usage/api-keys";
-import { ingestRequestSchema } from "@/lib/usage/contracts";
-import { ingestUsagePayload } from "@/lib/usage/ingest";
+import {
+  ingestRequestSchema,
+  usageDeleteQuerySchema,
+} from "@/lib/usage/contracts";
+import {
+  deleteUsageDeviceSnapshot,
+  ingestUsagePayload,
+} from "@/lib/usage/ingest";
 
 function getBearerToken(request: Request) {
   return request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
 }
 
-export async function POST(request: Request) {
+async function getAuthenticatedApiKey(request: Request) {
   const rawKey = getBearerToken(request);
 
   if (!rawKey) {
-    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    return null;
   }
 
-  const apiKey = await findUsageApiKeyByRaw(rawKey);
+  return findUsageApiKeyByRaw(rawKey);
+}
+
+export async function POST(request: Request) {
+  const apiKey = await getAuthenticatedApiKey(request);
 
   if (!apiKey) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
@@ -37,6 +47,36 @@ export async function POST(request: Request) {
     userId: apiKey.userId,
     apiKeyId: apiKey.id,
     payload: parsed.data,
+  });
+
+  return NextResponse.json(result);
+}
+
+export async function DELETE(request: Request) {
+  const apiKey = await getAuthenticatedApiKey(request);
+
+  if (!apiKey) {
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  }
+
+  const url = new URL(request.url);
+  const parsed = usageDeleteQuerySchema.safeParse({
+    deviceId: url.searchParams.get("deviceId") ?? undefined,
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: "INVALID_QUERY",
+        issues: parsed.error.flatten(),
+      },
+      { status: 400 },
+    );
+  }
+
+  const result = await deleteUsageDeviceSnapshot({
+    userId: apiKey.userId,
+    deviceId: parsed.data.deviceId,
   });
 
   return NextResponse.json(result);
