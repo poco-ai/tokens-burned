@@ -11,11 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BreakdownGrid } from "@/components/usage/breakdown-grid";
 import { EmptyState } from "@/components/usage/empty-state";
 import { FiltersBar } from "@/components/usage/filters-bar";
-import { HourlyActivityHeatmapCard } from "@/components/usage/hourly-activity-heatmap-card";
 import { KpiGrid } from "@/components/usage/kpi-grid";
 import { UsagePageShell } from "@/components/usage/page-shell";
 import { SessionsSection } from "@/components/usage/sessions-section";
-import { TokenTrendCard } from "@/components/usage/token-trend-card";
+import { UsageVisualizationCard } from "@/components/usage/usage-visualization-card";
 import { Link } from "@/i18n/navigation";
 import { redirectIfUsernameSetupNeeded } from "@/lib/account-setup";
 import { getSessionOrRedirect } from "@/lib/session";
@@ -217,10 +216,10 @@ export default async function UsagePage({
 
           {hasData ? (
             <>
-              <div className="grid gap-4 xl:grid-cols-2">
-                <TokenTrendCard data={tokenTrend} />
-                <HourlyActivityHeatmapCard data={hourlyActivityHeatmap} />
-              </div>
+              <UsageVisualizationCard
+                trendData={tokenTrend}
+                heatmapData={hourlyActivityHeatmap}
+              />
               <KpiGrid
                 overview={overview}
                 pricingSummary={pricing.summary}

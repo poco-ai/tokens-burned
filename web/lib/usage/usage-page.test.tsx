@@ -58,11 +58,8 @@ const mocks = vi.hoisted(() => ({
   ThemeSwitcher: vi.fn(() =>
     React.createElement("div", { "data-slot": "theme-switcher" }),
   ),
-  TokenTrendCard: vi.fn(() =>
-    React.createElement("div", { "data-slot": "token-trend-card" }),
-  ),
-  HourlyActivityHeatmapCard: vi.fn(() =>
-    React.createElement("div", { "data-slot": "hourly-activity-heatmap-card" }),
+  UsageVisualizationCard: vi.fn(() =>
+    React.createElement("div", { "data-slot": "usage-visualization-card" }),
   ),
   ProfileHeatmap: vi.fn(() =>
     React.createElement("div", { "data-slot": "profile-heatmap" }),
@@ -148,12 +145,8 @@ vi.mock("@/components/shared/theme-switcher", () => ({
   ThemeSwitcher: mocks.ThemeSwitcher,
 }));
 
-vi.mock("@/components/usage/token-trend-card", () => ({
-  TokenTrendCard: mocks.TokenTrendCard,
-}));
-
-vi.mock("@/components/usage/hourly-activity-heatmap-card", () => ({
-  HourlyActivityHeatmapCard: mocks.HourlyActivityHeatmapCard,
+vi.mock("@/components/usage/usage-visualization-card", () => ({
+  UsageVisualizationCard: mocks.UsageVisualizationCard,
 }));
 
 vi.mock("@/lib/session", () => ({
@@ -282,7 +275,7 @@ describe("UsagePage", () => {
     mocks.formatDateTime.mockReturnValue("2026-03-26 00:00");
   });
 
-  it("renders the profile heatmap and token trend", async () => {
+  it("renders the profile heatmap and usage visualization", async () => {
     const { default: UsagePage } = await import("@/app/[locale]/usage/page");
 
     const markup = renderToStaticMarkup(
@@ -297,8 +290,13 @@ describe("UsagePage", () => {
       timezone: "Asia/Shanghai",
     });
     expect(mocks.ProfileHeatmap).toHaveBeenCalledOnce();
-    expect(mocks.TokenTrendCard).toHaveBeenCalledOnce();
-    expect(mocks.HourlyActivityHeatmapCard).toHaveBeenCalledOnce();
+    expect(mocks.UsageVisualizationCard).toHaveBeenCalledWith(
+      expect.objectContaining({
+        trendData: expect.any(Array),
+        heatmapData: expect.any(Array),
+      }),
+      undefined,
+    );
     expect(mocks.ShareBadgesDialog).toHaveBeenCalledWith(
       expect.objectContaining({
         username: "test_user",
@@ -325,8 +323,7 @@ describe("UsagePage", () => {
     );
     expect(markup).toContain('data-slot="profile-heatmap-markdown-button"');
     expect(markup).toContain('data-slot="share-badges-dialog"');
-    expect(markup).toContain('data-slot="token-trend-card"');
-    expect(markup).toContain('data-slot="hourly-activity-heatmap-card"');
+    expect(markup).toContain('data-slot="usage-visualization-card"');
     expect(markup).toContain('data-slot="sessions-section"');
   });
 });
