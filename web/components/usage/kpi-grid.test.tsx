@@ -32,6 +32,18 @@ vi.mock("next-intl/server", () => ({
           cachedTokens: "Cached Tokens",
           activeTime: "Active Time",
           totalTime: "Total Time",
+          "definitions.activeTime.open": "What is active time?",
+          "definitions.activeTime.title": "Active Time",
+          "definitions.activeTime.summary":
+            "Counts only the time when AI is actively generating a reply.",
+          "definitions.activeTime.details":
+            "Queueing, TTFT, and idle gaps between prompts are excluded.",
+          "definitions.totalTime.open": "What is total time?",
+          "definitions.totalTime.title": "Total Time",
+          "definitions.totalTime.summary":
+            "Sums each session from the first message to the last message.",
+          "definitions.totalTime.details":
+            "Idle time inside a session is included, but gaps between sessions are not.",
           sessions: "Sessions",
           messages: "Messages",
           userMessages: "User Messages",
@@ -114,6 +126,8 @@ describe("KpiGrid", () => {
     expect(markup).toContain(">+6h45m</span>");
     expect(markup).toContain('title="+197.9M vs previous 132.9M"');
     expect(markup).toContain('title="-377 vs previous 784"');
+    expect(markup).toContain('aria-label="What is active time?"');
+    expect(markup).toContain('aria-label="What is total time?"');
     expect(markup).toContain("flex items-center justify-between gap-2");
     expect(markup).toContain('data-delta-tone="positive"');
     expect(markup).toContain('data-delta-tone="negative"');

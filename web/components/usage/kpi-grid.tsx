@@ -12,6 +12,7 @@ import type {
 } from "@/lib/usage/types";
 import { cn } from "@/lib/utils";
 import { AnimatedKpiDelta, AnimatedKpiValue } from "./kpi-animated-metric";
+import { MetricDefinitionPopover } from "./metric-definition-popover";
 import { PricingMatchDialog } from "./pricing-match-dialog";
 
 type KpiGridProps = {
@@ -268,6 +269,12 @@ export async function KpiGrid({
           previous: previousValue,
         });
         const isEstimatedCostCard = kpi.key === "estimatedCostUsd";
+        const definitionKey =
+          kpi.key === "activeSeconds"
+            ? "activeTime"
+            : kpi.key === "totalSeconds"
+              ? "totalTime"
+              : null;
 
         return (
           <Card key={kpi.key} size="sm">
@@ -275,6 +282,16 @@ export async function KpiGrid({
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   <CardTitle>{t(kpi.labelKey)}</CardTitle>
+                  {definitionKey ? (
+                    <MetricDefinitionPopover
+                      ariaLabel={t(`definitions.${definitionKey}.open`)}
+                      title={t(`definitions.${definitionKey}.title`)}
+                      paragraphs={[
+                        t(`definitions.${definitionKey}.summary`),
+                        t(`definitions.${definitionKey}.details`),
+                      ]}
+                    />
+                  ) : null}
                   {isEstimatedCostCard ? (
                     <PricingMatchDialog rows={modelPricingRows} />
                   ) : null}
