@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   formatDateTime: vi.fn(),
   getOverviewMetrics: vi.fn(),
   getTokenTrend: vi.fn(),
+  getHourlyActivityHeatmap: vi.fn(),
   getActivityHeatmap365: vi.fn(),
   getBreakdowns: vi.fn(),
   getPricingSummaryAndRows: vi.fn(),
@@ -59,6 +60,9 @@ const mocks = vi.hoisted(() => ({
   ),
   TokenTrendCard: vi.fn(() =>
     React.createElement("div", { "data-slot": "token-trend-card" }),
+  ),
+  HourlyActivityHeatmapCard: vi.fn(() =>
+    React.createElement("div", { "data-slot": "hourly-activity-heatmap-card" }),
   ),
   ProfileHeatmap: vi.fn(() =>
     React.createElement("div", { "data-slot": "profile-heatmap" }),
@@ -148,6 +152,10 @@ vi.mock("@/components/usage/token-trend-card", () => ({
   TokenTrendCard: mocks.TokenTrendCard,
 }));
 
+vi.mock("@/components/usage/hourly-activity-heatmap-card", () => ({
+  HourlyActivityHeatmapCard: mocks.HourlyActivityHeatmapCard,
+}));
+
 vi.mock("@/lib/session", () => ({
   getSessionOrRedirect: mocks.getSessionOrRedirect,
 }));
@@ -171,6 +179,7 @@ vi.mock("@/lib/usage/preferences", () => ({
 vi.mock("@/lib/usage/queries", () => ({
   getOverviewMetrics: mocks.getOverviewMetrics,
   getTokenTrend: mocks.getTokenTrend,
+  getHourlyActivityHeatmap: mocks.getHourlyActivityHeatmap,
   getBreakdowns: mocks.getBreakdowns,
   getPricingSummaryAndRows: mocks.getPricingSummaryAndRows,
   getSessionRows: mocks.getSessionRows,
@@ -227,6 +236,18 @@ describe("UsagePage", () => {
         totalSeconds: 120,
       },
     ]);
+    mocks.getHourlyActivityHeatmap.mockResolvedValue(
+      Array.from({ length: 7 * 24 }, (_, index) => ({
+        weekday: Math.floor(index / 24),
+        hour: index % 24,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        estimatedCostUsd: 0,
+        activeSeconds: 0,
+        sessions: 0,
+      })),
+    );
     mocks.getActivityHeatmap365.mockResolvedValue([]);
     mocks.getBreakdowns.mockResolvedValue({
       devices: [],
@@ -277,6 +298,7 @@ describe("UsagePage", () => {
     });
     expect(mocks.ProfileHeatmap).toHaveBeenCalledOnce();
     expect(mocks.TokenTrendCard).toHaveBeenCalledOnce();
+    expect(mocks.HourlyActivityHeatmapCard).toHaveBeenCalledOnce();
     expect(mocks.ShareBadgesDialog).toHaveBeenCalledWith(
       expect.objectContaining({
         username: "test_user",
@@ -304,6 +326,7 @@ describe("UsagePage", () => {
     expect(markup).toContain('data-slot="profile-heatmap-markdown-button"');
     expect(markup).toContain('data-slot="share-badges-dialog"');
     expect(markup).toContain('data-slot="token-trend-card"');
+    expect(markup).toContain('data-slot="hourly-activity-heatmap-card"');
     expect(markup).toContain('data-slot="sessions-section"');
   });
 });

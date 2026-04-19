@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BreakdownGrid } from "@/components/usage/breakdown-grid";
 import { EmptyState } from "@/components/usage/empty-state";
 import { FiltersBar } from "@/components/usage/filters-bar";
+import { HourlyActivityHeatmapCard } from "@/components/usage/hourly-activity-heatmap-card";
 import { KpiGrid } from "@/components/usage/kpi-grid";
 import { UsagePageShell } from "@/components/usage/page-shell";
 import { SessionsSection } from "@/components/usage/sessions-section";
@@ -28,6 +29,7 @@ import { getUsagePreference } from "@/lib/usage/preferences";
 import {
   getBreakdowns,
   getFilterOptions,
+  getHourlyActivityHeatmap,
   getLastSyncedAt,
   getOverviewMetrics,
   getPricingSummaryAndRows,
@@ -116,6 +118,7 @@ export default async function UsagePage({
   const [
     overview,
     tokenTrend,
+    hourlyActivityHeatmap,
     breakdowns,
     pricing,
     sessions,
@@ -125,6 +128,7 @@ export default async function UsagePage({
   ] = await Promise.all([
     getOverviewMetrics({ userId: session.user.id, range, filters }),
     getTokenTrend({ userId: session.user.id, range, filters }),
+    getHourlyActivityHeatmap({ userId: session.user.id, range, filters }),
     getBreakdowns({ userId: session.user.id, range, filters }),
     getPricingSummaryAndRows({ userId: session.user.id, range, filters }),
     getSessionRows({ userId: session.user.id, range, filters }),
@@ -213,7 +217,10 @@ export default async function UsagePage({
 
           {hasData ? (
             <>
-              <TokenTrendCard data={tokenTrend} />
+              <div className="grid gap-4 xl:grid-cols-2">
+                <TokenTrendCard data={tokenTrend} />
+                <HourlyActivityHeatmapCard data={hourlyActivityHeatmap} />
+              </div>
               <KpiGrid
                 overview={overview}
                 pricingSummary={pricing.summary}

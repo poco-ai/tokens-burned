@@ -81,6 +81,24 @@ export type ActivityTrendPoint = {
   userMessages: number;
 };
 
+export type HourlyActivityHeatmapMetric =
+  | "inputTokens"
+  | "outputTokens"
+  | "totalTokens"
+  | "estimatedCostUsd"
+  | "activeSeconds";
+
+export type HourlyActivityHeatmapCell = {
+  weekday: number;
+  hour: number;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number;
+  activeSeconds: number;
+  sessions: number;
+};
+
 export type BreakdownRow = {
   key: string;
   name: string;

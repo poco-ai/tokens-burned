@@ -214,7 +214,21 @@
       "sessions": "Sessions",
       "messages": "Messages",
       "userMessages": "User Messages",
-      "deltaVsPrevious": "{delta} vs previous {previous}"
+      "deltaVsPrevious": "{delta} vs previous {previous}",
+      "definitions": {
+        "activeTime": {
+          "open": "What is active time?",
+          "title": "Active Time",
+          "summary": "A turn starts when AI begins outputting and ends when that reply finishes.",
+          "details": "Active time sums those turn durations only. Queueing, TTFT, and idle gaps between prompts are excluded."
+        },
+        "totalTime": {
+          "open": "What is total time?",
+          "title": "Total Time",
+          "summary": "Total time sums each session from its first message to its last message.",
+          "details": "Idle time inside a session is included, but gaps between separate sessions are not."
+        }
+      }
     },
     "trend": {
       "title": "Daily Trend",
@@ -235,6 +249,37 @@
       "reasoning": "Reasoning",
       "cost": "Est. Cost",
       "totalTime": "Total Time",
+      "emptyCost": "No priced usage in this range."
+    },
+    "hourlyHeatmap": {
+      "title": "Hourly Activity",
+      "description": "Summed by local weekday and hour across the current range.",
+      "views": {
+        "input": "Input",
+        "output": "Output",
+        "tokens": "Token",
+        "cost": "Cost",
+        "activeTime": "Time"
+      },
+      "metrics": {
+        "inputTokens": "Input",
+        "outputTokens": "Output",
+        "totalTokens": "Tokens",
+        "estimatedCostUsd": "Est. Cost",
+        "activeSeconds": "Time"
+      },
+      "weekdays": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      },
+      "sessions": "{count} sessions",
+      "less": "Less",
+      "more": "More",
       "emptyCost": "No priced usage in this range."
     },
     "pricing": {

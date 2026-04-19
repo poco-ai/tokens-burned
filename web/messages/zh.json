@@ -214,7 +214,21 @@
       "sessions": "会话数",
       "messages": "消息数",
       "userMessages": "用户消息数",
-      "deltaVsPrevious": "{delta}，对比上一周期 {previous}"
+      "deltaVsPrevious": "{delta}，对比上一周期 {previous}",
+      "definitions": {
+        "activeTime": {
+          "open": "什么是活跃时长？",
+          "title": "活跃时长",
+          "summary": "从 AI 开始输出到这次回复结束算一个 turn。",
+          "details": "活跃时长是所有 turn 的累计时长，只计算 AI 实际生成内容的时间，不包含排队等待、首 Token 延迟和两次 prompt 之间的空闲。"
+        },
+        "totalTime": {
+          "open": "什么是总时长？",
+          "title": "总时长",
+          "summary": "总时长是每个会话从首条消息到末条消息的时间跨度之和。",
+          "details": "它包含会话内部的思考、看代码等空闲时间，但不包含不同会话之间的间隔。"
+        }
+      }
     },
     "trend": {
       "title": "每日趋势",
@@ -235,6 +249,37 @@
       "reasoning": "推理",
       "cost": "预估费用",
       "totalTime": "总时长",
+      "emptyCost": "这个时间范围内没有可定价的模型使用数据。"
+    },
+    "hourlyHeatmap": {
+      "title": "分时活跃",
+      "description": "按当前筛选范围内的本地星期与小时汇总。",
+      "views": {
+        "input": "输入",
+        "output": "输出",
+        "tokens": "Token",
+        "cost": "费用",
+        "activeTime": "时长"
+      },
+      "metrics": {
+        "inputTokens": "输入",
+        "outputTokens": "输出",
+        "totalTokens": "Token",
+        "estimatedCostUsd": "费用",
+        "activeSeconds": "时长"
+      },
+      "weekdays": {
+        "sun": "周日",
+        "mon": "周一",
+        "tue": "周二",
+        "wed": "周三",
+        "thu": "周四",
+        "fri": "周五",
+        "sat": "周六"
+      },
+      "sessions": "{count} 个会话",
+      "less": "少",
+      "more": "多",
       "emptyCost": "这个时间范围内没有可定价的模型使用数据。"
     },
     "pricing": {

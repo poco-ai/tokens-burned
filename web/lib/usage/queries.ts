@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { tokenCountToNumber } from "@/lib/token-counts";
 import {
   getPreviousRange,
+  getZonedWeekdayHour,
   groupByHourOrDay,
   listRangeBuckets,
 } from "./date-range";
@@ -16,6 +17,7 @@ import type {
   BreakdownRow,
   DashboardRange,
   FilterOption,
+  HourlyActivityHeatmapCell,
   ModelPricingRow,
   TokenTrendPoint,
   UsageBreakdowns,
@@ -344,6 +346,82 @@ export async function getActivityTrend(input: {
   }
 
   return Array.from(seeded.values());
+}
+
+function createHourlyHeatmapCells() {
+  const cells: HourlyActivityHeatmapCell[] = [];
+
+  for (let weekday = 0; weekday < 7; weekday += 1) {
+    for (let hour = 0; hour < 24; hour += 1) {
+      cells.push({
+        weekday,
+        hour,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        estimatedCostUsd: 0,
+        activeSeconds: 0,
+        sessions: 0,
+      });
+    }
+  }
+
+  return cells;
+}
+
+function getHourlyHeatmapCell(
+  cells: HourlyActivityHeatmapCell[],
+  weekday: number,
+  hour: number,
+) {
+  return cells[weekday * 24 + hour];
+}
+
+export async function getHourlyActivityHeatmap(input: {
+  userId: string;
+  range: DashboardRange;
+  filters: UsageFilters;
+}) {
+  const [catalog, buckets, sessions] = await Promise.all([
+    getPricingCatalog(),
+    loadBuckets(input),
+    loadSessions(input),
+  ]);
+  const cells = createHourlyHeatmapCells();
+
+  for (const bucket of buckets) {
+    const { weekday, hour } = getZonedWeekdayHour(
+      bucket.bucketStart,
+      input.range.timezone,
+    );
+    const cell = getHourlyHeatmapCell(cells, weekday, hour);
+
+    if (!cell) {
+      continue;
+    }
+
+    cell.inputTokens += bucket.inputTokens;
+    cell.outputTokens += bucket.outputTokens;
+    cell.totalTokens += bucket.totalTokens;
+    cell.estimatedCostUsd += estimateBucketCostUsd(bucket, catalog);
+  }
+
+  for (const session of sessions) {
+    const { weekday, hour } = getZonedWeekdayHour(
+      session.firstMessageAt,
+      input.range.timezone,
+    );
+    const cell = getHourlyHeatmapCell(cells, weekday, hour);
+
+    if (!cell) {
+      continue;
+    }
+
+    cell.activeSeconds += session.activeSeconds;
+    cell.sessions += 1;
+  }
+
+  return cells;
 }
 
 function finalizeBreakdownRows(rows: Map<string, BreakdownRow>) {

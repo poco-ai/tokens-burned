@@ -1,6 +1,6 @@
 import type { DashboardPreset, DashboardRange } from "./types";
 
-type ZonedDateParts = {
+export type ZonedDateParts = {
   year: number;
   month: number;
   day: number;
@@ -43,7 +43,7 @@ function getZonedFormatter(timezone: string) {
   return formatter;
 }
 
-function toZonedParts(date: Date, timezone: string): ZonedDateParts {
+export function toZonedParts(date: Date, timezone: string): ZonedDateParts {
   const parts = getZonedFormatter(timezone).formatToParts(date);
   const values = Object.fromEntries(
     parts
@@ -58,6 +58,17 @@ function toZonedParts(date: Date, timezone: string): ZonedDateParts {
     hour: values.hour,
     minute: values.minute,
     second: values.second,
+  };
+}
+
+export function getZonedWeekdayHour(date: Date, timezone: string) {
+  const parts = toZonedParts(date, timezone);
+
+  return {
+    weekday: new Date(
+      Date.UTC(parts.year, parts.month - 1, parts.day),
+    ).getUTCDay(),
+    hour: parts.hour,
   };
 }
 

@@ -41,6 +41,7 @@ vi.mock("@/lib/pricing/resolve", () => ({
 import {
   getBreakdowns,
   getFilterOptions,
+  getHourlyActivityHeatmap,
   getSessionRows,
   getTokenTrend,
 } from "./queries";
@@ -292,5 +293,73 @@ describe("getTokenTrend", () => {
       estimatedCostUsd: 1.5,
       totalSeconds: 1200,
     });
+  });
+});
+
+describe("getHourlyActivityHeatmap", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.usageBucketFindMany.mockResolvedValue([]);
+    mocks.usageSessionFindMany.mockResolvedValue([]);
+    mocks.deviceFindMany.mockResolvedValue([]);
+    mocks.usageApiKeyFindMany.mockResolvedValue([]);
+    mocks.getPricingCatalog.mockResolvedValue(new Map());
+    mocks.resolveOfficialPricingMatch.mockReturnValue({
+      providerId: "openai",
+      providerName: "OpenAI",
+      modelId: "gpt-5",
+      modelName: "GPT-5",
+      cost: { input: 1, output: 2 },
+    });
+    mocks.estimateCostUsd.mockReturnValue({
+      totalUsd: 1.5,
+      inputUsd: 0.5,
+      outputUsd: 1,
+      reasoningUsd: 0,
+      cacheUsd: 0,
+    });
+  });
+
+  it("aggregates buckets and active time by local weekday and hour", async () => {
+    mocks.usageBucketFindMany.mockResolvedValue([
+      {
+        bucketStart: new Date("2026-03-25T01:00:00.000Z"),
+        model: "gpt-5",
+        inputTokens: 100,
+        outputTokens: 40,
+        reasoningTokens: 0,
+        cachedTokens: 0,
+        totalTokens: 140,
+      },
+    ]);
+    mocks.usageSessionFindMany.mockResolvedValue([
+      {
+        firstMessageAt: new Date("2026-03-25T01:10:00.000Z"),
+        activeSeconds: 900,
+      },
+    ]);
+
+    const cells = await getHourlyActivityHeatmap({
+      userId: "user_123",
+      range: {
+        ...range,
+        timezone: "Asia/Shanghai",
+      },
+      filters: {},
+    });
+
+    expect(cells).toHaveLength(7 * 24);
+    expect(cells.find((cell) => cell.weekday === 3 && cell.hour === 9)).toEqual(
+      {
+        weekday: 3,
+        hour: 9,
+        inputTokens: 100,
+        outputTokens: 40,
+        totalTokens: 140,
+        estimatedCostUsd: 1.5,
+        activeSeconds: 900,
+        sessions: 1,
+      },
+    );
   });
 });
