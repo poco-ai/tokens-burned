@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useMemo, useState } from "react";
+import { Children, type ReactNode, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -151,6 +151,7 @@ export function FiltersBar({
     () => getActiveFilterChips(filters, options),
     [filters, options],
   );
+  const badgesSlotChildren = Children.toArray(badgesSlot);
   const updateParams = (updates: Record<string, string | null>) => {
     router.replace(buildUsageHref(searchParams.toString(), updates));
   };
@@ -396,14 +397,14 @@ export function FiltersBar({
           ) : null}
         </div>
 
-        {lastSyncedText || badgesSlot ? (
+        {lastSyncedText || badgesSlotChildren.length > 0 ? (
           <div className="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
             {lastSyncedText ? (
               <p className="text-sm text-muted-foreground sm:text-right">
                 {lastSyncedText}
               </p>
             ) : null}
-            {badgesSlot}
+            {badgesSlotChildren}
           </div>
         ) : null}
       </div>
