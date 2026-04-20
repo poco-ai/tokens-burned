@@ -11,11 +11,26 @@ import { findJsonlFiles, readFileSafe } from "../infrastructure/fs/utils";
 import { registerParser } from "./registry";
 import type { IParser, ToolDefinition } from "./types";
 
-const TOOL: ToolDefinition = {
-  id: "codex",
-  name: "Codex CLI",
-  dataDir: join(homedir(), ".codex", "sessions"),
-};
+const TOOL_ID = "codex";
+const TOOL_NAME = "Codex CLI";
+const DEFAULT_DATA_DIR = join(homedir(), ".codex", "sessions");
+
+function createToolDefinition(dataDir: string): ToolDefinition {
+  return {
+    id: TOOL_ID,
+    name: TOOL_NAME,
+    dataDir,
+  };
+}
+
+function toSafeNumber(value: unknown): number {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : 0;
+}
+
+function toNonNegativeDelta(current: unknown, previous: unknown): number {
+  return Math.max(0, toSafeNumber(current) - toSafeNumber(previous));
+}
 
 interface CodexEvent {
   type: string;
@@ -71,13 +86,17 @@ export function resolveCodexProject(payload?: CodexEvent["payload"]): string {
   return "unknown";
 }
 
-class CodexParser implements IParser {
-  readonly tool = TOOL;
+export class CodexParser implements IParser {
+  readonly tool: ToolDefinition;
+
+  constructor(private readonly dataDir = DEFAULT_DATA_DIR) {
+    this.tool = createToolDefinition(dataDir);
+  }
 
   async parse(): Promise<ParseResult> {
     const entries: TokenUsageEntry[] = [];
     const sessionEvents: SessionEvent[] = [];
-    const files = findJsonlFiles(TOOL.dataDir);
+    const files = findJsonlFiles(this.dataDir);
 
     if (files.length === 0) {
       return { buckets: [], sessions: [] };
@@ -121,7 +140,7 @@ class CodexParser implements IParser {
             if (!Number.isNaN(eventTimestamp.getTime())) {
               sessionEvents.push({
                 sessionId: filePath,
-                source: "codex",
+                source: TOOL_ID,
                 project: sessionProject,
                 timestamp: eventTimestamp,
                 role: "user",
@@ -147,7 +166,7 @@ class CodexParser implements IParser {
 
           sessionEvents.push({
             sessionId: filePath,
-            source: "codex",
+            source: TOOL_ID,
             project: sessionProject,
             timestamp,
             role: "assistant",
@@ -160,16 +179,22 @@ class CodexParser implements IParser {
             const curr = info.total_token_usage;
             if (prev) {
               usage = {
-                input_tokens:
-                  (curr.input_tokens || 0) - (prev.input_tokens || 0),
-                output_tokens:
-                  (curr.output_tokens || 0) - (prev.output_tokens || 0),
-                cached_input_tokens:
-                  (curr.cached_input_tokens || 0) -
-                  (prev.cached_input_tokens || 0),
-                reasoning_output_tokens:
-                  (curr.reasoning_output_tokens || 0) -
-                  (prev.reasoning_output_tokens || 0),
+                input_tokens: toNonNegativeDelta(
+                  curr.input_tokens,
+                  prev.input_tokens,
+                ),
+                output_tokens: toNonNegativeDelta(
+                  curr.output_tokens,
+                  prev.output_tokens,
+                ),
+                cached_input_tokens: toNonNegativeDelta(
+                  curr.cached_input_tokens,
+                  prev.cached_input_tokens,
+                ),
+                reasoning_output_tokens: toNonNegativeDelta(
+                  curr.reasoning_output_tokens,
+                  prev.reasoning_output_tokens,
+                ),
               };
             } else {
               usage = curr;
@@ -180,17 +205,34 @@ class CodexParser implements IParser {
 
           const model =
             info.model || payload.model || turnContextModel || sessionModel;
-          const cachedInput = usage.cached_input_tokens || 0;
-          const reasoningTokens = usage.reasoning_output_tokens || 0;
+          const cachedInput = toSafeNumber(usage.cached_input_tokens);
+          const reasoningTokens = toSafeNumber(usage.reasoning_output_tokens);
+          const inputTokens = Math.max(
+            0,
+            toSafeNumber(usage.input_tokens) - cachedInput,
+          );
+          const outputTokens = Math.max(
+            0,
+            toSafeNumber(usage.output_tokens) - reasoningTokens,
+          );
+
+          if (
+            inputTokens === 0 &&
+            outputTokens === 0 &&
+            reasoningTokens === 0 &&
+            cachedInput === 0
+          ) {
+            continue;
+          }
 
           entries.push({
             sessionId: filePath,
-            source: "codex",
+            source: TOOL_ID,
             model,
             project: sessionProject,
             timestamp,
-            inputTokens: (usage.input_tokens || 0) - cachedInput,
-            outputTokens: usage.output_tokens || 0,
+            inputTokens,
+            outputTokens,
             reasoningTokens,
             cachedTokens: cachedInput,
           });
