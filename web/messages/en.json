@@ -423,6 +423,13 @@
         "saving": "Saving...",
         "createKey": "Create key",
         "saveChanges": "Save changes"
+      },
+      "deleteDialog": {
+        "title": "Delete key?",
+        "description": "This can't be undone, and {name} will stop working immediately.",
+        "cancel": "Cancel",
+        "confirm": "Delete key",
+        "deleting": "Deleting..."
       }
     },
     "share": {

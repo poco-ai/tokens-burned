@@ -8,6 +8,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -69,9 +77,13 @@ export function KeyManager({
   const [rawKey, setRawKey] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<UsageKeyRecord | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<UsageKeyRecord | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pendingKeyId, setPendingKeyId] = useState<string | null>(null);
   const [isDialogPending, setIsDialogPending] = useState(false);
   const isDialog = variant === "dialog";
+  const isDeletePending =
+    deleteTarget != null && pendingKeyId === deleteTarget.id;
 
   useEffect(() => {
     if (
@@ -150,9 +162,15 @@ export function KeyManager({
     }
   };
 
-  const deleteKey = async (key: UsageKeyRecord) => {
+  const deleteKey = async () => {
+    if (!deleteTarget) {
+      return;
+    }
+
+    const key = deleteTarget;
     setPendingKeyId(key.id);
     setError(null);
+    setDeleteError(null);
 
     try {
       await request<{ success: true }>(`/api/usage/keys/${key.id}`, {
@@ -160,12 +178,14 @@ export function KeyManager({
       });
 
       setKeys((current) => current.filter((item) => item.id !== key.id));
+      setDeleteTarget(null);
     } catch (requestError) {
-      setError(
+      const message =
         requestError instanceof Error
           ? requestError.message
-          : t("deleteFailed"),
-      );
+          : t("deleteFailed");
+      setError(message);
+      setDeleteError(message);
     } finally {
       setPendingKeyId(null);
     }
@@ -413,7 +433,11 @@ export function KeyManager({
                           title={t("actions.delete")}
                           aria-label={t("actions.delete")}
                           className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => deleteKey(key)}
+                          onClick={() => {
+                            setDeleteTarget(key);
+                            setDeleteError(null);
+                            setError(null);
+                          }}
                           disabled={pendingKeyId === key.id}
                         >
                           <Trash2 />
@@ -448,6 +472,64 @@ export function KeyManager({
         pending={isDialogPending}
         onSubmit={renameKey}
       />
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open && isDeletePending) {
+            return;
+          }
+
+          if (!open) {
+            setDeleteTarget(null);
+            setDeleteError(null);
+          }
+        }}
+      >
+        <DialogContent
+          className="border border-border/70 bg-card shadow-2xl"
+          showCloseButton={!isDeletePending}
+        >
+          <DialogHeader>
+            <DialogTitle>{t("deleteDialog.title")}</DialogTitle>
+            <DialogDescription>
+              {deleteTarget
+                ? t("deleteDialog.description", { name: deleteTarget.name })
+                : null}
+            </DialogDescription>
+          </DialogHeader>
+
+          {deleteError ? (
+            <Alert variant="destructive" className="border-destructive/20">
+              <AlertDescription>{deleteError}</AlertDescription>
+            </Alert>
+          ) : null}
+
+          <DialogFooter className="border-border/60 bg-muted/60">
+            <Button
+              type="button"
+              variant="outline"
+              className={mutedControlClassName}
+              onClick={() => {
+                setDeleteTarget(null);
+                setDeleteError(null);
+              }}
+              disabled={isDeletePending}
+            >
+              {t("deleteDialog.cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={deleteKey}
+              disabled={isDeletePending}
+            >
+              {isDeletePending
+                ? t("deleteDialog.deleting")
+                : t("deleteDialog.confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

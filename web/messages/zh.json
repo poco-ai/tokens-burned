@@ -423,6 +423,13 @@
         "saving": "保存中...",
         "createKey": "创建 Key",
         "saveChanges": "保存修改"
+      },
+      "deleteDialog": {
+        "title": "确认删除 Key",
+        "description": "删除后将无法恢复，`{name}` 也会立即失效。确定要继续吗？",
+        "cancel": "取消",
+        "confirm": "确认删除",
+        "deleting": "删除中..."
       }
     },
     "share": {

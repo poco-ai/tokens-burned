@@ -54,6 +54,12 @@ vi.mock("next-intl", () => ({
       "dialog.saving": "Saving...",
       "dialog.createKey": "Create key",
       "dialog.saveChanges": "Save changes",
+      "deleteDialog.title": "Delete key?",
+      "deleteDialog.description":
+        "This can't be undone, and test will stop working immediately.",
+      "deleteDialog.cancel": "Cancel",
+      "deleteDialog.confirm": "Delete key",
+      "deleteDialog.deleting": "Deleting...",
     })[key] ?? key,
 }));
 
