@@ -1,6 +1,6 @@
 {
   "name": "@poco-ai/tokenarena",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "type": "module",
   "description": "Collect and sync local AI coding CLI usage data",
   "license": "MIT",
