@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { hostname } from "node:os";
+import { hasInvalidTokenCounts } from "./token-usage";
 import type {
   SessionEvent,
   SessionMetadata,
@@ -21,6 +22,10 @@ function buildSessionUsage(entries: TokenUsageEntry[]) {
 
   for (const entry of entries) {
     if (!entry.sessionId) {
+      continue;
+    }
+
+    if (hasInvalidTokenCounts(entry)) {
       continue;
     }
 
