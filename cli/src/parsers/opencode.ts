@@ -180,14 +180,18 @@ function readSqliteRowsWithCli(dbPath: string, query: string): SqliteRow[] {
   );
 }
 
-class OpenCodeParser implements IParser {
+export class OpenCodeParser implements IParser {
   readonly tool = TOOL;
+
+  constructor(
+    private readonly resolveRoots: () => string[] = getOpenCodeDataDirs,
+  ) {}
 
   async parse(): Promise<ParseResult> {
     const buckets: ParseResult["buckets"] = [];
     const sessions: ParseResult["sessions"] = [];
 
-    for (const rootDir of getOpenCodeDataDirs()) {
+    for (const rootDir of this.resolveRoots()) {
       const result = await this.parseRoot(rootDir);
       if (result.buckets.length > 0) {
         buckets.push(...result.buckets);
@@ -201,7 +205,7 @@ class OpenCodeParser implements IParser {
   }
 
   isInstalled(): boolean {
-    return getOpenCodeDataDirs().some((dir) => existsSync(dir));
+    return this.resolveRoots().some((dir) => existsSync(dir));
   }
 
   private async parseRoot(rootDir: string): Promise<ParseResult> {

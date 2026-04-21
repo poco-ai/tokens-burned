@@ -1,4 +1,5 @@
 import { hostname } from "node:os";
+import { hasInvalidTokenCounts } from "./token-usage";
 import type { TokenBucket, TokenUsageEntry } from "./types";
 
 /**
@@ -18,6 +19,10 @@ export function aggregateToBuckets(entries: TokenUsageEntry[]): TokenBucket[] {
   const host = hostname().replace(/\.local$/, "");
 
   for (const e of entries) {
+    if (hasInvalidTokenCounts(e)) {
+      continue;
+    }
+
     const bucketStart = roundToHalfHour(e.timestamp).toISOString();
     const key = `${e.source}|${e.model}|${e.project}|${bucketStart}`;
 
