@@ -1,5 +1,7 @@
+import { ArrowDownToLine } from "lucide-react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -28,6 +30,12 @@ type LeaderboardTableProps = {
   emptyLabel: string;
   entries: LeaderboardEntry[];
   viewerEntry?: LeaderboardEntry | null;
+  viewerSummary?: {
+    title: string;
+    rankLabel: string;
+    description: string;
+    ctaLabel?: string;
+  } | null;
   viewerNotice?: {
     name: string;
     username: string;
@@ -54,6 +62,7 @@ export function LeaderboardTable({
   emptyLabel,
   entries,
   viewerEntry = null,
+  viewerSummary = null,
   viewerNotice = null,
   labels,
 }: LeaderboardTableProps) {
@@ -92,15 +101,25 @@ export function LeaderboardTable({
 
   function renderEntryRow(entry: LeaderboardEntry, key: string) {
     const topRankMedal = getTopRankMedal(entry.rank);
+    const isViewerRow = entry.isSelf;
     const rowClasses = [
-      entry.isSelf && pinnedViewerEntry ? "bg-muted/30" : "",
+      isViewerRow
+        ? "bg-sky-50/80 ring-2 ring-inset ring-sky-500/40 hover:bg-sky-50 dark:bg-sky-950/30 dark:hover:bg-sky-950/40 dark:ring-sky-400/30"
+        : "",
       getTopRankRowClass(entry.rank),
     ]
       .filter(Boolean)
       .join(" ");
 
     return (
-      <TableRow key={key} className={rowClasses || undefined}>
+      <TableRow
+        key={key}
+        id={isViewerRow ? "leaderboard-self-row" : undefined}
+        className={cn(
+          rowClasses || undefined,
+          isViewerRow ? "scroll-mt-24" : undefined,
+        )}
+      >
         <TableCell className="font-medium">
           <div className="flex items-center gap-2">
             {topRankMedal ? (
@@ -196,6 +215,33 @@ export function LeaderboardTable({
         ) : null}
       </header>
       <CardContent className="px-4 pb-3 pt-3">
+        {viewerSummary ? (
+          <div className="mb-3 rounded-xl border border-sky-200/80 bg-sky-50/70 p-3 shadow-sm dark:border-sky-900/60 dark:bg-sky-950/25">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <div className="text-xs font-medium tracking-[0.12em] text-sky-700 uppercase dark:text-sky-300">
+                  {viewerSummary.title}
+                </div>
+                <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
+                  <div className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                    {viewerSummary.rankLabel}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {viewerSummary.description}
+                  </p>
+                </div>
+              </div>
+              {viewerSummary.ctaLabel ? (
+                <Button asChild type="button" size="sm" variant="outline">
+                  <a href="#leaderboard-self-row">
+                    <ArrowDownToLine aria-hidden="true" />
+                    {viewerSummary.ctaLabel}
+                  </a>
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
         {entries.length === 0 && !pinnedViewerEntry && !pinnedViewerNotice ? (
           <div
             className={cn(

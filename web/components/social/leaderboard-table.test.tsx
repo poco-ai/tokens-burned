@@ -49,6 +49,12 @@ describe("LeaderboardTable", () => {
             followsYou: false,
           },
         ]}
+        viewerSummary={{
+          title: "Your rank",
+          rankLabel: "#1",
+          description: "You're currently holding #1.",
+          ctaLabel: "Jump to your position",
+        }}
         labels={{
           rank: "Rank",
           user: "User",
@@ -71,6 +77,11 @@ describe("LeaderboardTable", () => {
     expect(markup).toContain("$12.34");
     expect(markup).toContain("🥇");
     expect(markup).toContain("bg-amber-50/80");
+    expect(markup).toContain("Your rank");
+    expect(markup).toContain("Jump to your position");
+    expect(markup).toContain('id="leaderboard-self-row"');
+    expect(markup).toContain("scroll-mt-24");
+    expect(markup).toContain("ring-2 ring-inset ring-sky-500/40");
   });
 
   it("highlights the top 3 ranks", () => {
@@ -215,6 +226,12 @@ describe("LeaderboardTable", () => {
           isFollowing: false,
           followsYou: false,
         }}
+        viewerSummary={{
+          title: "Your rank",
+          rankLabel: "#57",
+          description: "2.3K behind the next rank, 151.1K behind #1.",
+          ctaLabel: "Jump to your position",
+        }}
         labels={{
           rank: "Rank",
           user: "User",
@@ -232,6 +249,9 @@ describe("LeaderboardTable", () => {
     expect(markup).toContain('href="/u/linus"');
     expect(markup).toContain("@linus");
     expect(markup).toContain("...");
+    expect(markup).toContain("2.3K behind the next rank, 151.1K behind #1.");
+    expect(markup).toContain('href="#leaderboard-self-row"');
+    expect(markup).toContain("bg-sky-50/80");
   });
 
   it("renders a private viewer notice row when the viewer cannot be ranked", () => {
@@ -285,5 +305,43 @@ describe("LeaderboardTable", () => {
     expect(markup).toContain("@private.user");
     expect(markup).toContain("Profile is private and cannot be ranked.");
     expect(markup).toContain(">You<");
+  });
+
+  it("renders a viewer summary without jump action when the viewer cannot be ranked", () => {
+    const markup = renderToStaticMarkup(
+      <LeaderboardTable
+        locale="en"
+        title="Global leaderboard"
+        emptyLabel="Empty"
+        entries={[]}
+        viewerSummary={{
+          title: "Your rank",
+          rankLabel: "Private",
+          description: "Turn on your public profile to join the leaderboard.",
+        }}
+        viewerNotice={{
+          name: "Private User",
+          username: "private.user",
+          message: "Profile is private and cannot be ranked.",
+        }}
+        labels={{
+          rank: "Rank",
+          user: "User",
+          totalTokens: "Total Tokens",
+          estimatedCost: "Est. Cost",
+          activeTime: "Active Time",
+          sessions: "Sessions",
+          mutual: "Mutual",
+          you: "You",
+        }}
+      />,
+    );
+
+    expect(markup).toContain("Your rank");
+    expect(markup).toContain("Private");
+    expect(markup).toContain(
+      "Turn on your public profile to join the leaderboard.",
+    );
+    expect(markup).not.toContain("Jump to your position");
   });
 });
