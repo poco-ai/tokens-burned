@@ -15,10 +15,12 @@ import {
 import { getLeaderboardPageData } from "@/lib/leaderboard/queries";
 import {
   defaultLeaderboardMetric,
+  type LeaderboardEntry,
   type LeaderboardMetric,
   type LeaderboardPeriod,
 } from "@/lib/leaderboard/types";
 import { getOptionalSession } from "@/lib/session";
+import { formatTokenCount, formatUsdAmount } from "@/lib/usage/format";
 import { cn } from "@/lib/utils";
 
 type LeaderboardPageProps = {
@@ -52,6 +54,79 @@ function buildLeaderboardQuery(input: {
           metric: input.metric,
         }),
   };
+}
+
+function getViewerSummary(input: {
+  locale: string;
+  viewerName?: string | null;
+  viewerEntry: LeaderboardEntry | null;
+  viewerPublicProfileEnabled: boolean | null;
+  entries: LeaderboardEntry[];
+  metric: LeaderboardMetric;
+  t: Awaited<ReturnType<typeof getTranslations>>;
+}) {
+  const selfEntry =
+    input.entries.find((entry) => entry.isSelf) ?? input.viewerEntry ?? null;
+
+  if (selfEntry) {
+    const formattedRank = selfEntry.rank.toLocaleString(input.locale);
+    const metricValue = (entry: LeaderboardEntry) =>
+      input.metric === "estimated_cost"
+        ? entry.estimatedCostUsd
+        : entry.totalTokens;
+    const formatGap = (value: number) =>
+      input.metric === "estimated_cost"
+        ? formatUsdAmount(value, input.locale)
+        : formatTokenCount(value, input.locale);
+    const previousEntry = input.entries.find(
+      (entry) => entry.rank === selfEntry.rank - 1,
+    );
+    const leaderEntry = input.entries.find((entry) => entry.rank === 1);
+    const previousGap = previousEntry
+      ? Math.max(0, metricValue(previousEntry) - metricValue(selfEntry))
+      : null;
+    const leaderGap =
+      leaderEntry && leaderEntry.userId !== selfEntry.userId
+        ? Math.max(0, metricValue(leaderEntry) - metricValue(selfEntry))
+        : null;
+
+    let description = input.t("viewerSummary.firstPlaceDescription");
+    if (previousGap !== null && leaderGap !== null) {
+      description = input.t("viewerSummary.gapDescription", {
+        previousGap: formatGap(previousGap),
+        leaderGap: formatGap(leaderGap),
+      });
+    } else if (leaderGap !== null) {
+      description = input.t("viewerSummary.leaderGapDescription", {
+        leaderGap: formatGap(leaderGap),
+      });
+    }
+
+    return {
+      title: input.t("viewerSummary.title"),
+      rankLabel: `#${formattedRank}`,
+      description,
+      ctaLabel: input.t("viewerSummary.jumpToSelf"),
+    };
+  }
+
+  if (input.viewerPublicProfileEnabled === false) {
+    return {
+      title: input.t("viewerSummary.title"),
+      rankLabel: input.t("viewerSummary.privateLabel"),
+      description: input.t("viewerSummary.privateDescription"),
+    };
+  }
+
+  if (input.viewerName) {
+    return {
+      title: input.t("viewerSummary.title"),
+      rankLabel: input.t("viewerSummary.notOnBoardLabel"),
+      description: input.t("viewerSummary.notOnBoardDescription"),
+    };
+  }
+
+  return null;
 }
 
 export async function generateMetadata({
@@ -96,6 +171,17 @@ export default async function LeaderboardPage({
     { value: "total_tokens", label: t("metrics.totalTokens") },
     { value: "estimated_cost", label: t("metrics.estimatedCost") },
   ];
+  const viewerSummary = viewer
+    ? getViewerSummary({
+        locale,
+        viewerName: viewer.user.name,
+        viewerEntry: data.viewerGlobalEntry,
+        viewerPublicProfileEnabled: data.viewerPublicProfileEnabled,
+        entries: data.global.entries,
+        metric,
+        t,
+      })
+    : null;
 
   return (
     <SocialShell
@@ -159,6 +245,7 @@ export default async function LeaderboardPage({
           emptyLabel={t("emptyGlobal")}
           entries={data.global.entries}
           viewerEntry={data.viewerGlobalEntry}
+          viewerSummary={viewerSummary}
           viewerNotice={
             viewer && data.viewerPublicProfileEnabled === false
               ? {
