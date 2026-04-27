@@ -694,6 +694,17 @@
       "followingTitle": "关注排行榜",
       "emptyGlobal": "还没有公开的使用数据。",
       "emptyFollowing": "你的关注网络里在这个窗口内还没有排行榜数据。",
+      "viewerSummary": {
+        "title": "我的排名",
+        "gapDescription": "距上一名还差 {previousGap}，距第一名还差 {leaderGap}。",
+        "leaderGapDescription": "距第一名还差 {leaderGap}。",
+        "firstPlaceDescription": "你当前已经是第一名。",
+        "jumpToSelf": "跳到我的位置",
+        "privateLabel": "未公开",
+        "privateDescription": "开启公开主页后，你的使用数据才能进入全站排行榜。",
+        "notOnBoardLabel": "未上榜",
+        "notOnBoardDescription": "这个时间窗口里你还没有进入榜单，继续同步就会显示。"
+      },
       "privateNoticeTitle": "你的主页还没有进入全站排行榜",
       "privateNoticeDescription": "如果你希望自己的使用数据出现在公开榜单里，请点击右侧按钮或在设置页面开启公开主页。",
       "privateRankUnavailable": "主页未公开，无法进行排名",

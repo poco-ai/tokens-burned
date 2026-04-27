@@ -694,6 +694,17 @@
       "followingTitle": "Following leaderboard",
       "emptyGlobal": "No public usage has been synced yet.",
       "emptyFollowing": "No one in your network has leaderboard activity in this window yet.",
+      "viewerSummary": {
+        "title": "Your rank",
+        "gapDescription": "{previousGap} behind the next rank, {leaderGap} behind #1.",
+        "leaderGapDescription": "{leaderGap} behind #1.",
+        "firstPlaceDescription": "You're currently holding #1.",
+        "jumpToSelf": "Jump to your position",
+        "privateLabel": "Private",
+        "privateDescription": "Turn on your public profile to join the global leaderboard.",
+        "notOnBoardLabel": "Not ranked yet",
+        "notOnBoardDescription": "You have not reached the leaderboard in this window yet. Keep syncing and it will show up here."
+      },
       "privateNoticeTitle": "Your profile is hidden from the global leaderboard",
       "privateNoticeDescription": "Click the button on the right or enable Public profile in Settings on the dashboard if you want your usage to appear in the public rankings.",
       "privateRankUnavailable": "Profile is private and cannot be ranked.",
