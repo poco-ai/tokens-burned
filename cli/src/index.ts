@@ -1,9 +1,11 @@
 // Import parsers to register them before CLI setup
 import "./parsers/claude-code.js";
 import "./parsers/codex.js";
+import "./parsers/gsd.js";
 import "./parsers/gemini-cli.js";
 import "./parsers/hermes.js";
 import "./parsers/copilot-cli.js";
+import "./parsers/oh-my-pi.js";
 import "./parsers/opencode.js";
 import "./parsers/openclaw.js";
 import "./parsers/qwen-code.js";
