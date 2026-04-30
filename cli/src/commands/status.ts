@@ -1,4 +1,5 @@
 import { getConfigPath, loadConfig } from "../infrastructure/config/manager";
+import { getCliVersion } from "../infrastructure/runtime/cli-version";
 import { loadSyncState } from "../infrastructure/runtime/state";
 import {
   formatBullet,
@@ -24,7 +25,7 @@ export async function runStatus(): Promise<void> {
   logger.info(
     formatHeader(
       "TokenArena 状态",
-      "查看当前配置、已检测工具以及最近一次同步情况。",
+      `版本 ${getCliVersion()} · 查看当前配置、已检测工具以及最近一次同步情况。`,
     ),
   );
 
