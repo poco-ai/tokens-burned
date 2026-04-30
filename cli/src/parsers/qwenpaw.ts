@@ -125,53 +125,46 @@ export class QwenPawParser implements IParser {
   }
 
   async parse(): Promise<ParseResult> {
-    const content = readFileSafe(this.usagePath);
-    if (!content) {
-      return { buckets: [], sessions: [] };
-    }
-
-    let usageFile: QwenPawUsageFile;
-    try {
-      usageFile = JSON.parse(content) as QwenPawUsageFile;
-    } catch {
-      return { buckets: [], sessions: [] };
-    }
-
     const entries: TokenUsageEntry[] = [];
     const sessionEvents: SessionEvent[] = [];
 
-    // Parse token usage data
-    for (const [dateKey, recordsByModel] of Object.entries(usageFile)) {
-      const timestamp = parseUsageDate(dateKey);
-      if (!timestamp || typeof recordsByModel !== "object") {
-        continue;
-      }
+    const content = readFileSafe(this.usagePath);
+    if (content) {
+      try {
+        const usageFile = JSON.parse(content) as QwenPawUsageFile;
 
-      for (const [recordKey, record] of Object.entries(recordsByModel)) {
-        if (!record || typeof record !== "object") {
-          continue;
+        for (const [dateKey, recordsByModel] of Object.entries(usageFile)) {
+          const timestamp = parseUsageDate(dateKey);
+          if (!timestamp || typeof recordsByModel !== "object") {
+            continue;
+          }
+
+          for (const [recordKey, record] of Object.entries(recordsByModel)) {
+            if (!record || typeof record !== "object") {
+              continue;
+            }
+
+            const inputTokens = toSafeNumber(record.prompt_tokens);
+            const outputTokens = toSafeNumber(record.completion_tokens);
+            if (inputTokens === 0 && outputTokens === 0) {
+              continue;
+            }
+
+            entries.push({
+              source: TOOL_ID,
+              model: resolveModel(recordKey, record),
+              project: "unknown",
+              timestamp,
+              inputTokens,
+              outputTokens,
+              reasoningTokens: 0,
+              cachedTokens: 0,
+            });
+          }
         }
-
-        const inputTokens = toSafeNumber(record.prompt_tokens);
-        const outputTokens = toSafeNumber(record.completion_tokens);
-        if (inputTokens === 0 && outputTokens === 0) {
-          continue;
-        }
-
-        entries.push({
-          source: TOOL_ID,
-          model: resolveModel(recordKey, record),
-          project: "unknown",
-          timestamp,
-          inputTokens,
-          outputTokens,
-          reasoningTokens: 0,
-          cachedTokens: 0,
-        });
-      }
+      } catch {}
     }
 
-    // Parse session data from workspace
     const workspaceSessions = await this.parseWorkspaceSessions();
     sessionEvents.push(...workspaceSessions);
 
