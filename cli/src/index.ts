@@ -12,6 +12,7 @@ import "./parsers/qwen-code.js";
 import "./parsers/kimi-code.js";
 import "./parsers/droid.js";
 import "./parsers/pi-coding-agent.js";
+import "./parsers/qwenpaw.js";
 
 import { createCli } from "./cli.js";
 import { isMainModule } from "./infrastructure/runtime/main-module.js";
