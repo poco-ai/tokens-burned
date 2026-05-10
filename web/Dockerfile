@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Stage 1: Install dependencies
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 WORKDIR /app
 
 # Install pnpm
@@ -16,7 +16,7 @@ COPY web/prisma ./web/prisma/
 RUN pnpm install --filter ./web --frozen-lockfile
 
 # Stage 2: Build the application
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -38,7 +38,7 @@ WORKDIR /app/web
 RUN pnpm build
 
 # Stage 3: Production runner
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
