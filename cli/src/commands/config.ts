@@ -109,8 +109,8 @@ async function promptSyncIntervalValue(
     message: "请选择默认同步间隔",
     choices: [
       {
-        name: "5 分钟",
-        value: String(5 * 60_000),
+        name: "30 分钟",
+        value: String(30 * 60_000),
         description: "适合作为默认值",
       },
       {

@@ -8,7 +8,7 @@ import { runSync } from "../services/sync-service";
 import { logger } from "../utils/logger";
 import { runInit } from "./init";
 
-const DEFAULT_INTERVAL = 5 * 60_000; // 5 minutes
+const DEFAULT_INTERVAL = 30 * 60_000; // 30 minutes
 
 function log(msg: string): void {
   const ts = new Date().toLocaleTimeString("en-US", { hour12: false });

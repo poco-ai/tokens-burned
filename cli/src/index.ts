@@ -13,6 +13,10 @@ import "./parsers/kimi-code.js";
 import "./parsers/droid.js";
 import "./parsers/pi-coding-agent.js";
 import "./parsers/qwenpaw.js";
+import "./parsers/cline.js";
+import "./parsers/kiro.js";
+import "./parsers/roo-code.js";
+import "./parsers/cursor.js";
 
 import { createCli } from "./cli.js";
 import { isMainModule } from "./infrastructure/runtime/main-module.js";

@@ -57,7 +57,7 @@ export function createCli(): Command {
   // daemon command
   program
     .command("daemon")
-    .description("Run continuous sync (every 5 minutes by default)")
+    .description("Run continuous sync (every 30 minutes by default)")
     .option("--interval <ms>", "Sync interval in milliseconds", parseInt)
     .addOption(new Option("--service").hideHelp())
     .action(async (opts) => {
