@@ -1,9 +1,15 @@
 "use client";
 
-import { toPng } from "html-to-image";
 import { AlertCircle, Check, Copy, Download, Share2 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,10 +25,7 @@ import type {
   UsageShareCardTemplate,
 } from "@/lib/usage/share-card";
 import { cn } from "@/lib/utils";
-import {
-  UsageShareCardPreview,
-  type UsageShareCardPrivacy,
-} from "./share-card-preview";
+import type { UsageShareCardPrivacy } from "./share-card-preview";
 
 type UsageShareDialogProps = {
   data: UsageShareCardData;
@@ -43,7 +46,22 @@ const defaultPrivacy: UsageShareCardPrivacy = {
   hideUsername: false,
 };
 
+const UsageShareCardPreviewLoader = dynamic(
+  () =>
+    import("./share-card-preview-loader").then(
+      (mod) => mod.UsageShareCardPreviewLoader,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="aspect-[4/3] w-full max-w-[760px] animate-pulse rounded-[2rem] bg-muted" />
+    ),
+  },
+);
+
 async function renderShareCard(node: HTMLElement) {
+  const { toPng } = await import("html-to-image");
+
   if ("fonts" in document) {
     await document.fonts.ready;
   }
@@ -138,6 +156,11 @@ export function UsageShareDialog({
   const [status, setStatus] = useState<ShareStatus | null>(null);
   const [lastAction, setLastAction] = useState<ShareFooterAction | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isPreviewReady, setIsPreviewReady] = useState(false);
+
+  const handlePreviewReady = useCallback(() => {
+    setIsPreviewReady(true);
+  }, []);
 
   const canCopyImage =
     typeof navigator !== "undefined" &&
@@ -164,6 +187,7 @@ export function UsageShareDialog({
 
     setStatus(null);
     setLastAction(null);
+    setIsPreviewReady(false);
   }, [open]);
 
   const exportImage = async () => {
@@ -235,79 +259,78 @@ export function UsageShareDialog({
           : "idle";
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        {trigger === undefined ? (
-          <DialogTrigger asChild>
-            <Button type="button" variant="outline" size="sm">
-              <Share2 />
-              {t("button")}
-            </Button>
-          </DialogTrigger>
-        ) : trigger ? (
-          <DialogTrigger asChild>{trigger}</DialogTrigger>
-        ) : null}
-        <DialogContent
-          aria-describedby={undefined}
-          className={cn(
-            "!flex min-h-0 w-[min(96vw,56rem)] max-w-none flex-col gap-0 overflow-hidden border border-border/70 bg-card p-0 shadow-2xl",
-            "h-[min(46rem,90svh)] !max-h-[min(46rem,90svh)]",
-          )}
-        >
-          <DialogHeader className="shrink-0 border-b border-border/60 px-5 py-4 sm:px-6">
-            <DialogTitle>{t("title")}</DialogTitle>
-          </DialogHeader>
-
-          <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden p-4 sm:p-5">
-            <div className="min-h-0 min-w-0 flex-1 basis-0 overflow-y-auto overscroll-contain p-2 sm:p-3 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
-              <UsageShareCardPreview
-                data={data}
-                template={template}
-                privacy={defaultPrivacy}
-                locale={locale}
-                size="preview"
-                className="mx-auto w-full !max-w-[min(34rem,76svh)]"
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="mx-0 mb-0 flex w-full max-w-full min-w-0 shrink-0 flex-col gap-2 overflow-x-hidden border-t border-border/60 bg-card p-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-end sm:gap-2 sm:p-4">
-            <div className="grid min-w-0 w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:gap-2">
-              <ShareActionButton
-                variant="outline"
-                actionState={copyState}
-                disabled={!canCopyImage || isExporting}
-                title={!canCopyImage ? t("copyImageUnsupported") : undefined}
-                icon={<Copy className="size-4 shrink-0" aria-hidden />}
-                label={t("actions.copyImage")}
-                onClick={handleCopyImage}
-              />
-              <ShareActionButton
-                actionState={downloadState}
-                disabled={isExporting}
-                icon={<Download className="size-4 shrink-0" aria-hidden />}
-                label={t("actions.download")}
-                onClick={handleDownload}
-              />
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <div
-        className="pointer-events-none fixed top-0 left-0 h-px w-px overflow-hidden opacity-0"
-        aria-hidden="true"
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {trigger === undefined ? (
+        <DialogTrigger asChild>
+          <Button type="button" variant="outline" size="sm">
+            <Share2 />
+            {t("button")}
+          </Button>
+        </DialogTrigger>
+      ) : trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : null}
+      <DialogContent
+        aria-describedby={undefined}
+        className={cn(
+          "!flex min-h-0 w-[min(96vw,56rem)] max-w-none flex-col gap-0 overflow-hidden border border-border/70 bg-card p-0 shadow-2xl",
+          "h-[min(46rem,90svh)] !max-h-[min(46rem,90svh)]",
+        )}
       >
-        <div ref={exportRef} className="receipt-export-surface inline-block">
-          <UsageShareCardPreview
-            data={data}
-            template={template}
-            privacy={defaultPrivacy}
-            locale={locale}
-            size="export"
-          />
+        <DialogHeader className="shrink-0 border-b border-border/60 px-5 py-4 sm:px-6">
+          <DialogTitle>{t("title")}</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden p-4 sm:p-5">
+          <div className="min-h-0 min-w-0 flex-1 basis-0 overflow-y-auto overscroll-contain p-2 sm:p-3 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+            <UsageShareCardPreviewLoader
+              data={data}
+              template={template}
+              privacy={defaultPrivacy}
+              locale={locale}
+              size="preview"
+              className="mx-auto w-full !max-w-[min(34rem,76svh)]"
+              onReady={handlePreviewReady}
+            />
+          </div>
         </div>
-      </div>
-    </>
+
+        <DialogFooter className="mx-0 mb-0 flex w-full max-w-full min-w-0 shrink-0 flex-col gap-2 overflow-x-hidden border-t border-border/60 bg-card p-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-end sm:gap-2 sm:p-4">
+          <div className="grid min-w-0 w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:gap-2">
+            <ShareActionButton
+              variant="outline"
+              actionState={copyState}
+              disabled={!canCopyImage || isExporting || !isPreviewReady}
+              title={!canCopyImage ? t("copyImageUnsupported") : undefined}
+              icon={<Copy className="size-4 shrink-0" aria-hidden />}
+              label={t("actions.copyImage")}
+              onClick={handleCopyImage}
+            />
+            <ShareActionButton
+              actionState={downloadState}
+              disabled={isExporting || !isPreviewReady}
+              icon={<Download className="size-4 shrink-0" aria-hidden />}
+              label={t("actions.download")}
+              onClick={handleDownload}
+            />
+          </div>
+        </DialogFooter>
+
+        <div
+          className="pointer-events-none fixed top-0 left-0 h-px w-px overflow-hidden opacity-0"
+          aria-hidden="true"
+        >
+          <div ref={exportRef} className="receipt-export-surface inline-block">
+            <UsageShareCardPreviewLoader
+              data={data}
+              template={template}
+              privacy={defaultPrivacy}
+              locale={locale}
+              size="export"
+            />
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

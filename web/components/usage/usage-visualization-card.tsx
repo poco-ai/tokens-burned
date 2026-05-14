@@ -1,17 +1,9 @@
 "use client";
 
 import { Activity, Calendar } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
 import { Fragment, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -26,7 +18,6 @@ import type {
   TokenTrendPoint,
 } from "@/lib/usage/types";
 import { cn } from "@/lib/utils";
-import { TokenTrendTooltipContent } from "./token-trend-card";
 
 type VisualizationMode = "trend" | "heatmap";
 type VisualizationMetricView = "tokens" | "cost" | "time";
@@ -84,12 +75,20 @@ const TREND_SERIES = [
   },
 ] as const;
 
-const TREND_INITIAL_DIMENSION = {
-  width: 1120,
-  height: 352,
-} as const;
-
 const VISUALIZATION_PANEL_HEIGHT_CLASS = "h-[22rem]";
+
+const UsageVisualizationChart = dynamic(
+  () =>
+    import("./usage-visualization-chart").then(
+      (mod) => mod.UsageVisualizationChart,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[22rem] w-full animate-pulse rounded-xl bg-muted/50" />
+    ),
+  },
+);
 
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const HOURS = [
@@ -113,22 +112,6 @@ const HEATMAP_METRIC_COLORS = {
 const EMPTY_CELL_STYLE = {
   backgroundColor: "color-mix(in oklab, var(--muted) 82%, var(--background))",
 } as const;
-
-function formatTrendAxisValue(
-  value: number,
-  view: TrendMetricView,
-  locale: string,
-) {
-  if (view === "cost") {
-    return formatUsdAmount(value, locale, { compact: true });
-  }
-
-  if (view === "totalTime") {
-    return formatDuration(value, { compact: true });
-  }
-
-  return formatTokenCount(value);
-}
 
 function getHeatmapMetric(
   metricView: VisualizationMetricView,
@@ -404,71 +387,11 @@ export function UsageVisualizationCard({
             <div
               className={cn("w-full min-w-0", VISUALIZATION_PANEL_HEIGHT_CLASS)}
             >
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-                initialDimension={TREND_INITIAL_DIMENSION}
-              >
-                <BarChart
-                  data={trendData}
-                  margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
-                  barGap={0}
-                  barCategoryGap="8%"
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    className="stroke-muted"
-                  />
-                  <XAxis
-                    dataKey="label"
-                    minTickGap={24}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) =>
-                      formatTrendAxisValue(value, trendMetricView, locale)
-                    }
-                  />
-                  <Tooltip
-                    cursor={{ fill: "var(--muted)", opacity: 0.45 }}
-                    content={(props) => (
-                      <TokenTrendTooltipContent
-                        {...props}
-                        view={trendMetricView}
-                        locale={locale}
-                      />
-                    )}
-                  />
-                  {trendMetricView === "tokens" ? (
-                    TREND_SERIES.map((series) => (
-                      <Bar
-                        key={series.dataKey}
-                        dataKey={series.dataKey}
-                        name={tTrend(series.labelKey)}
-                        stackId="tokens"
-                        fill={series.color}
-                        fillOpacity={series.opacity}
-                        radius={series.radius}
-                      />
-                    ))
-                  ) : trendMetricView === "cost" ? (
-                    <Bar
-                      dataKey="estimatedCostUsd"
-                      name={tTrend("cost")}
-                      fill="var(--chart-2)"
-                      radius={[6, 6, 0, 0]}
-                    />
-                  ) : (
-                    <Bar
-                      dataKey="totalSeconds"
-                      name={tTrend("totalTime")}
-                      fill="var(--chart-3)"
-                      radius={[6, 6, 0, 0]}
-                    />
-                  )}
-                </BarChart>
-              </ResponsiveContainer>
+              <UsageVisualizationChart
+                data={trendData}
+                locale={locale}
+                view={trendMetricView}
+              />
             </div>
           )
         ) : (

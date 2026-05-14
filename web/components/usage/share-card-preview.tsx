@@ -9,9 +9,9 @@ import {
   Sparkles,
   Wrench,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import QRCode from "react-qr-code";
 import { Badge } from "@/components/ui/badge";
 import { buildAbsoluteUrl } from "@/lib/site-url";
 import {
@@ -46,6 +46,13 @@ type TranslationFn = (
   key: string,
   values?: Record<string, string | number>,
 ) => string;
+
+const QRCode = dynamic(() => import("react-qr-code"), {
+  ssr: false,
+  loading: () => (
+    <div className="size-11 rounded-sm bg-[var(--receipt-paper-fg-strong)]/10 sm:size-[72px]" />
+  ),
+});
 
 const paletteMap: Record<
   UsageShareCardPersona,
