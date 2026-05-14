@@ -48,21 +48,21 @@ describe("social badges", () => {
     mocks.findManyBuckets.mockResolvedValue([
       {
         bucketStart: new Date("2026-04-01T12:00:00.000Z"),
-        totalTokens: 1000n,
+        totalTokens: BigInt(1000),
         model: "gpt-x",
-        inputTokens: 600n,
-        outputTokens: 300n,
-        reasoningTokens: 50n,
-        cachedTokens: 50n,
+        inputTokens: BigInt(600),
+        outputTokens: BigInt(300),
+        reasoningTokens: BigInt(50),
+        cachedTokens: BigInt(50),
       },
       {
         bucketStart: new Date("2026-04-02T12:00:00.000Z"),
-        totalTokens: 500n,
+        totalTokens: BigInt(500),
         model: "gpt-x",
-        inputTokens: 250n,
-        outputTokens: 200n,
-        reasoningTokens: 25n,
-        cachedTokens: 25n,
+        inputTokens: BigInt(250),
+        outputTokens: BigInt(200),
+        reasoningTokens: BigInt(25),
+        cachedTokens: BigInt(25),
       },
     ]);
     mocks.aggregateSessions.mockResolvedValue({

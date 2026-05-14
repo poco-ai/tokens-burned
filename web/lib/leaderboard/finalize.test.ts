@@ -8,9 +8,8 @@ function createEntry(
   overrides: Partial<RankedLeaderboardEntry> &
     Pick<RankedLeaderboardEntry, "userId" | "rank">,
 ): RankedLeaderboardEntry {
+  const { userId, rank, ...rest } = overrides;
   return {
-    userId: overrides.userId,
-    rank: overrides.rank,
     inputTokens: 0,
     outputTokens: 0,
     reasoningTokens: 0,
@@ -18,7 +17,9 @@ function createEntry(
     totalTokens: 100,
     activeSeconds: 60,
     sessions: 1,
-    ...overrides,
+    userId,
+    rank,
+    ...rest,
   };
 }
 
