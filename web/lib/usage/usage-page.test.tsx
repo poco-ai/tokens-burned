@@ -5,18 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   redirect: vi.fn(),
   getSessionOrRedirect: vi.fn(),
-  getUsagePreference: vi.fn(),
   formatDateTime: vi.fn(),
-  getOverviewMetrics: vi.fn(),
-  getTokenTrend: vi.fn(),
-  getHourlyActivityHeatmap: vi.fn(),
+  getUsageDashboardData: vi.fn(),
   getActivityHeatmap365: vi.fn(),
-  getBreakdowns: vi.fn(),
-  getPricingSummaryAndRows: vi.fn(),
-  getSessionRows: vi.fn(),
   getFilterOptions: vi.fn(),
-  getLastSyncedAt: vi.fn(),
-  resolveDashboardRange: vi.fn(),
   getTranslations: vi.fn(
     async () => (key: string, values?: Record<string, string>) => {
       if (key === "overviewTitle") return "Overview";
@@ -164,27 +156,16 @@ vi.mock("@/lib/site-url", () => ({
   getAppOrigin: () => "https://token.poco-ai.com",
 }));
 
-vi.mock("@/lib/usage/date-range", () => ({
-  resolveDashboardRange: mocks.resolveDashboardRange,
+vi.mock("@/lib/usage/dashboard.server", () => ({
+  getUsageDashboardData: mocks.getUsageDashboardData,
 }));
 
 vi.mock("@/lib/usage/format", () => ({
   formatDateTime: mocks.formatDateTime,
 }));
 
-vi.mock("@/lib/usage/preferences", () => ({
-  getUsagePreference: mocks.getUsagePreference,
-}));
-
 vi.mock("@/lib/usage/queries", () => ({
-  getOverviewMetrics: mocks.getOverviewMetrics,
-  getTokenTrend: mocks.getTokenTrend,
-  getHourlyActivityHeatmap: mocks.getHourlyActivityHeatmap,
-  getBreakdowns: mocks.getBreakdowns,
-  getPricingSummaryAndRows: mocks.getPricingSummaryAndRows,
-  getSessionRows: mocks.getSessionRows,
   getFilterOptions: mocks.getFilterOptions,
-  getLastSyncedAt: mocks.getLastSyncedAt,
 }));
 
 describe("UsagePage", () => {
@@ -197,21 +178,14 @@ describe("UsagePage", () => {
         username: "test_user",
       },
     });
-    mocks.getUsagePreference.mockResolvedValue({
-      locale: "en",
-      theme: "system",
-      timezone: "Asia/Shanghai",
-      projectMode: "hashed",
-      publicProfileEnabled: true,
-    });
-    mocks.resolveDashboardRange.mockReturnValue({
+    const range = {
       from: new Date("2026-03-19T00:00:00.000Z"),
       to: new Date("2026-03-25T23:59:59.999Z"),
       granularity: "day",
       preset: "7d",
       timezone: "Asia/Shanghai",
-    });
-    mocks.getOverviewMetrics.mockResolvedValue({
+    };
+    const overview = {
       totalTokens: { current: 1, previous: 0, delta: 1 },
       inputTokens: { current: 1, previous: 0, delta: 1 },
       outputTokens: { current: 0, previous: 0, delta: 0 },
@@ -222,8 +196,8 @@ describe("UsagePage", () => {
       sessions: { current: 0, previous: 0, delta: 0 },
       messages: { current: 0, previous: 0, delta: 0 },
       userMessages: { current: 0, previous: 0, delta: 0 },
-    });
-    mocks.getTokenTrend.mockResolvedValue([
+    };
+    const tokenTrend = [
       {
         label: "2026-03-24",
         start: "2026-03-24T00:00:00.000Z",
@@ -235,9 +209,10 @@ describe("UsagePage", () => {
         estimatedCostUsd: 1.25,
         totalSeconds: 120,
       },
-    ]);
-    mocks.getHourlyActivityHeatmap.mockResolvedValue(
-      Array.from({ length: 7 * 24 }, (_, index) => ({
+    ];
+    const hourlyActivityHeatmap = Array.from(
+      { length: 7 * 24 },
+      (_, index) => ({
         weekday: Math.floor(index / 24),
         hour: index % 24,
         inputTokens: 0,
@@ -246,29 +221,47 @@ describe("UsagePage", () => {
         estimatedCostUsd: 0,
         activeSeconds: 0,
         sessions: 0,
-      })),
+      }),
     );
     mocks.getActivityHeatmap365.mockResolvedValue([]);
-    mocks.getBreakdowns.mockResolvedValue({
+    const breakdowns = {
       devices: [],
       tools: [],
       models: [],
       projects: [],
-    });
-    mocks.getPricingSummaryAndRows.mockResolvedValue({
-      summary: {
-        currentUsd: 1.25,
-        previousUsd: 0.75,
-        deltaUsd: 0.5,
-        pricedTokens: 120,
-        totalTokens: 120,
-        coverage: 1,
-        pricedModels: 1,
-        totalModels: 1,
+    };
+    const pricingSummary = {
+      currentUsd: 1.25,
+      previousUsd: 0.75,
+      deltaUsd: 0.5,
+      pricedTokens: 120,
+      totalTokens: 120,
+      coverage: 1,
+      pricedModels: 1,
+      totalModels: 1,
+    };
+    mocks.getUsageDashboardData.mockResolvedValue({
+      preference: {
+        locale: "en",
+        theme: "system",
+        timezone: "Asia/Shanghai",
+        projectMode: "hashed",
+        publicProfileEnabled: true,
       },
-      modelPricingRows: [],
+      dashboard: {
+        range,
+        filters: {},
+        overview,
+        tokenTrend,
+        activityTrend: [],
+        hourlyActivityHeatmap,
+        breakdowns,
+        pricingSummary,
+        modelPricingRows: [],
+        sessions: [],
+        lastSyncedAt: new Date("2026-03-25T16:00:00.000Z"),
+      },
     });
-    mocks.getSessionRows.mockResolvedValue([]);
     mocks.getFilterOptions.mockResolvedValue({
       apiKeys: [],
       devices: [],
@@ -276,9 +269,6 @@ describe("UsagePage", () => {
       models: [],
       projects: [],
     });
-    mocks.getLastSyncedAt.mockResolvedValue(
-      new Date("2026-03-25T16:00:00.000Z"),
-    );
     mocks.formatDateTime.mockReturnValue("2026-03-26 00:00");
   });
 
@@ -322,7 +312,7 @@ describe("UsagePage", () => {
       undefined,
     );
     expect(mocks.SessionsSection).toHaveBeenCalledOnce();
-    expect(mocks.getSessionRows).toHaveBeenCalledOnce();
+    expect(mocks.getUsageDashboardData).toHaveBeenCalledOnce();
     expect(mocks.KpiGrid).toHaveBeenCalledWith(
       expect.objectContaining({
         modelPricingRows: [],
