@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Stage 1: Install dependencies
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /app
 
 # Install pnpm (pinned to match dev environment)
@@ -19,7 +19,7 @@ RUN printf 'onlyBuiltDependencies[]=@parcel/watcher\nonlyBuiltDependencies[]=@pr
 RUN pnpm install --filter ./web --frozen-lockfile
 
 # Stage 2: Build the application
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
@@ -41,7 +41,7 @@ WORKDIR /app/web
 RUN pnpm build
 
 # Stage 3: Production runner
-FROM node:24-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
