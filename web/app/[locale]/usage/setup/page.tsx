@@ -1,5 +1,11 @@
 import { redirect } from "next/navigation";
 
-export default async function UsageSetupPage() {
-  redirect("/usage");
+type UsageSetupPageProps = {
+  params: Promise<{ locale: string }>;
+};
+
+export default async function UsageSetupPage({ params }: UsageSetupPageProps) {
+  const { locale } = await params;
+
+  redirect(`/${locale}/usage`);
 }
