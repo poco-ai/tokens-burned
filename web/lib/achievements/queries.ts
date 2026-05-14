@@ -1,3 +1,5 @@
+import "server-only";
+
 import { finalizePendingLeaderboardPeriods } from "@/lib/leaderboard/finalize";
 import { getUserGlobalLeaderboardRanksByTotalTokens } from "@/lib/leaderboard/rank";
 import type { PricingCatalog } from "@/lib/pricing/catalog";

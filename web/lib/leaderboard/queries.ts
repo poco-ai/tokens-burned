@@ -1,3 +1,5 @@
+import "server-only";
+
 import { getPricingCatalog } from "@/lib/pricing/catalog";
 import {
   estimateCostUsd,

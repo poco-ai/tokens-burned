@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { ProfileAchievementWallItem } from "@/lib/achievements/profile-wall";
 import { getProfileAchievementWall } from "@/lib/achievements/profile-wall";
 import { getAchievementArenaSummary } from "@/lib/achievements/queries";
