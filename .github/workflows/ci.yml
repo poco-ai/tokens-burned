@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AUTH_MODE: self-hosted
-      BETTER_AUTH_SECRET: ci-placeholder-secret-key
+      BETTER_AUTH_SECRET: ci-placeholder-secret-key-for-builds-only-000000
       BETTER_AUTH_URL: http://localhost:3000
       DATABASE_URL: postgresql://test:test@localhost:5432/tokenarena_test
 
