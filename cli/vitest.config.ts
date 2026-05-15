@@ -5,5 +5,8 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.ts"],
     passWithNoTests: true,
+    coverage: {
+      reporter: ["text", "json-summary", "lcov"],
+    },
   },
 });

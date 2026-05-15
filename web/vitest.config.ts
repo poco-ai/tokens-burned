@@ -17,5 +17,8 @@ export default defineConfig({
     environment: "node",
     include: ["lib/**/*.test.{ts,tsx}", "components/**/*.test.{ts,tsx}"],
     passWithNoTests: true,
+    coverage: {
+      reporter: ["text", "json-summary", "lcov"],
+    },
   },
 });
