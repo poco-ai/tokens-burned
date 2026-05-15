@@ -31,6 +31,12 @@
     "react-doctor:badge": "node scripts/update-react-doctor-badge.mjs",
     "react-doctor:badge:staged": "node scripts/update-react-doctor-badge.mjs --staged"
   },
+  "pnpm": {
+    "overrides": {
+      "postcss": ">=8.5.10",
+      "@hono/node-server": ">=1.19.13"
+    }
+  },
   "devDependencies": {
     "husky": "^9.1.7"
   }
