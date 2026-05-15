@@ -90,6 +90,7 @@ export function SettingsBody({
 }: SettingsBodyProps) {
   const t = useTranslations("usage.settings");
   const pathname = usePathname();
+  // KEPT: section is independently updated via setSection in the button onClick handler
   const [section, setSection] = useState<SettingsSectionId>(initialSection);
 
   const [preferences, setPreferences] = useState<SettingsPreferenceState>({
