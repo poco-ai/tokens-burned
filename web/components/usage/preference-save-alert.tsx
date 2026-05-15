@@ -2,7 +2,7 @@
 
 import { CheckCircle2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   type PreferenceNoticeDetail,
@@ -13,8 +13,17 @@ const dismissDelayMs = 2500;
 
 export function PreferenceSaveAlert() {
   const t = useTranslations("usage.settings");
-  const [visible, setVisible] = useState(false);
-  const visibleRef = useRef(false);
+
+  const [state, dispatch] = useReducer(
+    (
+      _prev: { visible: boolean },
+      action: { type: "show" } | { type: "hide" },
+    ) => ({
+      visible: action.type === "show",
+    }),
+    { visible: false },
+  );
+
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -25,16 +34,14 @@ export function PreferenceSaveAlert() {
         return;
       }
 
-      visibleRef.current = true;
-      setVisible(true);
+      dispatch({ type: "show" });
 
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
 
       timeoutRef.current = setTimeout(() => {
-        visibleRef.current = false;
-        setVisible(false);
+        dispatch({ type: "hide" });
         timeoutRef.current = null;
       }, dismissDelayMs);
     };
@@ -56,7 +63,7 @@ export function PreferenceSaveAlert() {
     };
   }, []);
 
-  if (!visible) {
+  if (!state.visible) {
     return null;
   }
 
@@ -75,8 +82,7 @@ export function PreferenceSaveAlert() {
           className="-mr-1 shrink-0 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-900 dark:text-emerald-200 dark:hover:bg-emerald-900/50"
           aria-label={t("dismissSaveAlert")}
           onClick={() => {
-            visibleRef.current = false;
-            setVisible(false);
+            dispatch({ type: "hide" });
           }}
         >
           <X className="size-3" />
