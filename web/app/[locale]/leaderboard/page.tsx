@@ -147,8 +147,8 @@ export default async function LeaderboardPage({
   params,
   searchParams,
 }: LeaderboardPageProps) {
-  const { locale } = await params;
-  const [viewer, resolvedSearchParams] = await Promise.all([
+  const [{ locale }, viewer, resolvedSearchParams] = await Promise.all([
+    params,
     getOptionalSession(),
     searchParams ?? Promise.resolve(undefined),
   ]);

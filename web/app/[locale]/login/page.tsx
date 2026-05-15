@@ -41,8 +41,8 @@ export default async function LoginPage({
   params,
   searchParams,
 }: LoginPageProps) {
-  const { locale } = await params;
-  const [session, t] = await Promise.all([
+  const [{ locale }, session, t] = await Promise.all([
+    params,
     getOptionalSession(),
     getTranslations("auth.login"),
   ]);

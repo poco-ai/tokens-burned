@@ -13,8 +13,10 @@ export default async function LocaleHomePage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
-  const session = await getOptionalSession();
+  const [{ locale }, session] = await Promise.all([
+    params,
+    getOptionalSession(),
+  ]);
 
   if (session) {
     const preference = await getUsagePreference(session.user.id);

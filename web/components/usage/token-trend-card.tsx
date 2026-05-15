@@ -1,25 +1,12 @@
 "use client";
 
 import { Activity } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  formatDuration,
-  formatTokenCount,
-  formatUsdAmount,
-} from "@/lib/usage/format";
 import type { TokenTrendPoint } from "@/lib/usage/types";
 
 type TrendMetricView = "tokens" | "cost" | "totalTime";
@@ -28,6 +15,17 @@ type TokenTrendCardProps = {
   data: TokenTrendPoint[];
   defaultMetricView?: TrendMetricView;
 };
+
+const TokenTrendChartInner = dynamic(
+  () =>
+    import("./token-trend-chart-inner").then((mod) => mod.TokenTrendChartInner),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-72 w-full animate-pulse rounded-xl bg-muted/50" />
+    ),
+  },
+);
 
 type TokenTrendTooltipContentProps = {
   active?: boolean;
@@ -47,11 +45,6 @@ const TREND_VIEW_OPTIONS = [
   value: TrendMetricView;
   labelKey: "views.tokens" | "views.cost" | "views.totalTime";
 }>;
-
-const TOKEN_TREND_INITIAL_DIMENSION = {
-  width: 720,
-  height: 288,
-} as const;
 
 const TOKEN_TREND_SERIES = [
   {
@@ -82,7 +75,7 @@ const TOKEN_TREND_SERIES = [
     opacity: 0.28,
     radius: [6, 6, 0, 0] as [number, number, number, number],
   },
-] as const;
+];
 
 const TOKEN_TREND_TOOLTIP_STYLES = {
   total: {
@@ -119,22 +112,6 @@ type TokenTrendTooltipRow = {
   kind: "tokens" | "currency" | "duration";
   value: number;
 };
-
-function formatTrendMetricValue(
-  value: number,
-  view: TrendMetricView,
-  locale: string,
-) {
-  if (view === "cost") {
-    return formatUsdAmount(value, locale, { compact: true });
-  }
-
-  if (view === "totalTime") {
-    return formatDuration(value, { compact: true });
-  }
-
-  return formatTokenCount(value);
-}
 
 function formatTooltipRowValue(
   row: TokenTrendTooltipRow,
@@ -301,68 +278,12 @@ export function TokenTrendCard({
           </div>
         ) : (
           <div className="h-72 w-full min-w-0">
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-              initialDimension={TOKEN_TREND_INITIAL_DIMENSION}
-            >
-              <BarChart
-                data={data}
-                margin={{ left: 8, right: 8, top: 8, bottom: 8 }}
-                barGap={0}
-                barCategoryGap="8%"
-              >
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis
-                  dataKey="label"
-                  minTickGap={24}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={(value) =>
-                    formatTrendMetricValue(value, metricView, locale)
-                  }
-                />
-                <Tooltip
-                  cursor={{ fill: "var(--muted)", opacity: 0.45 }}
-                  content={(props) => (
-                    <TokenTrendTooltipContent
-                      {...props}
-                      view={metricView}
-                      locale={locale}
-                    />
-                  )}
-                />
-                {metricView === "tokens" ? (
-                  TOKEN_TREND_SERIES.map((series) => (
-                    <Bar
-                      key={series.dataKey}
-                      dataKey={series.dataKey}
-                      name={t(series.labelKey)}
-                      stackId="tokens"
-                      fill={series.color}
-                      fillOpacity={series.opacity}
-                      radius={series.radius}
-                    />
-                  ))
-                ) : metricView === "cost" ? (
-                  <Bar
-                    dataKey="estimatedCostUsd"
-                    name={t("cost")}
-                    fill="var(--chart-2)"
-                    radius={[6, 6, 0, 0]}
-                  />
-                ) : (
-                  <Bar
-                    dataKey="totalSeconds"
-                    name={t("totalTime")}
-                    fill="var(--chart-3)"
-                    radius={[6, 6, 0, 0]}
-                  />
-                )}
-              </BarChart>
-            </ResponsiveContainer>
+            <TokenTrendChartInner
+              data={data}
+              metricView={metricView}
+              locale={locale}
+              t={t}
+            />
           </div>
         )}
       </CardContent>

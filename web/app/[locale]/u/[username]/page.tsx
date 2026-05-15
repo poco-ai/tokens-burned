@@ -105,15 +105,17 @@ export async function generateMetadata({
 export default async function PublicProfilePage({
   params,
 }: PublicProfilePageProps) {
-  const { locale, username } = await params;
-  const [viewer, t] = await Promise.all([
+  const [{ locale, username }, viewer] = await Promise.all([
+    params,
     getOptionalSession(),
-    getTranslations({ locale, namespace: "social.profile" }),
   ]);
-  const profile = await getPublicProfilePageData({
-    username,
-    viewerUserId: viewer?.user.id ?? null,
-  });
+  const [t, profile] = await Promise.all([
+    getTranslations({ locale, namespace: "social.profile" }),
+    getPublicProfilePageData({
+      username,
+      viewerUserId: viewer?.user.id ?? null,
+    }),
+  ]);
 
   if (!profile) {
     notFound();
