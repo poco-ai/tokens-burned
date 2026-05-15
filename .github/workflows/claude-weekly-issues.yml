@@ -1,8 +1,6 @@
 name: Claude Weekly Issue Summary
 
 on:
-  schedule:
-    - cron: "0 12 * * 5" # 每周五 UTC 12:00 (北京时间 20:00)
   workflow_dispatch:
 
 permissions:
@@ -67,6 +65,8 @@ jobs:
             只对停滞中且无人处理的 issue 生成评论计划。
 
             只需要写文件，不需要执行其他操作。
+          additional_permissions: |
+            actions: read
         env:
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
 

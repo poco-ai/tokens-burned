@@ -1,8 +1,7 @@
 name: Claude Code Review & Score
 
 on:
-  push:
-    branches: ["main", "dev"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Generate code review report
         id: claude-review
@@ -62,6 +61,8 @@ jobs:
             - ...
 
             只需要写文件，不需要执行其他操作。
+          additional_permissions: |
+            actions: read
         env:
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
 

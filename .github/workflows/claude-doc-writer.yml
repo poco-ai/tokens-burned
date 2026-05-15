@@ -1,10 +1,7 @@
 name: Claude Doc Writer
 
 on:
-  push:
-    branches: ["main", "dev"]
-    tags:
-      - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -18,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Update documentation for changes
         uses: anthropics/claude-code-action@v1
@@ -58,6 +55,8 @@ jobs:
                - 确保与现有文档的格式一致（标题层级、列表风格、代码块格式等）
 
             只需要修改文件，不需要 git commit 或 git push。
+          additional_permissions: |
+            actions: read
         env:
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
 

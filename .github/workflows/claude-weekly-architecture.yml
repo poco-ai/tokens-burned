@@ -1,8 +1,6 @@
 name: Claude Weekly Architecture Review
 
 on:
-  schedule:
-    - cron: "0 2 * * 5" # 每周五 UTC 02:00 (北京时间 10:00)
   workflow_dispatch:
 
 permissions:
@@ -17,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Run architecture review
         uses: anthropics/claude-code-action@v1
@@ -79,6 +77,8 @@ jobs:
             <列出具体可行的改进建议>
 
             只需要写文件，不需要执行其他操作。
+          additional_permissions: |
+            actions: read
         env:
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
 
