@@ -1,0 +1,47 @@
+name: Bundle Size
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "web/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+  pull_request:
+    paths:
+      - "web/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bundle:
+    name: Check Bundle Size
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install ${{ github.actor == 'dependabot[bot]' && '--no-frozen-lockfile' || '--frozen-lockfile' }}
+
+      - name: Generate Prisma client
+        run: pnpm --filter ./web exec prisma generate
+
+      - name: Build web
+        run: pnpm --filter ./web build
+
+      - name: Check bundle size limits
+        run: pnpm --filter ./web size

@@ -26,7 +26,8 @@
     "prepare": "husky",
     "publish": "pnpm --filter ./cli publish --access public",
     "migrate": "pnpm --filter ./web exec prisma migrate deploy",
-    "db:seed": "pnpm --filter ./web run db:seed"
+    "db:seed": "pnpm --filter ./web run db:seed",
+    "react-doctor": "pnpm --filter ./web react-doctor"
   },
   "devDependencies": {
     "husky": "^9.1.7"

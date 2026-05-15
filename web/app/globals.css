@@ -252,3 +252,17 @@
     min-height: 100dvh;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  [class],
+  [class]::before,
+  [class]::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+}

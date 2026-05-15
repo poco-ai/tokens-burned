@@ -70,7 +70,7 @@ jobs:
             "| --- | ---: | ---: | ---: | ---: |",
             ...rows,
             "",
-            "Coverage is reported for visibility only; no threshold is enforced.",
+            "Coverage thresholds are enforced in the vitest config.",
           ].join("\n");
 
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${body}\n`);

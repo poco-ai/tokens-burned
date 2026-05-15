@@ -14,15 +14,68 @@ permissions:
   contents: read
 
 jobs:
-  quality:
-    name: Quality
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: web/Dockerfile
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install ${{ github.actor == 'dependabot[bot]' && '--no-frozen-lockfile' || '--frozen-lockfile' }}
+
+      - name: Check linting and formatting
+        run: pnpm check
+
+  test-cli:
+    name: Test CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install ${{ github.actor == 'dependabot[bot]' && '--no-frozen-lockfile' || '--frozen-lockfile' }}
+
+      - name: Test CLI
+        run: pnpm --filter ./cli test
+
+  test-web:
+    name: Test Web
     runs-on: ubuntu-latest
     env:
-      AUTH_MODE: self-hosted
-      BETTER_AUTH_SECRET: ci-placeholder-secret-key-for-builds-only-000000
-      BETTER_AUTH_URL: http://localhost:3000
       DATABASE_URL: postgresql://test:test@localhost:5432/tokenarena_test
-
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: tokenarena_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v6
 
@@ -39,14 +92,55 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter ./web exec prisma generate
 
-      - name: Check linting and formatting
-        run: pnpm check
-
-      - name: Test CLI
-        run: pnpm --filter ./cli test
-
-      - name: Test web
+      - name: Test Web
         run: pnpm --filter ./web test
+
+  react-doctor:
+    name: React Doctor
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Scan React code health
+        uses: millionco/react-doctor@main
+        with:
+          directory: web
+          diff: ${{ github.event_name == 'pull_request' && github.base_ref || '' }}
+          fail-on: error
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          node-version: 22
+          offline: true
+          project: token-arena-web
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, test-cli, test-web, react-doctor]
+    env:
+      AUTH_MODE: self-hosted
+      BETTER_AUTH_SECRET: ci-placeholder-secret-key-for-builds-only-000000
+      BETTER_AUTH_URL: http://localhost:3000
+      DATABASE_URL: postgresql://test:test@localhost:5432/tokenarena_test
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install ${{ github.actor == 'dependabot[bot]' && '--no-frozen-lockfile' || '--frozen-lockfile' }}
+
+      - name: Generate Prisma client
+        run: pnpm --filter ./web exec prisma generate
 
       - name: Build all workspaces
         run: pnpm build
