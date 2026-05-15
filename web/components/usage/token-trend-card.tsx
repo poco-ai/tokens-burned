@@ -7,6 +7,11 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  formatDuration,
+  formatTokenCount,
+  formatUsdAmount,
+} from "@/lib/usage/format";
 import type { TokenTrendPoint } from "@/lib/usage/types";
 
 type TrendMetricView = "tokens" | "cost" | "totalTime";
