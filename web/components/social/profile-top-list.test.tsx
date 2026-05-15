@@ -4,6 +4,7 @@ import { Bar, BarChart, LabelList, ResponsiveContainer } from "recharts";
 import { describe, expect, it, vi } from "vitest";
 
 import { ProfileTopList } from "./profile-top-list";
+import { ProfileTopListChartInner } from "./profile-top-list-chart-inner";
 
 vi.mock("next-intl", () => ({
   useTranslations:
@@ -27,6 +28,15 @@ vi.mock("next-intl", () => ({
 
       return key;
     },
+}));
+
+vi.mock("next/dynamic", () => ({
+  default: () => {
+    const FakeComponent = (props: Record<string, unknown>) => props.children;
+    FakeComponent.displayName = "DynamicComponent";
+    FakeComponent.preload = () => Promise.resolve();
+    return FakeComponent;
+  },
 }));
 
 function collectElements(node: ReactNode): Array<{
@@ -70,16 +80,36 @@ function collectElements(node: ReactNode): Array<{
   return elements;
 }
 
-describe("ProfileTopList", () => {
+describe("ProfileTopListChartInner", () => {
   it("renders a recharts bar chart ranked by total tokens", () => {
-    const tree = ProfileTopList({
-      locale: "en",
-      emptyLabel: "No tool usage yet.",
-      items: [
-        { name: "Claude Code", totalTokens: 1200000, share: 0.75 },
-        { name: "Codex", totalTokens: 300000, share: 0.1875 },
-        { name: "OpenCode", totalTokens: 100000, share: 0.0625 },
+    const tree = ProfileTopListChartInner({
+      chartData: [
+        {
+          name: "Claude Code",
+          shortName: "Claude Code",
+          value: 1200000,
+          valueLabel: "1.2M",
+          share: 0.75,
+        },
+        {
+          name: "Codex",
+          shortName: "Codex",
+          value: 300000,
+          valueLabel: "300K",
+          share: 0.1875,
+        },
+        {
+          name: "OpenCode",
+          shortName: "OpenCode",
+          value: 100000,
+          valueLabel: "100K",
+          share: 0.0625,
+        },
       ],
+      chartHeight: 220,
+      locale: "en",
+      shareLabel: "Share",
+      tokenLabel: "Total Tokens",
     });
     const elements = collectElements(tree);
     const charts = elements.filter((element) => element.type === BarChart);
@@ -99,7 +129,9 @@ describe("ProfileTopList", () => {
     expect(markup).not.toContain("Claude Code");
     expect(markup).not.toContain("75.0%");
   });
+});
 
+describe("ProfileTopList", () => {
   it("renders the empty label when no items are available", () => {
     const markup = renderToStaticMarkup(
       <ProfileTopList locale="en" emptyLabel="No tool usage yet." items={[]} />,
