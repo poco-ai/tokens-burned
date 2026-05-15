@@ -914,7 +914,11 @@ function ReceiptBarcode({
       )}
     >
       {bars.slice(0, 96).map((width, index) => (
-        <span key={index} className="h-full bg-current" style={{ width }} />
+        <span
+          key={`bar-${index}`}
+          className="h-full bg-current"
+          style={{ width }}
+        />
       ))}
     </div>
   );
