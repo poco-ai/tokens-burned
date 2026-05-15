@@ -11,7 +11,8 @@ jobs:
     steps:
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ""
+          claude_code_oauth_token: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_args: "--model glm-5.1"
         env:
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
