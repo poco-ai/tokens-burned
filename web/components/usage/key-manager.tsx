@@ -3,7 +3,7 @@
 import { Copy, Pencil, Plus, Power, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useReducer, useState } from "react";
+import { Suspense, useEffect, useReducer, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -116,6 +116,24 @@ const activeBadgeClassName =
   "border-emerald-500/25 bg-emerald-500/12 text-emerald-700 dark:border-emerald-400/20 dark:text-emerald-300";
 
 export function KeyManager({
+  initialKeys,
+  variant = "page",
+  omitCardTitle = false,
+  sectionHeading,
+}: KeyManagerProps) {
+  return (
+    <Suspense fallback={null}>
+      <KeyManagerInner
+        initialKeys={initialKeys}
+        variant={variant}
+        omitCardTitle={omitCardTitle}
+        sectionHeading={sectionHeading}
+      />
+    </Suspense>
+  );
+}
+
+function KeyManagerInner({
   initialKeys,
   variant = "page",
   omitCardTitle = false,
