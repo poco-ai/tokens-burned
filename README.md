@@ -115,7 +115,17 @@ pnpm build:web    # 仅构建 Web
 pnpm test:cli     # 运行 CLI 测试并生成覆盖率
 pnpm test:web     # 运行 Web 测试并生成覆盖率
 pnpm check        # 运行 lint 与 format 检查
+pnpm react-doctor       # 使用 React Doctor 检查 Web 端 React 代码健康度
 ```
+
+#### React Doctor
+
+[React Doctor](https://github.com/millionco/react-doctor) 是面向 React / Next.js / Vite / React Native 项目的代码健康检查工具，会扫描 state & effects、性能、架构、安全、可访问性和 dead code 等问题，并给出可操作的诊断结果。仓库已接入两种使用方式：
+
+- **本地检查**：运行 `pnpm react-doctor`，等价于在 `web/` 工作区执行 `react-doctor . --project token-arena-web --full --offline --fail-on error`。
+- **CI 检查**：`CI` workflow 的 `React Doctor` job 会扫描 `web/`。PR 中只检查相对 base branch 变更的文件，并使用 GitHub token 更新 PR 评论；`main` 分支 push 会执行完整扫描。
+
+React Doctor 的 CI 采用 `--fail-on error`，仅 error 级诊断会阻塞构建；warning 会展示在报告中，便于后续迭代修复。
 
 Docker Compose 启动时，根目录 `.env` 里的 `DATABASE_URL` 应使用 `db` 作为主机名，例如：
 
