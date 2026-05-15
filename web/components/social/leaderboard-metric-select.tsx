@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { useCallback } from "react";
 import {
   Select,
   SelectContent,
@@ -44,24 +45,27 @@ export function LeaderboardMetricSelect({
   ariaLabel,
   options,
 }: LeaderboardMetricSelectProps) {
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const handleChange = (nextValue: string) => {
-    if (nextValue === value) {
-      return;
-    }
+  const handleChange = useCallback(
+    (nextValue: string) => {
+      if (nextValue === value) {
+        return;
+      }
 
-    router.replace(
-      buildLeaderboardHref(
-        pathname,
-        new URLSearchParams(searchParams.toString()),
-        nextValue,
-        defaultValue,
-      ),
-    );
-  };
+      replace(
+        buildLeaderboardHref(
+          pathname,
+          new URLSearchParams(searchParams.toString()),
+          nextValue,
+          defaultValue,
+        ),
+      );
+    },
+    [defaultValue, pathname, replace, searchParams, value],
+  );
 
   return (
     <Select value={value} onValueChange={handleChange}>

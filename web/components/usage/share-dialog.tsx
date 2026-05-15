@@ -180,16 +180,6 @@ export function UsageShareDialog({
     return () => window.clearTimeout(timeoutId);
   }, [status]);
 
-  useEffect(() => {
-    if (open !== false) {
-      return;
-    }
-
-    setStatus(null);
-    setLastAction(null);
-    setIsPreviewReady(false);
-  }, [open]);
-
   const exportImage = async () => {
     if (!exportRef.current) {
       throw new Error("Share card is not ready");
@@ -258,8 +248,22 @@ export function UsageShareDialog({
           ? "error"
           : "idle";
 
+  const resetState = () => {
+    setStatus(null);
+    setLastAction(null);
+    setIsPreviewReady(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          resetState();
+        }
+        onOpenChange?.(nextOpen);
+      }}
+    >
       {trigger === undefined ? (
         <DialogTrigger asChild>
           <Button type="button" variant="outline" size="sm">

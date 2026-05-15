@@ -6,6 +6,7 @@ import {
   formatDuration,
   formatPercentage,
   formatTokenCount,
+  formatUsdAmount,
   formatUsdRatePerMillion,
 } from "./format";
 
@@ -48,5 +49,49 @@ describe("usage format helpers", () => {
     expect(
       formatDateTime(new Date("2026-03-25T16:00:00.000Z"), "Asia/Shanghai"),
     ).toContain("2026");
+  });
+
+  it("formatUsdAmount formats values >= $1 with standard precision", () => {
+    expect(formatUsdAmount(42.5)).toBe("$42.50");
+    expect(formatUsdAmount(1)).toBe("$1.00");
+  });
+
+  it("formatUsdAmount uses compact format for large values with compact option", () => {
+    const result = formatUsdAmount(1500, "en", { compact: true });
+    expect(result).toContain("K");
+  });
+
+  it("formatUsdAmount formats small values (< $0.01) with more decimals", () => {
+    const result = formatUsdAmount(0.005);
+    expect(result).toBe("$0.005");
+  });
+
+  it("formatUsdAmount formats tiny values with maximum precision", () => {
+    const result = formatUsdAmount(0.001);
+    expect(result).toBe("$0.001");
+  });
+
+  it("formatTokenCount handles negative values", () => {
+    expect(formatTokenCount(-500)).toBe("-500");
+    expect(formatTokenCount(-1500)).toBe("-1.5K");
+    expect(formatTokenCount(-1500000)).toBe("-1.5M");
+  });
+
+  it("formatDuration returns 0s for zero seconds", () => {
+    expect(formatDuration(0)).toBe("0s");
+  });
+
+  it("formatDuration returns 0s for negative seconds", () => {
+    expect(formatDuration(-10)).toBe("0s");
+  });
+
+  it("formatDuration handles hours only (no remaining minutes)", () => {
+    expect(formatDuration(3600)).toBe("1h");
+    expect(formatDuration(7200)).toBe("2h");
+  });
+
+  it("formatUsdRatePerMillion uses fewer decimals for values >= 1", () => {
+    expect(formatUsdRatePerMillion(1)).toBe("$1/M");
+    expect(formatUsdRatePerMillion(10.5)).toBe("$10.5/M");
   });
 });
