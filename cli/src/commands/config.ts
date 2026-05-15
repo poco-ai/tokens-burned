@@ -25,11 +25,11 @@ const VALID_KEYS = ["apiKey", "apiUrl", "syncInterval", "logLevel"] as const;
 type ConfigKey = (typeof VALID_KEYS)[number];
 type ConfigSubcommand = "get" | "set" | "show";
 
-function isConfigKey(value: string): value is ConfigKey {
+export function isConfigKey(value: string): value is ConfigKey {
   return isValidConfigKey(value) && VALID_KEYS.includes(value as ConfigKey);
 }
 
-function formatConfigValue(key: ConfigKey, value: unknown): string {
+export function formatConfigValue(key: ConfigKey, value: unknown): string {
   if (value === undefined || value === null || value === "") {
     return "(empty)";
   }
