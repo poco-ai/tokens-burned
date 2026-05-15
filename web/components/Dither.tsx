@@ -274,8 +274,10 @@ function DitheredWaves({
 
   return (
     <>
+      {/* eslint-disable-next-line react/no-unknown-property -- Three.js JSX elements (scale) */}
       <mesh ref={mesh} scale={[viewport.width, viewport.height, 1]}>
         <planeGeometry args={[1, 1]} />
+        {/* eslint-disable-next-line react/no-unknown-property -- Three.js shaderMaterial props (vertexShader, fragmentShader, uniforms) */}
         <shaderMaterial
           vertexShader={waveVertexShader}
           fragmentShader={waveFragmentShader}
@@ -287,6 +289,7 @@ function DitheredWaves({
         <RetroEffect colorNum={colorNum} pixelSize={pixelSize} />
       </EffectComposer>
 
+      {/* eslint-disable-next-line react/no-unknown-property -- Three.js JSX elements (scale, visible) */}
       <mesh
         onPointerMove={handlePointerMove}
         position={[0, 0, 0.01]}
@@ -294,6 +297,7 @@ function DitheredWaves({
         visible={false}
       >
         <planeGeometry args={[1, 1]} />
+        {/* eslint-disable-next-line react/no-unknown-property -- Three.js meshBasicMaterial props (transparent, opacity) */}
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
     </>
