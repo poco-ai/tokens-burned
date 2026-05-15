@@ -94,6 +94,10 @@ docker compose down -v           # 停止并删除数据
 
 ### 本地开发
 
+[![CI](https://github.com/poco-ai/tokenarena/actions/workflows/ci.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/ci.yml) [![Coverage](https://github.com/poco-ai/tokenarena/actions/workflows/coverage.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/coverage.yml) [![CodeQL](https://github.com/poco-ai/tokenarena/actions/workflows/codeql.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/codeql.yml) [![Docker](https://github.com/poco-ai/tokenarena/actions/workflows/docker.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/docker.yml) [![npm publish](https://github.com/poco-ai/tokenarena/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/npm-publish.yml)
+
+[![CLI Coverage](https://img.shields.io/badge/CLI%20coverage-41%25-yellow)](https://github.com/poco-ai/tokenarena/actions/workflows/coverage.yml) [![Web Coverage](https://img.shields.io/badge/Web%20coverage-69%25-green)](https://github.com/poco-ai/tokenarena/actions/workflows/coverage.yml)
+
 ```bash
 pnpm install
 pnpm migrate      # 部署 Prisma 数据库迁移
