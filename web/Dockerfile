@@ -8,7 +8,7 @@ WORKDIR /app
 RUN npm install -g pnpm@10.32.1
 
 # Copy root workspace files
-COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY web/package.json ./web/
 COPY web/prisma ./web/prisma/
 
@@ -24,7 +24,7 @@ RUN npm install -g pnpm@10.32.1
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/web/node_modules ./web/node_modules
-COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY web ./web
 
 # Set environment variables for build
