@@ -94,7 +94,7 @@ docker compose down -v           # 停止并删除数据
 
 ### 本地开发
 
-[![CI](https://github.com/poco-ai/tokenarena/actions/workflows/ci.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/ci.yml) [![Coverage](https://codecov.io/gh/poco-ai/tokenarena/branch/main/graph/badge.svg)](https://codecov.io/gh/poco-ai/tokenarena) [![CodeQL](https://github.com/poco-ai/tokenarena/actions/workflows/codeql.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/codeql.yml) [![Docker](https://github.com/poco-ai/tokenarena/actions/workflows/docker.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/docker.yml) [![npm publish](https://github.com/poco-ai/tokenarena/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/npm-publish.yml)
+[![CI](https://github.com/poco-ai/tokenarena/actions/workflows/ci.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/ci.yml) [![Release](https://github.com/poco-ai/tokenarena/actions/workflows/release.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/release.yml) [![Coverage](https://codecov.io/gh/poco-ai/tokenarena/branch/main/graph/badge.svg)](https://codecov.io/gh/poco-ai/tokenarena) [![CodeQL](https://github.com/poco-ai/tokenarena/actions/workflows/codeql.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/codeql.yml)
 
 ```bash
 pnpm install
@@ -117,6 +117,8 @@ pnpm test:web     # 运行 Web 测试并生成覆盖率
 pnpm check        # 运行 lint 与 format 检查
 pnpm react-doctor       # 使用 React Doctor 检查 Web 端 React 代码健康度
 ```
+
+发布由 release-please 管理。普通提交合入 `main` 后，Release workflow 会维护一个 Release PR；确认版本和 changelog 后合并该 PR，云端会创建 `vX.Y.Z` tag / GitHub Release，发布 CLI 到 npm，并用同一个 tag 构建 Web Docker 镜像。不要手动修改三个 `package.json` 版本或手动打 release tag。
 
 Docker Compose 启动时，根目录 `.env` 里的 `DATABASE_URL` 应使用 `db` 作为主机名，例如：
  

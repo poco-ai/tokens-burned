@@ -28,8 +28,10 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY web ./web
 
 # Set environment variables for build
+ARG NEXT_PUBLIC_APP_VERSION=dev
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
 # Build-time placeholders (overridden at runtime)
 ENV BETTER_AUTH_URL=http://localhost:3000
 ENV BETTER_AUTH_SECRET=build-time-placeholder-secret-key
@@ -43,8 +45,10 @@ RUN pnpm build
 FROM node:26-alpine AS runner
 WORKDIR /app
 
+ARG NEXT_PUBLIC_APP_VERSION=dev
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_APP_VERSION=$NEXT_PUBLIC_APP_VERSION
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs \
