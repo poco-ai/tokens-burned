@@ -12,7 +12,7 @@ import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -98,29 +98,43 @@ export function AchievementNotification({
   const [open, setOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [state, setState] = useState<FetchState>({ status: "idle" });
+  const fetchAbortRef = useRef<AbortController>(null);
 
-  useEffect(() => {
-    if (!open || state.status === "success" || state.status === "loading") {
-      return;
-    }
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) {
+        if (state.status === "success" || state.status === "loading") {
+          setOpen(true);
+          return;
+        }
 
-    let isCancelled = false;
-    setState({ status: "loading" });
+        const controller = new AbortController();
+        fetchAbortRef.current = controller;
+        setState({ status: "loading" });
+        setOpen(true);
 
-    fetch("/api/achievements/summary", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Failed to load achievement summary");
-        const data = (await response.json()) as AchievementNotificationData;
-        if (!isCancelled) setState({ status: "success", data });
-      })
-      .catch(() => {
-        if (!isCancelled) setState({ status: "error" });
-      });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [open, state.status]);
+        fetch("/api/achievements/summary", {
+          cache: "no-store",
+          signal: controller.signal,
+        })
+          .then(async (response) => {
+            if (!response.ok)
+              throw new Error("Failed to load achievement summary");
+            const data = (await response.json()) as AchievementNotificationData;
+            setState({ status: "success", data });
+          })
+          .catch((_error: unknown) => {
+            if (controller.signal.aborted) return;
+            setState({ status: "error" });
+          });
+      } else {
+        fetchAbortRef.current?.abort();
+        fetchAbortRef.current = null;
+        setOpen(false);
+      }
+    },
+    [state.status],
+  );
 
   const summary = state.status === "success" ? state.data : null;
   const recentCount = summary?.recentUnlocks.length ?? 0;
@@ -140,7 +154,7 @@ export function AchievementNotification({
       )}
       onClick={() => {
         setReportOpen(true);
-        setOpen(false);
+        handleOpenChange(false);
       }}
     >
       <span className="relative min-w-0 flex-1 overflow-hidden">
@@ -164,7 +178,7 @@ export function AchievementNotification({
 
   return (
     <LazyMotion features={domAnimation}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button
             type="button"
