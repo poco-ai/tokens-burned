@@ -5,7 +5,7 @@ FROM node:26-alpine AS deps
 WORKDIR /app
 
 # Install pnpm (pinned to match dev environment)
-RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
+RUN npm install -g pnpm@10.32.1
 
 # Copy root workspace files
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -20,7 +20,7 @@ RUN printf 'onlyBuiltDependencies[]=@parcel/watcher\nonlyBuiltDependencies[]=@pr
 FROM node:26-alpine AS builder
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
+RUN npm install -g pnpm@10.32.1
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/web/node_modules ./web/node_modules
