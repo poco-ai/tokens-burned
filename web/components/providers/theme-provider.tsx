@@ -52,15 +52,11 @@ export function ThemeProvider({
   initialThemeMode,
   children,
 }: ThemeProviderProps) {
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- server cookie default, root layout never re-renders on navigation
   const [themeMode, setThemeModeState] = useState<ThemeMode>(initialThemeMode);
   const [resolvedTheme, setResolvedTheme] = useState<ThemeAppearance>(() =>
     resolveThemeAppearance(initialThemeMode, false),
   );
-
-  // Sync internal state when the prop changes (e.g. server-driven navigation).
-  useEffect(() => {
-    setThemeModeState(initialThemeMode);
-  }, [initialThemeMode]);
 
   useEffect(() => {
     setResolvedTheme(applyTheme(themeMode));
