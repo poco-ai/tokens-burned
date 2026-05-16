@@ -66,7 +66,8 @@ export async function runDaemon(opts: DaemonOptions = {}): Promise<void> {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
-      await runSync(config, {
+      const fresh = loadConfig();
+      await runSync(fresh ?? config, {
         quiet: true,
         source: "daemon",
         throws: true,
