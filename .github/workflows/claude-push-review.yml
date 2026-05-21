@@ -67,7 +67,7 @@ jobs:
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
 
       - name: Create review issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           ISSUE_TITLE: "代码变更评分: ${{ steps.claude-review.outputs.result }}"
         with:
