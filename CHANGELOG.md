@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/poco-ai/TokenArena/compare/v0.4.3...v0.5.0) (2026-05-25)
+
+
+### Features
+
+* **cli:** support .jsonl format and nested subagent sessions for Gemini CLI ([cf08120](https://github.com/poco-ai/TokenArena/commit/cf081201f9e5ca8cf53a6fd4194890356f27b7be))
+* **cli:** support custom Claude config directory via CLAUDE_CONFIG_DIR env var ([eb2b9a6](https://github.com/poco-ai/TokenArena/commit/eb2b9a6000b0f1a2995f98d1065d37ba2bf89d8f))
+
 ## [0.4.3](https://github.com/poco-ai/TokenArena/compare/v0.4.2...v0.4.3) (2026-05-16)
 
 
