@@ -130,14 +130,16 @@ export default async function PeoplePage({
   searchParams,
 }: PeoplePageProps) {
   const { locale } = await params;
-  const viewer = await getOptionalSession();
-  const t = await getTranslations({ locale, namespace: "social.people" });
-  const tNetwork = await getTranslations({
-    locale,
-    namespace: "social.network",
-  });
-  const tCard = await getTranslations({ locale, namespace: "social.card" });
-  const tTags = await getTranslations({ locale, namespace: "social.tags" });
+  const [viewer, t, tNetwork, tCard, tTags] = await Promise.all([
+    getOptionalSession(),
+    getTranslations({ locale, namespace: "social.people" }),
+    getTranslations({
+      locale,
+      namespace: "social.network",
+    }),
+    getTranslations({ locale, namespace: "social.card" }),
+    getTranslations({ locale, namespace: "social.tags" }),
+  ]);
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const query = firstValue(resolvedSearchParams?.query)?.trim() ?? "";
   const tab = normalizePeopleTab(

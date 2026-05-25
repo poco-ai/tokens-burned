@@ -4,7 +4,6 @@ import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "@/i18n/navigation";
 import { emitPreferenceSavedNotice } from "@/lib/usage/preference-notice";
 import { cn } from "@/lib/utils";
@@ -18,7 +17,7 @@ export function LeaderboardPublicProfileButton({
 }: LeaderboardPublicProfileButtonProps) {
   const t = useTranslations("social.leaderboard");
   const tSettings = useTranslations("usage.settings");
-  const router = useRouter();
+  const { refresh } = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +46,7 @@ export function LeaderboardPublicProfileButton({
         publicProfileEnabled: payload.publicProfileEnabled,
         bio: payload.bio,
       });
-      router.refresh();
+      refresh();
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -77,25 +76,5 @@ export function LeaderboardPublicProfileButton({
       </Button>
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
-  );
-}
-
-export function LeaderboardPrivateNotice() {
-  const t = useTranslations("social.leaderboard");
-
-  return (
-    <Card className="border-dashed shadow-sm ring-1 ring-border/60">
-      <CardContent className="flex flex-col gap-3 py-4">
-        <div className="flex flex-row items-center justify-between gap-4">
-          <div className="min-w-0 flex-1 space-y-1">
-            <div className="text-sm font-medium">{t("privateNoticeTitle")}</div>
-            <p className="text-sm text-muted-foreground">
-              {t("privateNoticeDescription")}
-            </p>
-          </div>
-          <LeaderboardPublicProfileButton />
-        </div>
-      </CardContent>
-    </Card>
   );
 }

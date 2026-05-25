@@ -1,5 +1,3 @@
-import type { AppLocale } from "@/lib/i18n";
-import { type ThemeMode, themeModes } from "@/lib/theme";
 import type { ProjectMode, UsageApiKeyStatus } from "./types";
 
 export const projectModeOptions: Array<{
@@ -20,22 +18,11 @@ export const projectModeOptions: Array<{
   },
 ];
 
-export const localeOptions: Array<{ value: AppLocale; label: string }> = [
-  { value: "en", label: "English" },
-  { value: "zh", label: "中文" },
-];
-
-export const themeModeOptions: Array<{ value: ThemeMode; label: string }> =
-  themeModes.map((value) => ({
-    value,
-    label: value === "light" ? "Light" : value === "dark" ? "Dark" : "System",
-  }));
-
 type PreferenceSnapshot = {
-  locale?: AppLocale;
-  theme?: ThemeMode;
   timezone: string;
   projectMode: ProjectMode;
+  locale?: string;
+  theme?: string;
   publicProfileEnabled?: boolean;
   bio?: string | null;
 };
@@ -53,10 +40,10 @@ export function hasPreferenceChanges(
   current: PreferenceSnapshot,
 ) {
   return (
-    initial.locale !== current.locale ||
-    initial.theme !== current.theme ||
     initial.timezone !== current.timezone ||
     initial.projectMode !== current.projectMode ||
+    initial.locale !== current.locale ||
+    initial.theme !== current.theme ||
     initial.publicProfileEnabled !== current.publicProfileEnabled ||
     (initial.bio ?? "") !== (current.bio ?? "")
   );

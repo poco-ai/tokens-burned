@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginDitherBackground } from "@/components/auth/login-dither-background";
 import { LoginForm } from "@/components/auth/login-form";
@@ -40,9 +41,11 @@ export default async function LoginPage({
   params,
   searchParams,
 }: LoginPageProps) {
-  const { locale } = await params;
-  const session = await getOptionalSession();
-  const t = await getTranslations("auth.login");
+  const [{ locale }, session, t] = await Promise.all([
+    params,
+    getOptionalSession(),
+    getTranslations("auth.login"),
+  ]);
   const providers = getEnabledLoginProviders();
 
   if (session) {
@@ -82,7 +85,9 @@ export default async function LoginPage({
         }
         footerActions={
           <>
-            <LanguageSwitcher footerIcon variant="icon" />
+            <Suspense fallback={null}>
+              <LanguageSwitcher footerIcon variant="icon" />
+            </Suspense>
             <ThemeSwitcher footerIcon variant="icon" />
           </>
         }

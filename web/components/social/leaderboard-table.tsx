@@ -54,18 +54,25 @@ type LeaderboardTableProps = {
   };
 };
 
-export function LeaderboardTable({
+function LeaderboardEntryRow({
+  entry,
   locale,
-  title,
-  headerRight = null,
-  emptyPlain = false,
-  emptyLabel,
-  entries,
-  viewerEntry = null,
-  viewerSummary = null,
-  viewerNotice = null,
   labels,
-}: LeaderboardTableProps) {
+}: {
+  entry: LeaderboardEntry;
+  locale: string;
+  labels: LeaderboardTableProps["labels"];
+}) {
+  const topRankMedal =
+    entry.rank === 1
+      ? "🥇"
+      : entry.rank === 2
+        ? "🥈"
+        : entry.rank === 3
+          ? "🥉"
+          : null;
+  const isViewerRow = entry.isSelf;
+
   function getTopRankRowClass(rank: number) {
     if (rank === 1) {
       return "bg-amber-50/80 hover:bg-amber-50 dark:bg-amber-950/30 dark:hover:bg-amber-950/40";
@@ -79,130 +86,122 @@ export function LeaderboardTable({
     return "";
   }
 
-  function getTopRankMedal(rank: number) {
-    if (rank === 1) {
-      return "🥇";
-    }
-    if (rank === 2) {
-      return "🥈";
-    }
-    if (rank === 3) {
-      return "🥉";
-    }
-    return null;
-  }
+  const rowClasses = [
+    isViewerRow
+      ? "bg-sky-50/80 ring-2 ring-inset ring-sky-500/40 hover:bg-sky-50 dark:bg-sky-950/30 dark:hover:bg-sky-950/40 dark:ring-sky-400/30"
+      : "",
+    getTopRankRowClass(entry.rank),
+  ]
+    .filter(Boolean)
+    .join(" ");
 
+  return (
+    <TableRow
+      id={isViewerRow ? "leaderboard-self-row" : undefined}
+      className={cn(
+        rowClasses || undefined,
+        isViewerRow ? "scroll-mt-24" : undefined,
+      )}
+    >
+      <TableCell className="font-medium">
+        <div className="flex items-center gap-2">
+          {topRankMedal ? (
+            <span className="text-base leading-none" aria-hidden="true">
+              {topRankMedal}
+            </span>
+          ) : (
+            <span>#{entry.rank}</span>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="min-w-64">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Link
+            href={`/u/${entry.username}`}
+            className="truncate font-medium text-foreground hover:underline"
+          >
+            {entry.name}
+          </Link>
+          <span className="text-sm text-muted-foreground">
+            @{entry.username}
+          </span>
+          {entry.isSelf ? <Badge variant="outline">{labels.you}</Badge> : null}
+          {entry.isFollowing && entry.followsYou ? (
+            <Badge variant="secondary">{labels.mutual}</Badge>
+          ) : null}
+        </div>
+      </TableCell>
+      <TableCell className="text-right font-medium">
+        {formatTokenCount(entry.totalTokens)}
+      </TableCell>
+      <TableCell className="text-right font-medium">
+        {formatUsdAmount(entry.estimatedCostUsd, locale)}
+      </TableCell>
+      <TableCell className="text-right text-muted-foreground">
+        {formatDuration(entry.activeSeconds)}
+      </TableCell>
+      <TableCell className="text-right text-muted-foreground">
+        {entry.sessions.toLocaleString(locale)}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function ViewerNoticeRow({
+  viewerNotice,
+  labels,
+}: {
+  viewerNotice: NonNullable<LeaderboardTableProps["viewerNotice"]>;
+  labels: LeaderboardTableProps["labels"];
+}) {
+  return (
+    <TableRow className="bg-muted/30">
+      <TableCell className="font-medium text-muted-foreground">-</TableCell>
+      <TableCell className="min-w-64">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Link
+            href={`/u/${viewerNotice.username}`}
+            className="truncate font-medium text-foreground hover:underline"
+          >
+            {viewerNotice.name}
+          </Link>
+          <span className="text-sm text-muted-foreground">
+            @{viewerNotice.username}
+          </span>
+          <Badge variant="outline">{labels.you}</Badge>
+        </div>
+      </TableCell>
+      <TableCell
+        colSpan={4}
+        className="text-right text-sm text-muted-foreground"
+      >
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span>{viewerNotice.message}</span>
+          {viewerNotice.action ?? null}
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+export function LeaderboardTable({
+  locale,
+  title,
+  headerRight = null,
+  emptyPlain = false,
+  emptyLabel,
+  entries,
+  viewerEntry = null,
+  viewerSummary = null,
+  viewerNotice = null,
+  labels,
+}: LeaderboardTableProps) {
   const pinnedViewerEntry =
     viewerEntry && entries.every((entry) => entry.userId !== viewerEntry.userId)
       ? viewerEntry
       : null;
   const pinnedViewerNotice =
     !pinnedViewerEntry && viewerNotice ? viewerNotice : null;
-
-  function renderEntryRow(entry: LeaderboardEntry, key: string) {
-    const topRankMedal = getTopRankMedal(entry.rank);
-    const isViewerRow = entry.isSelf;
-    const rowClasses = [
-      isViewerRow
-        ? "bg-sky-50/80 ring-2 ring-inset ring-sky-500/40 hover:bg-sky-50 dark:bg-sky-950/30 dark:hover:bg-sky-950/40 dark:ring-sky-400/30"
-        : "",
-      getTopRankRowClass(entry.rank),
-    ]
-      .filter(Boolean)
-      .join(" ");
-
-    return (
-      <TableRow
-        key={key}
-        id={isViewerRow ? "leaderboard-self-row" : undefined}
-        className={cn(
-          rowClasses || undefined,
-          isViewerRow ? "scroll-mt-24" : undefined,
-        )}
-      >
-        <TableCell className="font-medium">
-          <div className="flex items-center gap-2">
-            {topRankMedal ? (
-              <span className="text-base leading-none" aria-hidden="true">
-                {topRankMedal}
-              </span>
-            ) : (
-              <span>#{entry.rank}</span>
-            )}
-          </div>
-        </TableCell>
-        <TableCell className="min-w-64">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <Link
-              href={`/u/${entry.username}`}
-              className="truncate font-medium text-foreground hover:underline"
-            >
-              {entry.name}
-            </Link>
-            <span className="text-sm text-muted-foreground">
-              @{entry.username}
-            </span>
-            {entry.isSelf ? (
-              <Badge variant="outline">{labels.you}</Badge>
-            ) : null}
-            {entry.isFollowing && entry.followsYou ? (
-              <Badge variant="secondary">{labels.mutual}</Badge>
-            ) : null}
-          </div>
-        </TableCell>
-        <TableCell className="text-right font-medium">
-          {formatTokenCount(entry.totalTokens)}
-        </TableCell>
-        <TableCell className="text-right font-medium">
-          {formatUsdAmount(entry.estimatedCostUsd, locale)}
-        </TableCell>
-        <TableCell className="text-right text-muted-foreground">
-          {formatDuration(entry.activeSeconds)}
-        </TableCell>
-        <TableCell className="text-right text-muted-foreground">
-          {entry.sessions.toLocaleString(locale)}
-        </TableCell>
-      </TableRow>
-    );
-  }
-
-  function renderViewerNoticeRow() {
-    if (!pinnedViewerNotice) {
-      return null;
-    }
-
-    return (
-      <TableRow
-        key={`${pinnedViewerNotice.username}-viewer-notice`}
-        className="bg-muted/30"
-      >
-        <TableCell className="font-medium text-muted-foreground">-</TableCell>
-        <TableCell className="min-w-64">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <Link
-              href={`/u/${pinnedViewerNotice.username}`}
-              className="truncate font-medium text-foreground hover:underline"
-            >
-              {pinnedViewerNotice.name}
-            </Link>
-            <span className="text-sm text-muted-foreground">
-              @{pinnedViewerNotice.username}
-            </span>
-            <Badge variant="outline">{labels.you}</Badge>
-          </div>
-        </TableCell>
-        <TableCell
-          colSpan={4}
-          className="text-right text-sm text-muted-foreground"
-        >
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <span>{pinnedViewerNotice.message}</span>
-            {pinnedViewerNotice.action ?? null}
-          </div>
-        </TableCell>
-      </TableRow>
-    );
-  }
 
   return (
     <Card className="gap-0 overflow-hidden p-0 shadow-sm ring-1 ring-border/60">
@@ -270,7 +269,14 @@ export function LeaderboardTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {entries.map((entry) => renderEntryRow(entry, entry.userId))}
+              {entries.map((entry) => (
+                <LeaderboardEntryRow
+                  key={entry.userId}
+                  entry={entry}
+                  locale={locale}
+                  labels={labels}
+                />
+              ))}
               {pinnedViewerEntry ? (
                 <>
                   <TableRow className="hover:bg-transparent">
@@ -281,10 +287,11 @@ export function LeaderboardTable({
                       ...
                     </TableCell>
                   </TableRow>
-                  {renderEntryRow(
-                    pinnedViewerEntry,
-                    `${pinnedViewerEntry.userId}-viewer`,
-                  )}
+                  <LeaderboardEntryRow
+                    entry={pinnedViewerEntry}
+                    locale={locale}
+                    labels={labels}
+                  />
                 </>
               ) : null}
               {pinnedViewerNotice ? (
@@ -299,7 +306,10 @@ export function LeaderboardTable({
                       </TableCell>
                     </TableRow>
                   ) : null}
-                  {renderViewerNoticeRow()}
+                  <ViewerNoticeRow
+                    viewerNotice={pinnedViewerNotice}
+                    labels={labels}
+                  />
                 </>
               ) : null}
             </TableBody>

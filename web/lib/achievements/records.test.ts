@@ -9,14 +9,14 @@ import type { AchievementStatus } from "./types";
 function createStatus(
   overrides: Partial<AchievementStatus> & Pick<AchievementStatus, "code">,
 ): AchievementStatus {
+  const { code, ...rest } = overrides;
   return {
-    code: overrides.code,
     category: "volume",
     tier: "bronze",
     iconKey: "coins",
     points: 10,
-    titleKey: `achievements.items.${overrides.code}.title`,
-    descriptionKey: `achievements.items.${overrides.code}.description`,
+    titleKey: `achievements.items.${code}.title`,
+    descriptionKey: `achievements.items.${code}.description`,
     order: 1,
     unlocked: true,
     isQualifiedNow: true,
@@ -30,7 +30,8 @@ function createStatus(
       ratio: 0,
       unit: "count",
     },
-    ...overrides,
+    code,
+    ...rest,
   };
 }
 
@@ -38,13 +39,14 @@ function createRecord(
   overrides: Partial<StoredAchievementRecord> &
     Pick<StoredAchievementRecord, "code">,
 ): StoredAchievementRecord {
+  const { code, ...rest } = overrides;
   return {
-    code: overrides.code,
     awardCount: 0,
     firstAwardedAt: null,
     lastAwardedAt: null,
     state: null,
-    ...overrides,
+    code,
+    ...rest,
   };
 }
 

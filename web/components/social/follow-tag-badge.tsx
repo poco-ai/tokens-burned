@@ -20,7 +20,7 @@ type FollowTagBadgeProps = {
 };
 
 export function FollowTagBadge({ locale, username, tag }: FollowTagBadgeProps) {
-  const router = useRouter();
+  const { push, refresh } = useRouter();
   const tTags = useTranslations("social.tags");
   const tErrors = useTranslations("social.errors");
   const [isPending, startTransition] = useTransition();
@@ -45,7 +45,7 @@ export function FollowTagBadge({ locale, username, tag }: FollowTagBadgeProps) {
         );
 
         if (response.status === 401) {
-          router.push(`/${locale}/login`);
+          push(`/${locale}/login`);
           return;
         }
 
@@ -54,7 +54,7 @@ export function FollowTagBadge({ locale, username, tag }: FollowTagBadgeProps) {
         }
 
         setOpen(false);
-        router.refresh();
+        refresh();
       } catch {
         // Silently fail - user can retry
       }

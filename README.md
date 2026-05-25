@@ -1,6 +1,6 @@
 [![tokenarena](assets/banner.png)](https://token.poco-ai.com)
 
-[![Docker Image](https://img.shields.io/badge/Docker%20Image-tokenarena%3Alatest-blue?logo=docker&logoColor=white)](https://github.com/poco-ai/tokenarena/pkgs/container/tokenarena) [![pnpm](https://img.shields.io/badge/pnpm-monorepo-blue?logo=pnpm)](https://pnpm.io/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/poco-ai/tokenarena/pulls) [![License](https://img.shields.io/github/license/poco-ai/tokenarena)](LICENSE)
+[![Docker Image](https://img.shields.io/badge/Docker%20Image-tokenarena%3Alatest-blue?logo=docker&logoColor=white)](https://github.com/poco-ai/tokenarena/pkgs/container/tokenarena) [![pnpm](https://img.shields.io/badge/pnpm-monorepo-blue?logo=pnpm)](https://pnpm.io/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://github.com/poco-ai/tokenarena/pulls) [![License](https://img.shields.io/github/license/poco-ai/tokenarena)](LICENSE) [![React Doctor](https://www.react.doctor/share/badge?p=web&s=95&e=0&w=19&f=17)](https://www.react.doctor/share?p=web&s=95&e=0&w=19&f=17)
 
 你有没有好奇过：
 
@@ -94,17 +94,34 @@ docker compose down -v           # 停止并删除数据
 
 ### 本地开发
 
+[![CI](https://github.com/poco-ai/tokenarena/actions/workflows/ci.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/ci.yml) [![Release](https://github.com/poco-ai/tokenarena/actions/workflows/release.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/release.yml) [![Coverage](https://codecov.io/gh/poco-ai/tokenarena/branch/main/graph/badge.svg)](https://codecov.io/gh/poco-ai/tokenarena) [![CodeQL](https://github.com/poco-ai/tokenarena/actions/workflows/codeql.yml/badge.svg)](https://github.com/poco-ai/tokenarena/actions/workflows/codeql.yml)
+
 ```bash
 pnpm install
-pnpm migrate    # 迁移数据库
-pnpm db:seed # 生成一些 mock user 数据，用于开发
-pnpm dev:web    # 启动 Web 仪表盘
-pnpm build:cli    # 启动 CLI 工具
+pnpm migrate      # 部署 Prisma 数据库迁移
+pnpm db:seed      # 生成一些 mock user 数据，用于开发
+pnpm dev:web      # 启动 Web 仪表盘
+pnpm dev:cli      # 启动 CLI 开发模式
+pnpm build:cli    # 构建 CLI 工具
 TOKEN_ARENA_API_URL=http://localhost:3000 node cli/dist/index.js init
 ```
 
-Docker Compose 启动时，根目录 `.env` 里的 `DATABASE_URL` 应使用 `db` 作为主机名，例如：
+常用工作区命令：
 
+```bash
+pnpm build        # 构建 CLI 与 Web
+pnpm build:cli    # 仅构建 CLI
+pnpm build:web    # 仅构建 Web
+pnpm test:cli     # 运行 CLI 测试并生成覆盖率
+pnpm test:web     # 运行 Web 测试并生成覆盖率
+pnpm check        # 运行 lint 与 format 检查
+pnpm react-doctor       # 使用 React Doctor 检查 Web 端 React 代码健康度
+```
+
+发布由 release-please 管理。普通提交合入 `main` 后，Release workflow 会维护一个 Release PR；确认版本和 changelog 后合并该 PR，云端会创建 `vX.Y.Z` tag / GitHub Release，发布 CLI 到 npm，并用同一个 tag 构建 Web Docker 镜像。不要手动修改三个 `package.json` 版本或手动打 release tag。
+
+Docker Compose 启动时，根目录 `.env` 里的 `DATABASE_URL` 应使用 `db` 作为主机名，例如：
+ 
 ```bash
 DATABASE_URL=postgresql://postgres:postgres@db:5432/tokens_burned
 ```
@@ -123,6 +140,7 @@ pnpm run format:cli
 pnpm run format:web
 pnpm run lint:cli
 pnpm run lint:web
+pnpm run check
 ```
 
 如果是旧工作区在 `.gitattributes` 生效前检出的文件导致换行不一致，可以额外执行一次：

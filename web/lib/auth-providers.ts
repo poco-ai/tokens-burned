@@ -264,17 +264,16 @@ function getProviderCredentials(
 }
 
 export function getEnabledLoginProviders(env = process.env): LoginProvider[] {
-  return providerDefinitions
-    .filter((provider) =>
+  return providerDefinitions.reduce<LoginProvider[]>((acc, provider) => {
+    const isEnabled =
       provider.kind === "social"
         ? hasProviderCredentials(provider.credentials, env)
-        : hasOAuth2ProviderConfig(provider, env),
-    )
-    .map(({ id, kind, label }) => ({
-      id,
-      kind,
-      label,
-    }));
+        : hasOAuth2ProviderConfig(provider, env);
+    if (isEnabled) {
+      acc.push({ id: provider.id, kind: provider.kind, label: provider.label });
+    }
+    return acc;
+  }, []);
 }
 
 export function isSocialProviderEnabled(

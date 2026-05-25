@@ -167,10 +167,7 @@ function normalizeSessionUsage(
   };
 }
 
-export async function upsertDevice(
-  db: UsageWriteClient,
-  input: UpsertDeviceInput,
-) {
+async function upsertDevice(db: UsageWriteClient, input: UpsertDeviceInput) {
   return db.device.upsert({
     where: {
       userId_deviceId: {
@@ -193,7 +190,7 @@ export async function upsertDevice(
   });
 }
 
-export async function upsertBuckets(
+async function upsertBuckets(
   db: UsageWriteClient,
   input: IngestUsagePayloadInput,
 ) {
@@ -231,7 +228,7 @@ export async function upsertBuckets(
   );
 }
 
-export async function upsertSessions(
+async function upsertSessions(
   db: UsageWriteClient,
   input: IngestUsagePayloadInput,
   catalog: Awaited<ReturnType<typeof getPricingCatalog>>,
@@ -388,8 +385,10 @@ export async function ingestUsagePayload(input: IngestUsagePayloadInput) {
       })),
     });
 
-    await upsertBuckets(tx, input);
-    await upsertSessions(tx, input, catalog);
+    await Promise.all([
+      upsertBuckets(tx, input),
+      upsertSessions(tx, input, catalog),
+    ]);
 
     const affectedDates = collectAffectedLeaderboardDates({
       bucketStarts: input.payload.buckets.map((bucket) => bucket.bucketStart),

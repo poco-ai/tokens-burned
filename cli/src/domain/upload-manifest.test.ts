@@ -249,12 +249,10 @@ describe("diffUploadManifest", () => {
     });
     const legacyPrevious = JSON.parse(
       JSON.stringify(previous),
-    ) as UploadManifest & {
-      scope: UploadManifest["scope"] & {
-        snapshotProtocolVersion?: number;
-      };
-    };
-    delete legacyPrevious.scope.snapshotProtocolVersion;
+    ) as unknown as UploadManifest;
+    const legacyScope = legacyPrevious.scope as Record<string, unknown> &
+      UploadManifest["scope"];
+    Reflect.deleteProperty(legacyScope, "snapshotProtocolVersion");
 
     const diff = diffUploadManifest({
       buckets: currentBuckets,

@@ -164,6 +164,8 @@ async function seedLeaderboardDaysAndBuckets(
     return;
   }
 
+  const ops: Promise<unknown>[] = [];
+
   for (let userIndex = 0; userIndex < userIds.length; userIndex++) {
     const userId = userIds[userIndex];
     const weeklyTotal = weeklyTotals[userIndex] ?? 100_000;
@@ -179,141 +181,152 @@ async function seedLeaderboardDaysAndBuckets(
       const sessions = 4 + (userIndex % 5) + (d % 3);
       const activeSeconds = 900 * sessions;
 
-      await prisma.leaderboardUserDay.upsert({
-        where: {
-          userId_statDate: {
+      ops.push(
+        prisma.leaderboardUserDay.upsert({
+          where: {
+            userId_statDate: {
+              userId,
+              statDate,
+            },
+          },
+          create: {
             userId,
             statDate,
+            inputTokens: BigInt(inputTokens),
+            outputTokens: BigInt(outputTokens),
+            reasoningTokens: BigInt(0),
+            cachedTokens: BigInt(0),
+            totalTokens: BigInt(totalTokens),
+            activeSeconds,
+            sessions,
+            messages: 20 + d * 5,
+            userMessages: 10 + d * 3,
           },
-        },
-        create: {
-          userId,
-          statDate,
-          inputTokens: BigInt(inputTokens),
-          outputTokens: BigInt(outputTokens),
-          reasoningTokens: BigInt(0),
-          cachedTokens: BigInt(0),
-          totalTokens: BigInt(totalTokens),
-          activeSeconds,
-          sessions,
-          messages: 20 + d * 5,
-          userMessages: 10 + d * 3,
-        },
-        update: {
-          inputTokens: BigInt(inputTokens),
-          outputTokens: BigInt(outputTokens),
-          reasoningTokens: BigInt(0),
-          cachedTokens: BigInt(0),
-          totalTokens: BigInt(totalTokens),
-          activeSeconds,
-          sessions,
-          messages: 20 + d * 5,
-          userMessages: 10 + d * 3,
-        },
-      });
+          update: {
+            inputTokens: BigInt(inputTokens),
+            outputTokens: BigInt(outputTokens),
+            reasoningTokens: BigInt(0),
+            cachedTokens: BigInt(0),
+            totalTokens: BigInt(totalTokens),
+            activeSeconds,
+            sessions,
+            messages: 20 + d * 5,
+            userMessages: 10 + d * 3,
+          },
+        }),
+      );
 
-      await prisma.usageBucket.upsert({
-        where: {
-          userId_deviceId_source_model_projectKey_bucketStart: {
+      ops.push(
+        prisma.usageBucket.upsert({
+          where: {
+            userId_deviceId_source_model_projectKey_bucketStart: {
+              userId,
+              deviceId: SEED_DEVICE_ID,
+              source: SEED_SOURCE,
+              model: SEED_MODEL,
+              projectKey: SEED_PROJECT_KEY,
+              bucketStart: statDate,
+            },
+          },
+          create: {
             userId,
             deviceId: SEED_DEVICE_ID,
             source: SEED_SOURCE,
             model: SEED_MODEL,
             projectKey: SEED_PROJECT_KEY,
+            projectLabel: SEED_PROJECT_LABEL,
             bucketStart: statDate,
+            inputTokens: BigInt(inputTokens),
+            outputTokens: BigInt(outputTokens),
+            reasoningTokens: BigInt(0),
+            cachedTokens: BigInt(0),
+            totalTokens: BigInt(totalTokens),
           },
-        },
-        create: {
-          userId,
-          deviceId: SEED_DEVICE_ID,
-          source: SEED_SOURCE,
-          model: SEED_MODEL,
-          projectKey: SEED_PROJECT_KEY,
-          projectLabel: SEED_PROJECT_LABEL,
-          bucketStart: statDate,
-          inputTokens: BigInt(inputTokens),
-          outputTokens: BigInt(outputTokens),
-          reasoningTokens: BigInt(0),
-          cachedTokens: BigInt(0),
-          totalTokens: BigInt(totalTokens),
-        },
-        update: {
-          inputTokens: BigInt(inputTokens),
-          outputTokens: BigInt(outputTokens),
-          reasoningTokens: BigInt(0),
-          cachedTokens: BigInt(0),
-          totalTokens: BigInt(totalTokens),
-          projectLabel: SEED_PROJECT_LABEL,
-        },
-      });
+          update: {
+            inputTokens: BigInt(inputTokens),
+            outputTokens: BigInt(outputTokens),
+            reasoningTokens: BigInt(0),
+            cachedTokens: BigInt(0),
+            totalTokens: BigInt(totalTokens),
+            projectLabel: SEED_PROJECT_LABEL,
+          },
+        }),
+      );
     }
   }
+
+  await Promise.all(ops);
 }
 
 async function seedFollows(edges: Array<[string, string]>) {
-  for (const [followerId, followingId] of edges) {
-    await prisma.follow.upsert({
-      where: {
-        followerId_followingId: {
+  await Promise.all(
+    edges.map(([followerId, followingId]) =>
+      prisma.follow.upsert({
+        where: {
+          followerId_followingId: {
+            followerId,
+            followingId,
+          },
+        },
+        create: {
           followerId,
           followingId,
+          tag: FollowTag.peer,
         },
-      },
-      create: {
-        followerId,
-        followingId,
-        tag: FollowTag.peer,
-      },
-      update: {
-        tag: FollowTag.peer,
-      },
-    });
-  }
+        update: {
+          tag: FollowTag.peer,
+        },
+      }),
+    ),
+  );
 }
 
 async function main() {
   const rng = mulberry32(MOCK_RANDOM_SEED);
   const mockUsers = buildMockUsers(rng);
   const weeklyTotals = buildWeeklyTotals(rng, MOCK_USER_NUM);
-  const resolvedIds: string[] = [];
 
-  for (const u of mockUsers) {
-    const user = await prisma.user.upsert({
-      where: { email: u.email },
-      create: {
-        id: u.id,
-        name: u.name,
-        username: u.username,
-        email: u.email,
-        emailVerified: true,
-        usernameNeedsSetup: false,
-        usernameAutoAdjusted: false,
-      },
-      update: {
-        name: u.name,
-        username: u.username,
-        emailVerified: true,
-        usernameNeedsSetup: false,
-        usernameAutoAdjusted: false,
-      },
-    });
+  await Promise.all(
+    mockUsers.map(async (u) => {
+      const user = await prisma.user.upsert({
+        where: { email: u.email },
+        create: {
+          id: u.id,
+          name: u.name,
+          username: u.username,
+          email: u.email,
+          emailVerified: true,
+          usernameNeedsSetup: false,
+          usernameAutoAdjusted: false,
+        },
+        update: {
+          name: u.name,
+          username: u.username,
+          emailVerified: true,
+          usernameNeedsSetup: false,
+          usernameAutoAdjusted: false,
+        },
+      });
 
-    resolvedIds.push(user.id);
+      await prisma.usagePreference.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          projectHashSalt: randomProjectHashSalt(),
+          publicProfileEnabled: true,
+          bio: `Seeded mock account (${u.username})`,
+        },
+        update: {
+          publicProfileEnabled: true,
+          bio: `Seeded mock account (${u.username})`,
+        },
+      });
 
-    await prisma.usagePreference.upsert({
-      where: { userId: user.id },
-      create: {
-        userId: user.id,
-        projectHashSalt: randomProjectHashSalt(),
-        publicProfileEnabled: true,
-        bio: `Seeded mock account (${u.username})`,
-      },
-      update: {
-        publicProfileEnabled: true,
-        bio: `Seeded mock account (${u.username})`,
-      },
-    });
-  }
+      return user.id;
+    }),
+  );
+
+  const resolvedIds = mockUsers.map((u) => u.id);
 
   await seedLeaderboardDaysAndBuckets(resolvedIds, weeklyTotals);
 

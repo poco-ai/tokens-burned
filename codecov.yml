@@ -1,0 +1,65 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+        paths:
+          - "cli/src/"
+          - "web/lib/"
+          - "web/components/"
+    cli:
+      flags:
+        - cli
+      target: auto
+      threshold: 2%
+    web:
+      flags:
+        - web
+      target: auto
+      threshold: 2%
+    patch:
+      default:
+        target: auto
+        threshold: 5%
+
+flags:
+  cli:
+    paths:
+      - cli/src/
+    carryforward: true
+  web:
+    paths:
+      - web/lib/
+      - web/components/
+    carryforward: true
+
+component_management:
+  individual_components:
+    - component_id: cli
+      name: CLI
+      paths:
+        - cli/src/
+    - component_id: web
+      name: Web
+      paths:
+        - web/lib/
+        - web/components/
+
+comment:
+  layout: header, flags, components, files
+  behavior: once
+  require_changes: true
+  hide_comment_details: false
+
+github_checks:
+  annotations: true
+
+ignore:
+  - "cli/dist/**"
+  - "web/.next/**"
+  - "web/public/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.d.ts"
+  - "**/types.ts"

@@ -19,7 +19,7 @@ export type PricingCatalogModel = {
   cost: PricingCost | null;
 };
 
-export type PricingCatalogProvider = {
+type PricingCatalogProvider = {
   id: string;
   name: string;
   modelsByLower: Map<string, PricingCatalogModel>;
@@ -43,14 +43,14 @@ type RawCatalogPayload = Record<
   }
 >;
 
-export type SerializedPricingCatalogModel = readonly [
+type SerializedPricingCatalogModel = readonly [
   lookupKey: string,
   modelId: string,
   modelName: string | null,
   cost: PricingCost | null,
 ];
 
-export type SerializedPricingCatalogProvider = readonly [
+type SerializedPricingCatalogProvider = readonly [
   providerId: string,
   providerName: string | null,
   models: SerializedPricingCatalogModel[],

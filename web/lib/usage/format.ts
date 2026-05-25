@@ -13,7 +13,7 @@ function getDatePartsFormatter(timezone: string) {
     return cached;
   }
 
-  const formatter = new Intl.DateTimeFormat("en-CA", {
+  const formatter = Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
     year: "numeric",
     month: "2-digit",
@@ -33,7 +33,7 @@ function getDateFormatter(timezone: string, locale = "en") {
     return cached;
   }
 
-  const formatter = new Intl.DateTimeFormat(locale, {
+  const formatter = Intl.DateTimeFormat(locale, {
     timeZone: timezone,
     year: "numeric",
     month: "short",
@@ -53,7 +53,7 @@ function getTimeFormatter(timezone: string, locale = "en") {
     return cached;
   }
 
-  const formatter = new Intl.DateTimeFormat(locale, {
+  const formatter = Intl.DateTimeFormat(locale, {
     timeZone: timezone,
     hour: "2-digit",
     minute: "2-digit",
@@ -72,7 +72,7 @@ function getPercentageFormatter(locale = "en") {
     return cached;
   }
 
-  const formatter = new Intl.NumberFormat(locale, {
+  const formatter = Intl.NumberFormat(locale, {
     style: "percent",
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
@@ -90,7 +90,7 @@ function getCompactCurrencyFormatter(locale = "en") {
     return cached;
   }
 
-  const formatter = new Intl.NumberFormat(locale, {
+  const formatter = Intl.NumberFormat(locale, {
     style: "currency",
     currency: "USD",
     notation: "compact",
@@ -110,7 +110,7 @@ function getPreciseCurrencyFormatter(locale = "en", maximumFractionDigits = 2) {
     return cached;
   }
 
-  const formatter = new Intl.NumberFormat(locale, {
+  const formatter = Intl.NumberFormat(locale, {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 2,
@@ -130,7 +130,7 @@ function getRateCurrencyFormatter(maximumFractionDigits = 4) {
     return cached;
   }
 
-  const formatter = new Intl.NumberFormat("en-US", {
+  const formatter = Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 0,

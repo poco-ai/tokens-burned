@@ -1,19 +1,18 @@
 import { execSync } from "node:child_process";
+import { platform } from "node:os";
 
 /**
  * Check if a command is available in PATH.
- * Uses POSIX-standard `command -v` which is more reliable than `which`.
+ * Uses `command -v` on Unix and `where` on Windows.
  *
  * @param command - The command name to check (e.g., 'systemctl', 'git')
  * @returns true if the command exists, false otherwise
- *
- * @remarks
- * Ensure you're using macOS/Linux. This uses shell built-in `command -v`
- * which may not be available on Windows.
  */
 export function isCommandAvailable(command: string): boolean {
   try {
-    execSync(`command -v ${command}`, { stdio: "ignore" });
+    const check =
+      platform() === "win32" ? `where ${command}` : `command -v ${command}`;
+    execSync(check, { stdio: "ignore" });
     return true;
   } catch {
     return false;

@@ -2,7 +2,7 @@
 
 import { Copy, LoaderCircle, Share2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import { RiWechatFill } from "react-icons/ri";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export function ProfileWechatShareButton({
   const locale = useLocale();
   const t = useTranslations("social.profile.wechatShare");
   const lastAttemptRef = useRef(0);
-  const [isPending, setIsPending] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
 
   const getSupport = () => {
@@ -88,76 +88,77 @@ export function ProfileWechatShareButton({
     }
 
     await withRateLimitGuard(async () => {
-      setIsPending(true);
+      startTransition(async () => {
+        try {
+          const currentSupport = getSupport();
 
-      try {
-        const currentSupport = getSupport();
-
-        if (!currentSupport.isHttps) {
-          toast.info(t("httpsRequired"));
-          return;
-        }
-
-        if (!currentSupport.sdkLoaded) {
-          await handleCopyLink();
-          toast.info(t("desktopOnly"));
-          return;
-        }
-
-        const response = await fetch("/api/integrations/wechat/share-ticket", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(
-            getWechatShareRequestBody({
-              source,
-              locale,
-            }),
-          ),
-        });
-
-        if (!response.ok) {
-          const payload = (await response.json().catch(() => null)) as {
-            error?: string;
-          } | null;
-
-          if (payload?.error === "PROFILE_PRIVATE") {
-            toast.info(t("profilePrivate"));
+          if (!currentSupport.isHttps) {
+            toast.info(t("httpsRequired"));
             return;
           }
 
-          if (payload?.error === "WECHAT_SHARE_NOT_CONFIGURED") {
+          if (!currentSupport.sdkLoaded) {
+            await handleCopyLink();
             toast.info(t("desktopOnly"));
             return;
           }
 
-          throw new Error(payload?.error || "SHARE_TICKET_FAILED");
-        }
-
-        const payload = (await response.json()) as WechatShareTicketPayload;
-        const result = await shareLinkToWechat(payload);
-
-        if (result.errcode === 0) {
-          toast.success(
-            source === "chat" ? t("friendSuccess") : t("timelineSuccess"),
+          const response = await fetch(
+            "/api/integrations/wechat/share-ticket",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(
+                getWechatShareRequestBody({
+                  source,
+                  locale,
+                }),
+              ),
+            },
           );
-          return;
-        }
 
-        toast.error(mapWechatShareErrorCode(result.errcode, locale), {
-          description: result.errmsg,
-        });
-      } catch (error) {
-        toast.error(t("failed"), {
-          description:
-            error instanceof Error && error.message
-              ? error.message
-              : t("desktopOnly"),
-        });
-      } finally {
-        setIsPending(false);
-      }
+          if (!response.ok) {
+            const payload = (await response.json().catch(() => null)) as {
+              error?: string;
+            } | null;
+
+            if (payload?.error === "PROFILE_PRIVATE") {
+              toast.info(t("profilePrivate"));
+              return;
+            }
+
+            if (payload?.error === "WECHAT_SHARE_NOT_CONFIGURED") {
+              toast.info(t("desktopOnly"));
+              return;
+            }
+
+            throw new Error(payload?.error || "SHARE_TICKET_FAILED");
+          }
+
+          const payload = (await response.json()) as WechatShareTicketPayload;
+          const result = await shareLinkToWechat(payload);
+
+          if (result.errcode === 0) {
+            toast.success(
+              source === "chat" ? t("friendSuccess") : t("timelineSuccess"),
+            );
+            return;
+          }
+
+          toast.error(mapWechatShareErrorCode(result.errcode, locale), {
+            description: result.errmsg,
+          });
+        } catch (error) {
+          toast.error(t("failed"), {
+            description:
+              error instanceof Error && error.message
+                ? error.message
+                : t("desktopOnly"),
+          });
+        }
+      });
     });
   };
 

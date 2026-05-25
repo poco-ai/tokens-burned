@@ -1,0 +1,81 @@
+name: CLI Linux
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/cli-linux.yml"
+      - "cli/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+    paths:
+      - ".github/workflows/cli-linux.yml"
+      - "cli/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  cli:
+    name: Node ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ matrix.node-version }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 20
+          - 22
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install ${{ github.actor == 'dependabot[bot]' && '--no-frozen-lockfile' || '--frozen-lockfile' }}
+
+      - name: Test CLI
+        run: pnpm --filter ./cli test
+
+      - name: Build CLI
+        run: pnpm --filter ./cli build
+
+      - name: Smoke test dist entry
+        run: |
+          pnpm --filter ./cli exec node dist/index.js --help
+          pnpm --filter ./cli exec node dist/index.js status
+
+      - name: Smoke test packed CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          pack_dir="${RUNNER_TEMP}/tokenarena-pack"
+          smoke_dir="${RUNNER_TEMP}/tokenarena-smoke"
+          mkdir -p "$pack_dir" "$smoke_dir"
+
+          pnpm --filter ./cli pack --pack-destination "$pack_dir"
+          package_file="$(find "$pack_dir" -name '*.tgz' -print -quit)"
+          test -n "$package_file"
+
+          cd "$smoke_dir"
+          export npm_config_cache="$smoke_dir/.npm-cache"
+          npm init -y
+          npm install --no-audit --no-fund "$package_file"
+          ./node_modules/.bin/tokenarena --help
+          ./node_modules/.bin/tokenarena status

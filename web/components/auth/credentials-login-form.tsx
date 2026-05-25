@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useReducer, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,44 +14,100 @@ type CredentialsLoginFormProps = {
   showInvalidSessionMessage?: boolean;
 };
 
+type FormStatus = {
+  emailError: string | null;
+  passwordError: string | null;
+  formError: string | null;
+  isSubmitting: boolean;
+};
+
+type FormStatusAction =
+  | { type: "RESET_ERRORS" }
+  | { type: "SET_EMAIL_ERROR"; error: string }
+  | { type: "SET_PASSWORD_ERROR"; error: string }
+  | { type: "SET_FORM_ERROR"; error: string }
+  | { type: "SET_SUBMITTING"; value: boolean };
+
+const initialFormStatus: FormStatus = {
+  emailError: null,
+  passwordError: null,
+  formError: null,
+  isSubmitting: false,
+};
+
+function formStatusReducer(
+  state: FormStatus,
+  action: FormStatusAction,
+): FormStatus {
+  switch (action.type) {
+    case "RESET_ERRORS":
+      return {
+        ...state,
+        emailError: null,
+        passwordError: null,
+        formError: null,
+      };
+    case "SET_EMAIL_ERROR":
+      return { ...state, emailError: action.error };
+    case "SET_PASSWORD_ERROR":
+      return { ...state, passwordError: action.error };
+    case "SET_FORM_ERROR":
+      return { ...state, formError: action.error };
+    case "SET_SUBMITTING":
+      return { ...state, isSubmitting: action.value };
+    default:
+      return state;
+  }
+}
+
 export function CredentialsLoginForm({
   showInvalidSessionMessage = false,
 }: CredentialsLoginFormProps) {
-  const router = useRouter();
+  const { push, refresh } = useRouter();
   const t = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, dispatch] = useReducer(formStatusReducer, initialFormStatus);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    setFormError(null);
-    setEmailError(null);
-    setPasswordError(null);
+    dispatch({ type: "RESET_ERRORS" });
 
     const trimmedEmail = email.trim();
     let hasError = false;
 
     if (!trimmedEmail) {
-      setEmailError(t("login.errors.emailRequired"));
+      dispatch({
+        type: "SET_EMAIL_ERROR",
+        error: t("login.errors.emailRequired"),
+      });
       hasError = true;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      setEmailError(t("login.errors.emailInvalid"));
+      dispatch({
+        type: "SET_EMAIL_ERROR",
+        error: t("login.errors.emailInvalid"),
+      });
       hasError = true;
     }
 
     if (!password) {
-      setPasswordError(t("login.errors.passwordRequired"));
+      dispatch({
+        type: "SET_PASSWORD_ERROR",
+        error: t("login.errors.passwordRequired"),
+      });
       hasError = true;
     } else if (password.length > 128) {
-      setPasswordError(t("login.errors.passwordTooLong"));
+      dispatch({
+        type: "SET_PASSWORD_ERROR",
+        error: t("login.errors.passwordTooLong"),
+      });
       hasError = true;
     } else if (password.length < 8) {
-      setPasswordError(t("login.errors.passwordTooShort"));
+      dispatch({
+        type: "SET_PASSWORD_ERROR",
+        error: t("login.errors.passwordTooShort"),
+      });
       hasError = true;
     }
 
@@ -59,7 +115,7 @@ export function CredentialsLoginForm({
       return;
     }
 
-    setIsSubmitting(true);
+    dispatch({ type: "SET_SUBMITTING", value: true });
 
     try {
       const result = await authClient.signIn.email({
@@ -68,18 +124,22 @@ export function CredentialsLoginForm({
       });
 
       if (result.error) {
-        setFormError(
-          getAuthErrorMessage(result.error, t("login.errors.default")),
-        );
+        dispatch({
+          type: "SET_FORM_ERROR",
+          error: getAuthErrorMessage(result.error, t("login.errors.default")),
+        });
         return;
       }
 
-      router.push("/usage");
-      router.refresh();
+      push("/usage");
+      refresh();
     } catch (error) {
-      setFormError(getAuthErrorMessage(error, t("login.errors.default")));
+      dispatch({
+        type: "SET_FORM_ERROR",
+        error: getAuthErrorMessage(error, t("login.errors.default")),
+      });
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: "SET_SUBMITTING", value: false });
     }
   };
 
@@ -91,9 +151,9 @@ export function CredentialsLoginForm({
         </Alert>
       ) : null}
 
-      {formError ? (
+      {status.formError ? (
         <Alert variant="destructive">
-          <AlertDescription>{formError}</AlertDescription>
+          <AlertDescription>{status.formError}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -105,10 +165,10 @@ export function CredentialsLoginForm({
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          aria-invalid={Boolean(emailError)}
+          aria-invalid={Boolean(status.emailError)}
         />
-        {emailError ? (
-          <p className="text-sm text-destructive">{emailError}</p>
+        {status.emailError ? (
+          <p className="text-sm text-destructive">{status.emailError}</p>
         ) : null}
       </div>
 
@@ -120,15 +180,15 @@ export function CredentialsLoginForm({
           autoComplete="current-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          aria-invalid={Boolean(passwordError)}
+          aria-invalid={Boolean(status.passwordError)}
         />
-        {passwordError ? (
-          <p className="text-sm text-destructive">{passwordError}</p>
+        {status.passwordError ? (
+          <p className="text-sm text-destructive">{status.passwordError}</p>
         ) : null}
       </div>
 
-      <Button className="w-full" type="submit" disabled={isSubmitting}>
-        {isSubmitting ? t("login.submitting") : t("login.submit")}
+      <Button className="w-full" type="submit" disabled={status.isSubmitting}>
+        {status.isSubmitting ? t("login.submitting") : t("login.submit")}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">

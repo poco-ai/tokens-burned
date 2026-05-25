@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import type { FollowTag, FollowTagSelectValue } from "@/lib/social/follow-tags";
 import {
   fromFollowTagSelectValue,
@@ -29,14 +29,6 @@ export function useSocialFollow({
   const [isPending, startTransition] = useTransition();
   const [tagMenuOpen, setTagMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setFollowing(initialFollowing);
-  }, [initialFollowing]);
-
-  useEffect(() => {
-    setTag(initialTag);
-  }, [initialTag]);
 
   const handleFollowToggle = () => {
     startTransition(async () => {

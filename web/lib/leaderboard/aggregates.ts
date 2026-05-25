@@ -182,51 +182,53 @@ export async function recomputeLeaderboardUserDays(
     row.userMessages += session.userMessageCount;
   }
 
-  for (const statDate of sortedDates) {
-    const key = getShanghaiDateKey(statDate);
-    const row = rows.get(key);
+  await Promise.all(
+    sortedDates.map(async (statDate) => {
+      const key = getShanghaiDateKey(statDate);
+      const row = rows.get(key);
 
-    if (!row) {
-      await db.leaderboardUserDay.deleteMany({
+      if (!row) {
+        await db.leaderboardUserDay.deleteMany({
+          where: {
+            userId: input.userId,
+            statDate,
+          },
+        });
+        return;
+      }
+
+      await db.leaderboardUserDay.upsert({
         where: {
+          userId_statDate: {
+            userId: input.userId,
+            statDate,
+          },
+        },
+        update: {
+          inputTokens: tokenCountToBigInt(row.inputTokens),
+          outputTokens: tokenCountToBigInt(row.outputTokens),
+          reasoningTokens: tokenCountToBigInt(row.reasoningTokens),
+          cachedTokens: tokenCountToBigInt(row.cachedTokens),
+          totalTokens: tokenCountToBigInt(row.totalTokens),
+          activeSeconds: row.activeSeconds,
+          sessions: row.sessions,
+          messages: row.messages,
+          userMessages: row.userMessages,
+        },
+        create: {
           userId: input.userId,
           statDate,
+          inputTokens: tokenCountToBigInt(row.inputTokens),
+          outputTokens: tokenCountToBigInt(row.outputTokens),
+          reasoningTokens: tokenCountToBigInt(row.reasoningTokens),
+          cachedTokens: tokenCountToBigInt(row.cachedTokens),
+          totalTokens: tokenCountToBigInt(row.totalTokens),
+          activeSeconds: row.activeSeconds,
+          sessions: row.sessions,
+          messages: row.messages,
+          userMessages: row.userMessages,
         },
       });
-      continue;
-    }
-
-    await db.leaderboardUserDay.upsert({
-      where: {
-        userId_statDate: {
-          userId: input.userId,
-          statDate,
-        },
-      },
-      update: {
-        inputTokens: tokenCountToBigInt(row.inputTokens),
-        outputTokens: tokenCountToBigInt(row.outputTokens),
-        reasoningTokens: tokenCountToBigInt(row.reasoningTokens),
-        cachedTokens: tokenCountToBigInt(row.cachedTokens),
-        totalTokens: tokenCountToBigInt(row.totalTokens),
-        activeSeconds: row.activeSeconds,
-        sessions: row.sessions,
-        messages: row.messages,
-        userMessages: row.userMessages,
-      },
-      create: {
-        userId: input.userId,
-        statDate,
-        inputTokens: tokenCountToBigInt(row.inputTokens),
-        outputTokens: tokenCountToBigInt(row.outputTokens),
-        reasoningTokens: tokenCountToBigInt(row.reasoningTokens),
-        cachedTokens: tokenCountToBigInt(row.cachedTokens),
-        totalTokens: tokenCountToBigInt(row.totalTokens),
-        activeSeconds: row.activeSeconds,
-        sessions: row.sessions,
-        messages: row.messages,
-        userMessages: row.userMessages,
-      },
-    });
-  }
+    }),
+  );
 }

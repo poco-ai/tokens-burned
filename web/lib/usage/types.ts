@@ -9,7 +9,7 @@ export type UsageApiKeyStatus = (typeof usageApiKeyStatuses)[number];
 export const dashboardPresets = ["1d", "7d", "30d", "custom"] as const;
 export type DashboardPreset = (typeof dashboardPresets)[number];
 
-export type DashboardGranularity = "hour" | "day";
+type DashboardGranularity = "hour" | "day";
 
 export type DashboardRange = {
   from: Date;
@@ -40,7 +40,7 @@ export type UsageMetricTotals = {
   userMessages: number;
 };
 
-export type UsageMetricDelta = {
+type UsageMetricDelta = {
   current: number;
   previous: number;
   delta: number;

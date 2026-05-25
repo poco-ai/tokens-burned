@@ -10,7 +10,7 @@ type RepeatRule =
   | { mode: "recross" }
   | { mode: "external" };
 
-export type StoredAchievementState = {
+type StoredAchievementState = {
   lastQualified?: boolean;
 };
 

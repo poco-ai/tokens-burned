@@ -246,7 +246,10 @@ function DitheredWaves({
     if (u.waveAmplitude.value !== waveAmplitude)
       u.waveAmplitude.value = waveAmplitude;
 
-    if (!prevColor.current.every((v, i) => v === waveColor[i])) {
+    if (
+      prevColor.current.length === waveColor.length &&
+      !prevColor.current.every((v, i) => v === waveColor[i])
+    ) {
       u.waveColor.value.set(...waveColor);
       prevColor.current = [...waveColor];
     }
@@ -271,6 +274,7 @@ function DitheredWaves({
 
   return (
     <>
+      {/* oxlint-disable react/no-unknown-property -- Three.js R3F JSX elements */}
       <mesh ref={mesh} scale={[viewport.width, viewport.height, 1]}>
         <planeGeometry args={[1, 1]} />
         <shaderMaterial
@@ -293,6 +297,7 @@ function DitheredWaves({
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
+      {/* oxlint-enable react/no-unknown-property */}
     </>
   );
 }

@@ -36,7 +36,7 @@ function createRandomSuffix() {
   return randomUUID().slice(0, 6);
 }
 
-export function createUsernameCandidateBase(value: string) {
+function createUsernameCandidateBase(value: string) {
   return value
     .trim()
     .toLowerCase()

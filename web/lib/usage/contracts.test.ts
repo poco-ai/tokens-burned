@@ -3,8 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   dashboardQuerySchema,
   ingestRequestSchema,
+  isValidTimezone,
   usageDeleteQuerySchema,
+  usageKeyCreateSchema,
+  usageKeyUpdateSchema,
   usagePreferenceUpdateSchema,
+  usageSettingsSchema,
 } from "./contracts";
 
 describe("ingestRequestSchema", () => {
@@ -119,5 +123,98 @@ describe("ingestRequestSchema", () => {
         deviceId: "",
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("isValidTimezone", () => {
+  it("returns true for UTC", () => {
+    expect(isValidTimezone("UTC")).toBe(true);
+  });
+
+  it("returns true for Asia/Shanghai", () => {
+    expect(isValidTimezone("Asia/Shanghai")).toBe(true);
+  });
+
+  it("returns false for an invalid timezone string", () => {
+    expect(isValidTimezone("Invalid/Timezone")).toBe(false);
+  });
+});
+
+describe("usageKeyCreateSchema", () => {
+  it("accepts a valid name", () => {
+    const result = usageKeyCreateSchema.safeParse({ name: "My API Key" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an empty name", () => {
+    const result = usageKeyCreateSchema.safeParse({ name: "" });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a name exceeding 80 characters", () => {
+    const result = usageKeyCreateSchema.safeParse({
+      name: "a".repeat(81),
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("usageKeyUpdateSchema", () => {
+  it("accepts update with only name", () => {
+    const result = usageKeyUpdateSchema.safeParse({ name: "New Name" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts update with only status", () => {
+    const result = usageKeyUpdateSchema.safeParse({ status: "disabled" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects update with neither name nor status", () => {
+    const result = usageKeyUpdateSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("dashboardQuerySchema additional cases", () => {
+  it("accepts a preset without from/to", () => {
+    const result = dashboardQuerySchema.safeParse({ preset: "7d" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects custom preset without from and to", () => {
+    const result = dashboardQuerySchema.safeParse({ preset: "custom" });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts custom preset with valid from and to", () => {
+    const result = dashboardQuerySchema.safeParse({
+      preset: "custom",
+      from: "2026-01-01",
+      to: "2026-01-31",
+    });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("usageSettingsSchema", () => {
+  it("accepts a valid settings object", () => {
+    const result = usageSettingsSchema.safeParse({
+      schemaVersion: 2,
+      projectMode: "raw",
+      projectHashSalt: "some-salt-value",
+      timezone: "UTC",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects an invalid schemaVersion", () => {
+    const result = usageSettingsSchema.safeParse({
+      schemaVersion: 99,
+      projectMode: "raw",
+      projectHashSalt: "some-salt-value",
+      timezone: "UTC",
+    });
+    expect(result.success).toBe(false);
   });
 });

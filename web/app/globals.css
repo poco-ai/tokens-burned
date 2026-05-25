@@ -62,6 +62,15 @@
   --shadow-offset-x: 0px;
   --shadow-offset-y: 1px;
   --letter-spacing: 0em;
+  /* Warm “receipt paper” promo surfaces (notification row). */
+  --achievement-report-notice-bg: #f3f0e7;
+  --achievement-report-notice-hover: #ebe8df;
+  /* Share-card thermal receipt. */
+  --receipt-paper-bg: #f3f0e7;
+  --receipt-paper-fg-strong: #09090b;
+  --receipt-paper-fg: #27272a;
+  --receipt-paper-fg-soft: #52525b;
+  --receipt-paper-border: rgba(161, 161, 170, 0.35);
 }
 
 .dark {
@@ -97,6 +106,13 @@
   --sidebar-accent-foreground: oklch(0.9851 0 0);
   --sidebar-border: oklch(1 0 0);
   --sidebar-ring: oklch(0.4386 0 0);
+  --achievement-report-notice-bg: var(--muted);
+  --achievement-report-notice-hover: var(--accent);
+  --receipt-paper-bg: #252422;
+  --receipt-paper-fg-strong: #fafafa;
+  --receipt-paper-fg: #d4d4d8;
+  --receipt-paper-fg-soft: #a1a1aa;
+  --receipt-paper-border: rgba(244, 244, 245, 0.18);
   --font-sans: Geist Mono, monospace;
   --font-serif: Geist Mono, monospace;
   --font-mono: Geist Mono, monospace;
@@ -196,6 +212,15 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Off-screen PNG export: force light thermal receipt even when `html.dark`. */
+.receipt-export-surface {
+  --receipt-paper-bg: #f3f0e7;
+  --receipt-paper-fg-strong: #09090b;
+  --receipt-paper-fg: #27272a;
+  --receipt-paper-fg-soft: #52525b;
+  --receipt-paper-border: rgba(161, 161, 170, 0.35);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -225,5 +250,19 @@
     min-height: 100vh;
     min-height: -webkit-fill-available;
     min-height: 100dvh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class],
+  [class]::before,
+  [class]::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+
+  html:focus-within {
+    scroll-behavior: auto;
   }
 }

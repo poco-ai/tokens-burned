@@ -42,6 +42,17 @@ type SettingsDialogProps = {
   triggerClassName?: string;
 };
 
+const EMPTY_CONNECTED_ACCOUNTS: Array<{
+  id: string;
+  providerId: string;
+  accountId: string;
+  createdAt: string;
+  updatedAt: string;
+  scopes: string[];
+}> = [];
+
+const EMPTY_AVAILABLE_PROVIDERS: LoginProvider[] = [];
+
 export function SettingsDialog({
   initialName = "",
   initialUsername = "",
@@ -51,8 +62,8 @@ export function SettingsDialog({
   initialPublicProfileEnabled,
   initialBio,
   initialKeys,
-  connectedAccounts = [],
-  availableProviders = [],
+  connectedAccounts = EMPTY_CONNECTED_ACCOUNTS,
+  availableProviders = EMPTY_AVAILABLE_PROVIDERS,
   triggerVariant = "button",
   triggerLabel,
   triggerButtonVariant = "outline",

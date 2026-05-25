@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   type AchievementInputMetrics,
+  buildAchievementNotificationData,
   buildAchievementStatuses,
+  buildAchievementsPageData,
+  buildAchievementsPageDataFromStatuses,
   computeCurrentStreak,
 } from "./evaluate";
 
@@ -105,7 +108,10 @@ describe("buildAchievementStatuses", () => {
   it("unlocks milestone achievements once thresholds are met", () => {
     const statuses = buildAchievementStatuses(createMetrics());
     const unlockedCodes = new Set(
-      statuses.filter((status) => status.unlocked).map((status) => status.code),
+      statuses.reduce<string[]>((acc, status) => {
+        if (status.unlocked) acc.push(status.code);
+        return acc;
+      }, []),
     );
 
     expect(unlockedCodes.has("first_sync")).toBe(true);
@@ -196,7 +202,10 @@ describe("buildAchievementStatuses", () => {
       }),
     );
     const unlockedCodes = new Set(
-      statuses.filter((status) => status.unlocked).map((status) => status.code),
+      statuses.reduce<string[]>((acc, status) => {
+        if (status.unlocked) acc.push(status.code);
+        return acc;
+      }, []),
     );
 
     expect(unlockedCodes.has("active_days_365")).toBe(true);
@@ -227,7 +236,10 @@ describe("buildAchievementStatuses", () => {
       }),
     );
     const unlockedCodes = new Set(
-      statuses.filter((status) => status.unlocked).map((status) => status.code),
+      statuses.reduce<string[]>((acc, status) => {
+        if (status.unlocked) acc.push(status.code);
+        return acc;
+      }, []),
     );
 
     expect(unlockedCodes.has("leaderboard_day_top50")).toBe(true);
@@ -246,10 +258,112 @@ describe("buildAchievementStatuses", () => {
       }),
     );
     const unlockedCodes = new Set(
-      statuses.filter((status) => status.unlocked).map((status) => status.code),
+      statuses.reduce<string[]>((acc, status) => {
+        if (status.unlocked) acc.push(status.code);
+        return acc;
+      }, []),
     );
 
     expect(unlockedCodes.has("leaderboard_day_top50")).toBe(false);
     expect(unlockedCodes.has("leaderboard_all_time_top100")).toBe(false);
+  });
+});
+
+describe("buildAchievementsPageData", () => {
+  it("builds complete page data from metrics", () => {
+    const metrics = createMetrics();
+    const pageData = buildAchievementsPageData(metrics);
+
+    expect(pageData.timezone).toBe("Asia/Shanghai");
+    expect(pageData.summary.totalCount).toBeGreaterThan(0);
+    expect(pageData.sections.length).toBeGreaterThan(0);
+    expect(pageData.featured.length).toBeLessThanOrEqual(3);
+    expect(pageData.recentUnlocks.length).toBeLessThanOrEqual(5);
+    expect(pageData.nextTargets.length).toBeLessThanOrEqual(3);
+    expect(pageData.summary.currentPersona).toBe("reasoning_master");
+  });
+});
+
+describe("buildAchievementsPageDataFromStatuses", () => {
+  it("delegates page construction from pre-built statuses", () => {
+    const metrics = createMetrics();
+    const achievements = buildAchievementStatuses(metrics);
+    const pageData = buildAchievementsPageDataFromStatuses({
+      metrics,
+      achievements,
+    });
+
+    expect(pageData.summary.unlockedCount).toBe(
+      achievements.filter((a) => a.unlocked).length,
+    );
+    expect(pageData.summary.totalCount).toBe(achievements.length);
+    expect(pageData.summary.score).toBe(0);
+    expect(pageData.summary.totalActiveDays).toBe(metrics.activeDayKeys.length);
+  });
+});
+
+describe("buildAchievementNotificationData", () => {
+  it("extracts notification-relevant fields from page data", () => {
+    const metrics = createMetrics();
+    const pageData = buildAchievementsPageData(metrics);
+    const notification = buildAchievementNotificationData(pageData);
+
+    expect(notification.timezone).toBe(pageData.timezone);
+    expect(notification.score).toBe(pageData.summary.score);
+    expect(notification.level).toBe(pageData.summary.level);
+    expect(notification.unlockedCount).toBe(pageData.summary.unlockedCount);
+    expect(notification.totalCount).toBe(pageData.summary.totalCount);
+    expect(notification.currentStreak).toBe(pageData.summary.currentStreak);
+    expect(notification.recentUnlocks.length).toBeLessThanOrEqual(3);
+    expect(notification.nextTargets.length).toBeLessThanOrEqual(3);
+    expect(notification.currentPersona).toBe("reasoning_master");
+  });
+});
+
+describe("achievement sort order", () => {
+  it("sorts statuses by order property", () => {
+    const statuses = buildAchievementStatuses(createMetrics());
+    const orders = statuses.map((s) => s.order);
+
+    for (let i = 1; i < orders.length; i++) {
+      expect(orders[i]).toBeGreaterThanOrEqual(orders[i - 1]);
+    }
+  });
+});
+
+describe("edge case: empty metrics", () => {
+  it("handles zero-value metrics with all achievements locked", () => {
+    const metrics = createMetrics({
+      firstSyncAt: null,
+      totalTokens: 0,
+      totalSessions: 0,
+      totalActiveSeconds: 0,
+      totalEstimatedCostUsd: 0,
+      activeDayKeys: [],
+      tokenTimeline: [],
+      sessionTimeline: [],
+      activeSecondsTimeline: [],
+      followingCount: 0,
+      firstFollowingAt: null,
+      followingTimeline: [],
+      followerCount: 0,
+      firstFollowerAt: null,
+      followerTimeline: [],
+      mutualCount: 0,
+      mutualReachedAt: null,
+      mutualTimeline: [],
+      modelTimeline: [],
+      toolTimeline: [],
+      projectTimeline: [],
+      deviceTimeline: [],
+      reasoningShare30d: 0,
+      cacheShare30d: 0,
+      topProjectShare30d: 0,
+    });
+    const statuses = buildAchievementStatuses(metrics);
+    const unlocked = statuses.filter((s) => s.unlocked);
+
+    expect(unlocked.length).toBe(0);
+    expect(statuses.length).toBeGreaterThan(0);
   });
 });

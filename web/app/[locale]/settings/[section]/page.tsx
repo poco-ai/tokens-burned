@@ -53,8 +53,10 @@ export default async function SettingsSectionPage({
     notFound();
   }
 
-  const session = await getSessionOrRedirect(locale);
-  const requestHeaders = await headers();
+  const [session, requestHeaders] = await Promise.all([
+    getSessionOrRedirect(locale),
+    headers(),
+  ]);
   const [preference, keys, accounts] = await Promise.all([
     getUsagePreference(session.user.id),
     listUsageApiKeys(session.user.id),

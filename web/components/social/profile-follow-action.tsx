@@ -91,7 +91,7 @@ export function ProfileFollowAction({
               >
                 <span
                   aria-hidden="true"
-                  className="block h-0 w-0 border-x-[4px] border-x-transparent border-t-[5px] border-t-current opacity-70"
+                  className="block size-0 border-x-[4px] border-x-transparent border-t-[5px] border-t-current opacity-70"
                 />
               </button>
             </PopoverTrigger>

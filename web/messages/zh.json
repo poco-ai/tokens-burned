@@ -433,49 +433,28 @@
       }
     },
     "share": {
-      "button": "分享图",
-      "title": "生成分享图",
-      "description": "把当前 Usage 视图生成一张 4:3 的分享图，可下载或复制。",
-      "templates": "模板",
-      "privacy": "隐私",
-      "preview": "预览",
-      "sourceTitle": "基于当前仪表盘视图",
-      "sourceDescription": "分享图会直接继承你现在在 Usage 页面选择的时间范围和筛选条件。",
-      "footerHint": "建议先复制文案，再把图片贴到任何社交应用里。",
+      "button": "小票",
+      "title": "AI 使用小票",
       "copyImageUnsupported": "当前浏览器暂不支持复制图片。",
       "actions": {
-        "copyText": "复制文案",
         "copyImage": "复制图片",
         "download": "下载 PNG"
       },
       "status": {
-        "copiedText": "文案已复制到剪贴板。",
         "copiedImage": "图片已复制到剪贴板。",
         "downloaded": "PNG 已下载。",
         "failed": "生成分享图失败，请重试。"
       },
-      "templateOptions": {
-        "summary": {
-          "label": "战报卡",
-          "description": "突出 token、趋势和用量构成。"
-        },
-        "persona": {
-          "label": "人格卡",
-          "description": "突出你的 AI 编码风格和最强特征。"
-        }
-      },
-      "privacyOptions": {
-        "hideProject": {
-          "title": "隐藏项目名",
-          "description": "把主项目替换成中性的私有项目标签。"
-        },
-        "hideCost": {
-          "title": "隐藏费用",
-          "description": "保留整体战报氛围，但不暴露具体金额。"
-        },
-        "hideUsername": {
-          "title": "匿名模式",
-          "description": "把用户名替换成 Anonymous Builder。"
+      "receipt": {
+        "fields": {
+          "user": "用户",
+          "activeTime": "活跃时长",
+          "sessions": "会话数",
+          "messages": "消息数",
+          "cost": "预估费用",
+          "totalTokens": "总 Tokens",
+          "modelsTag": "模型用量",
+          "otherModels": "其他模型"
         }
       },
       "card": {
@@ -518,7 +497,8 @@
       },
       "captions": {
         "summary": "{user} 在 {period} 烧了 {totalTokens}。{insight} via Token Arena。",
-        "persona": "{user} 的 AI Coding Persona 是“{persona}”。{insight} via Token Arena。"
+        "persona": "{user} 的 AI Coding Persona 是“{persona}”。{insight} via Token Arena。",
+        "receipt": "{user} 在 {period} 打印了 AI 使用小票：{totalTokens}。via Token Arena。"
       },
       "personas": {
         "reasoning_master": {
@@ -559,6 +539,7 @@
     "badges": {
       "button": "Badge",
       "title": "Badge",
+      "description": "选择 Badge 样式并复制用于分享的 Markdown。",
       "styleLabel": "样式",
       "styles": {
         "flat": "Flat",
@@ -802,9 +783,8 @@
       }
     },
     "notification": {
-      "button": "打开成就通知",
-      "title": "成就通知",
-      "description": "最近解锁、当前 Persona 与距离最近的目标都会汇总在这里。",
+      "button": "打开通知",
+      "title": "通知",
       "score": "积分",
       "level": "等级",
       "streak": "连击",
@@ -815,7 +795,10 @@
       "nextTargets": "下一批目标",
       "viewAll": "查看全部成就",
       "error": "成就数据加载失败，请稍后再试。",
-      "emptyNextTargets": "当前没有更近的目标了，继续保持节奏。"
+      "emptyNextTargets": "当前没有更近的目标了，继续保持节奏。",
+      "report": {
+        "description": "点击打开小票打印机，生成并分享你的 AI 编程周度报告。"
+      }
     },
     "items": {
       "first_sync": {

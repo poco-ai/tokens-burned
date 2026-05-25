@@ -25,6 +25,7 @@ export function CollapsibleSection({
   contentClassName,
   children,
 }: CollapsibleSectionProps) {
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- toggle button, initial value from prop
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (

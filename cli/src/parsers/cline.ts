@@ -138,6 +138,7 @@ class ClineParser implements IParser {
 
               const model =
                 (info.model && String(info.model).trim()) || fallbackModel;
+              if (typeof model !== "string") continue;
 
               entries.push({
                 source: "cline",

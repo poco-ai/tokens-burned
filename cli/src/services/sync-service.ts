@@ -40,13 +40,13 @@ const BATCH_SIZE = 100;
 const SESSION_BATCH_SIZE = 500;
 const PROGRESS_BAR_WIDTH = 28;
 
-function formatBytes(bytes: number): string {
+export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes}B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
 
-function renderProgressBar(progress: number): string {
+export function renderProgressBar(progress: number): string {
   const safeProgress = Math.max(0, Math.min(progress, 1));
   const filled = Math.round(safeProgress * PROGRESS_BAR_WIDTH);
   return `${"█".repeat(filled)}${"░".repeat(PROGRESS_BAR_WIDTH - filled)}`;
@@ -134,7 +134,7 @@ function toDeviceMetadata(config: Config): DeviceMetadata {
   };
 }
 
-function toUploadBuckets(
+export function toUploadBuckets(
   buckets: TokenBucket[],
   settings: ApiSettings,
   device: DeviceMetadata,
@@ -184,7 +184,7 @@ function toUploadBuckets(
   return Array.from(aggregated.values());
 }
 
-function toUploadSessions(
+export function toUploadSessions(
   sessions: SessionMetadata[],
   settings: ApiSettings,
   device: DeviceMetadata,

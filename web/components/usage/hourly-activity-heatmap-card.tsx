@@ -71,10 +71,14 @@ function getMetricLevel(
   metric: HourlyActivityHeatmapMetric,
   data: HourlyActivityHeatmapCell[],
 ) {
-  const nonZeroValues = data
-    .map((cell) => cell[metric])
-    .filter((currentValue) => currentValue > 0)
-    .sort((left, right) => left - right);
+  const nonZeroValues = data.reduce<number[]>((acc, cell) => {
+    const currentValue = cell[metric];
+    if (currentValue > 0) {
+      acc.push(currentValue);
+    }
+    return acc;
+  }, []);
+  nonZeroValues.sort((left, right) => left - right);
 
   if (value <= 0 || nonZeroValues.length === 0) {
     return null;
@@ -152,6 +156,7 @@ export function HourlyActivityHeatmapCard({
 }: HourlyActivityHeatmapCardProps) {
   const locale = useLocale();
   const t = useTranslations("usage.hourlyHeatmap");
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- metric toggle button, initial value from prop
   const [metric, setMetric] =
     useState<HourlyActivityHeatmapMetric>(defaultMetric);
   const showEmptyCostState =

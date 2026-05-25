@@ -3,8 +3,8 @@
 import {
   createContext,
   type ReactNode,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -52,6 +52,7 @@ export function ThemeProvider({
   initialThemeMode,
   children,
 }: ThemeProviderProps) {
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- server cookie default, root layout never re-renders on navigation
   const [themeMode, setThemeModeState] = useState<ThemeMode>(initialThemeMode);
   const [resolvedTheme, setResolvedTheme] = useState<ThemeAppearance>(() =>
     resolveThemeAppearance(initialThemeMode, false),
@@ -95,7 +96,7 @@ export function ThemeProvider({
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
+  const context = use(ThemeContext);
 
   if (!context) {
     throw new Error("useTheme must be used within a ThemeProvider.");

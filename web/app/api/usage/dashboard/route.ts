@@ -2,18 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getOptionalSession } from "@/lib/session";
 import { dashboardQuerySchema } from "@/lib/usage/contracts";
-import { resolveDashboardRange } from "@/lib/usage/date-range";
-import { getUsagePreference } from "@/lib/usage/preferences";
-import {
-  getActivityTrend,
-  getBreakdowns,
-  getHourlyActivityHeatmap,
-  getLastSyncedAt,
-  getOverviewMetrics,
-  getPricingSummaryAndRows,
-  getSessionRows,
-  getTokenTrend,
-} from "@/lib/usage/queries";
+import { getUsageDashboardData } from "@/lib/usage/dashboard.server";
 
 function parseDashboardParams(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -49,57 +38,27 @@ export async function GET(request: Request) {
     );
   }
 
-  const preference = await getUsagePreference(session.user.id);
-  const range = resolveDashboardRange({
-    preset: query.data.preset,
-    from: query.data.from,
-    to: query.data.to,
-    timezone: preference.timezone,
+  const { dashboard } = await getUsageDashboardData({
+    userId: session.user.id,
+    query: query.data,
   });
-  const filters = {
-    apiKeyId: query.data.apiKeyId,
-    deviceId: query.data.deviceId,
-    source: query.data.source,
-    model: query.data.model,
-    projectKey: query.data.projectKey,
-  };
-
-  const [
-    overview,
-    tokenTrend,
-    activityTrend,
-    hourlyActivityHeatmap,
-    breakdowns,
-    pricing,
-    sessions,
-    lastSyncedAt,
-  ] = await Promise.all([
-    getOverviewMetrics({ userId: session.user.id, range, filters }),
-    getTokenTrend({ userId: session.user.id, range, filters }),
-    getActivityTrend({ userId: session.user.id, range, filters }),
-    getHourlyActivityHeatmap({ userId: session.user.id, range, filters }),
-    getBreakdowns({ userId: session.user.id, range, filters }),
-    getPricingSummaryAndRows({ userId: session.user.id, range, filters }),
-    getSessionRows({ userId: session.user.id, range, filters }),
-    getLastSyncedAt(session.user.id),
-  ]);
 
   return NextResponse.json({
     range: {
-      from: range.from.toISOString(),
-      to: range.to.toISOString(),
-      granularity: range.granularity,
-      preset: range.preset,
-      timezone: range.timezone,
+      from: dashboard.range.from.toISOString(),
+      to: dashboard.range.to.toISOString(),
+      granularity: dashboard.range.granularity,
+      preset: dashboard.range.preset,
+      timezone: dashboard.range.timezone,
     },
-    overview,
-    tokenTrend,
-    activityTrend,
-    hourlyActivityHeatmap,
-    breakdowns,
-    pricingSummary: pricing.summary,
-    modelPricingRows: pricing.modelPricingRows,
-    sessions,
-    lastSyncedAt: lastSyncedAt?.toISOString() ?? null,
+    overview: dashboard.overview,
+    tokenTrend: dashboard.tokenTrend,
+    activityTrend: dashboard.activityTrend,
+    hourlyActivityHeatmap: dashboard.hourlyActivityHeatmap,
+    breakdowns: dashboard.breakdowns,
+    pricingSummary: dashboard.pricingSummary,
+    modelPricingRows: dashboard.modelPricingRows,
+    sessions: dashboard.sessions,
+    lastSyncedAt: dashboard.lastSyncedAt?.toISOString() ?? null,
   });
 }

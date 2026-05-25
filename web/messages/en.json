@@ -433,49 +433,28 @@
       }
     },
     "share": {
-      "button": "Share card",
-      "title": "Generate share card",
-      "description": "Turn the current dashboard view into a 4:3 image you can download or copy.",
-      "templates": "Template",
-      "privacy": "Privacy",
-      "preview": "Preview",
-      "sourceTitle": "Uses your current dashboard view",
-      "sourceDescription": "The share card always reflects the range and filters you already picked on the Usage page.",
-      "footerHint": "Tip: copy the caption first, then drop the image into any social app.",
+      "button": "Receipt",
+      "title": "AI usage receipt",
       "copyImageUnsupported": "Copying images is not supported in this browser.",
       "actions": {
-        "copyText": "Copy caption",
         "copyImage": "Copy image",
         "download": "Download PNG"
       },
       "status": {
-        "copiedText": "Caption copied to clipboard.",
         "copiedImage": "Image copied to clipboard.",
         "downloaded": "PNG downloaded.",
         "failed": "Couldn’t generate the share card. Please try again."
       },
-      "templateOptions": {
-        "summary": {
-          "label": "Report card",
-          "description": "Lead with tokens, trend, and your usage mix."
-        },
-        "persona": {
-          "label": "Persona card",
-          "description": "Lead with your AI coding style and strongest pattern."
-        }
-      },
-      "privacyOptions": {
-        "hideProject": {
-          "title": "Hide project names",
-          "description": "Replace the top project with a neutral private label."
-        },
-        "hideCost": {
-          "title": "Hide cost",
-          "description": "Keep the dollars private while still sharing the rest of the card."
-        },
-        "hideUsername": {
-          "title": "Anonymous mode",
-          "description": "Replace your username with Anonymous Builder."
+      "receipt": {
+        "fields": {
+          "user": "User",
+          "activeTime": "Active time",
+          "sessions": "Sessions",
+          "messages": "Messages",
+          "cost": "Est. cost",
+          "totalTokens": "Total tokens",
+          "modelsTag": "Models",
+          "otherModels": "Other models"
         }
       },
       "card": {
@@ -518,7 +497,8 @@
       },
       "captions": {
         "summary": "{user} burned {totalTokens} {period}. {insight} Built with Token Arena.",
-        "persona": "{user}'s AI Coding Persona is “{persona}”. {insight} Built with Token Arena."
+        "persona": "{user}'s AI Coding Persona is “{persona}”. {insight} Built with Token Arena.",
+        "receipt": "{user} printed an AI usage receipt for {period}: {totalTokens}. Built with Token Arena."
       },
       "personas": {
         "reasoning_master": {
@@ -559,6 +539,7 @@
     "badges": {
       "button": "badges",
       "title": "Badges",
+      "description": "Choose a badge style and copy the Markdown for sharing.",
       "styleLabel": "Style",
       "styles": {
         "flat": "Flat",
@@ -802,9 +783,8 @@
       }
     },
     "notification": {
-      "button": "Open achievement notifications",
-      "title": "Achievement notifications",
-      "description": "Recent unlocks, your current persona, and the nearest milestones all show up here.",
+      "button": "Open notifications",
+      "title": "Notifications",
       "score": "Score",
       "level": "Level",
       "streak": "Streak",
@@ -815,7 +795,10 @@
       "nextTargets": "Next targets",
       "viewAll": "View all achievements",
       "error": "Failed to load achievements. Please try again later.",
-      "emptyNextTargets": "No nearby targets right now. Keep the momentum going."
+      "emptyNextTargets": "No nearby targets right now. Keep the momentum going.",
+      "report": {
+        "description": "Open the receipt printer to generate and share your weekly AI coding report."
+      }
     },
     "items": {
       "first_sync": {

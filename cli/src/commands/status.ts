@@ -1,3 +1,4 @@
+import { buildLocalUsageDashboardData } from "../domain/local-usage-summary";
 import { getConfigPath, loadConfig } from "../infrastructure/config/manager";
 import { getCliVersion } from "../infrastructure/runtime/cli-version";
 import { loadSyncState } from "../infrastructure/runtime/state";
@@ -9,18 +10,55 @@ import {
   formatStatusBadge,
   maskSecret,
 } from "../infrastructure/ui/format";
+import { showLocalUsageDashboard } from "../infrastructure/ui/local-usage-dashboard";
 import {
   detectInstalledTools,
   getAllTools,
   isToolInstalled,
 } from "../parsers/registry";
+import { runAllParsers } from "../services/parser-service";
 import { logger } from "../utils/logger";
+
+export interface StatusCommandOptions {
+  show?: boolean;
+}
 
 function formatMaybe(value?: string): string {
   return value || "(never)";
 }
 
-export async function runStatus(): Promise<void> {
+async function runStatusDashboard(): Promise<void> {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    const result = await runAllParsers();
+    await showLocalUsageDashboard(
+      buildLocalUsageDashboardData({
+        buckets: result.buckets,
+        sessions: result.sessions,
+        tools: getAllTools(),
+      }),
+    );
+    return;
+  }
+
+  process.stdout.write("Loading local usage…\n");
+  const result = await runAllParsers();
+  await showLocalUsageDashboard(
+    buildLocalUsageDashboardData({
+      buckets: result.buckets,
+      sessions: result.sessions,
+      tools: getAllTools(),
+    }),
+  );
+}
+
+export async function runStatus(
+  opts: StatusCommandOptions = {},
+): Promise<void> {
+  if (opts.show) {
+    await runStatusDashboard();
+    return;
+  }
+
   const config = loadConfig();
   logger.info(
     formatHeader(

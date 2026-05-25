@@ -9,9 +9,11 @@ import {
   Sparkles,
   Wrench,
 } from "lucide-react";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
-
 import { Badge } from "@/components/ui/badge";
+import { buildAbsoluteUrl } from "@/lib/site-url";
 import {
   formatDuration,
   formatPercentage,
@@ -44,6 +46,13 @@ type TranslationFn = (
   key: string,
   values?: Record<string, string | number>,
 ) => string;
+
+const QRCode = dynamic(() => import("react-qr-code"), {
+  ssr: false,
+  loading: () => (
+    <div className="size-11 rounded-sm bg-[var(--receipt-paper-fg-strong)]/10 sm:size-[72px]" />
+  ),
+});
 
 const paletteMap: Record<
   UsageShareCardPersona,
@@ -136,12 +145,20 @@ const sizePresets = {
   },
 } as const;
 
+const shortDateFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
 function formatShortDate(value: string, locale: string, timezone: string) {
-  return new Intl.DateTimeFormat(locale, {
-    month: "short",
-    day: "numeric",
-    timeZone: timezone,
-  }).format(new Date(value));
+  const cacheKey = `${locale}:${timezone}`;
+  let formatter = shortDateFormatterCache.get(cacheKey);
+  if (!formatter) {
+    formatter = Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      timeZone: timezone,
+    });
+    shortDateFormatterCache.set(cacheKey, formatter);
+  }
+  return formatter.format(new Date(value));
 }
 
 function getRangeLabel(
@@ -298,12 +315,12 @@ function TrendBars({
 
   return (
     <div className="flex h-full items-end gap-2">
-      {data.map((point, index) => {
+      {data.map((point, _index) => {
         const height = Math.max((point.totalTokens / maxValue) * 100, 10);
 
         return (
           <div
-            key={`${point.label}-${index}`}
+            key={point.label}
             className="flex min-w-0 flex-1 flex-col justify-end gap-2"
           >
             <div
@@ -748,37 +765,397 @@ function PersonaTemplate({
   );
 }
 
-export function buildUsageShareCardCaption(input: {
-  data: UsageShareCardData;
-  template: UsageShareCardTemplate;
-  privacy: UsageShareCardPrivacy;
-  locale: string;
-  t: TranslationFn;
-}) {
-  const user = getDisplayUser(input.data, input.privacy, input.t);
-  const period = getRangeLabel(input.data, input.locale, input.t).toLowerCase();
-  const insight = getInsightText(
-    input.data,
-    input.privacy,
-    input.locale,
-    input.t,
-  );
+/** English-only thermal receipt microcopy (avoids locale bundle drift). */
+const RECEIPT_THERMAL_MICROCOPY = {
+  datePrefix: "DATE:",
+} as const;
 
-  if (input.template === "persona") {
-    return input.t("captions.persona", {
-      user,
-      persona: input.t(getPersonaBadgeKey(input.data.persona)),
-      insight,
-      period,
-    });
+const TOKEN_ARENA_SITE_URL = "https://token.poco-ai.com";
+
+function buildProfileAbsoluteUrl(locale: string, username: string): string {
+  const path = `/${locale}/u/${encodeURIComponent(username)}`;
+  const absolute = buildAbsoluteUrl(path);
+  if (absolute) {
+    return absolute;
+  }
+  return `${TOKEN_ARENA_SITE_URL.replace(/\/$/, "")}${path}`;
+}
+
+/** Deterministic 0–1 jitter from an integer seed (stable across SSR/client). */
+function tearNoise01(seed: number): number {
+  const x = Math.sin(seed * 12.9898) * 43758.5453123;
+  return x - Math.floor(x);
+}
+
+/** Format a percentage to 4 decimal places so SSR and client emit identical strings. */
+function pct(n: number): string {
+  return `${n.toFixed(4)}%`;
+}
+
+/**
+ * Soft torn-paper clip-path: shallow bites + irregular depth (not a perfect zigzag).
+ */
+function buildThermalReceiptClipPath(
+  teeth: number,
+  maxDepthPct: number,
+): string {
+  const pts: string[] = [];
+  const maxD = maxDepthPct;
+
+  const valleyDepth = (i: number, phase: number) => {
+    const body = 0.22 + 0.78 * tearNoise01(i * 17 + phase);
+    const dip = tearNoise01(i * 41 + phase) > 0.88 ? 0.58 : 1;
+    return maxD * body * dip;
+  };
+
+  const peakDepth = (i: number, phase: number) =>
+    maxD * (0.015 + 0.14 * tearNoise01(i * 29 + phase));
+
+  let topLeftY = 0;
+
+  for (let i = 0; i <= teeth; i++) {
+    const x = (i / teeth) * 100;
+    const y = i % 2 === 0 ? valleyDepth(i, 11) : peakDepth(i, 103);
+    if (i === 0) {
+      topLeftY = y;
+    }
+    pts.push(`${pct(x)} ${pct(y)}`);
   }
 
-  return input.t("captions.summary", {
-    user,
-    totalTokens: formatTokenCount(input.data.totalTokens),
-    period,
-    insight,
+  pts.push("100% 100%");
+
+  for (let i = teeth; i >= 0; i--) {
+    const x = (i / teeth) * 100;
+    const depth = i % 2 === 0 ? valleyDepth(i, 67) : peakDepth(i, 179);
+    pts.push(`${pct(x)} ${pct(100 - depth)}`);
+  }
+
+  pts.push(`0% ${pct(topLeftY)}`);
+
+  return `polygon(${pts.join(", ")})`;
+}
+
+const mmddFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function formatMmddInTimezone(iso: string, timeZone: string): string {
+  const instant = new Date(iso);
+  let formatter = mmddFormatterCache.get(timeZone);
+  if (!formatter) {
+    formatter = Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      month: "2-digit",
+      day: "2-digit",
+    });
+    mmddFormatterCache.set(timeZone, formatter);
+  }
+  const parts = formatter.formatToParts(instant);
+  const month = parts.find((p) => p.type === "month")?.value ?? "01";
+  const day = parts.find((p) => p.type === "day")?.value ?? "01";
+  return `${month}${day}`;
+}
+
+function formatThermalReceiptDateRange(data: UsageShareCardData): string {
+  const tz = data.range.timezone;
+  const from = formatMmddInTimezone(data.range.from, tz);
+  const to = formatMmddInTimezone(data.range.to, tz);
+  return `${from}-${to}`;
+}
+
+function ReceiptLine({
+  label,
+  value,
+  strong = false,
+  size,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  size: keyof typeof sizePresets;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex w-full items-baseline justify-between gap-4 font-mono tabular-nums",
+        size === "export" ? "text-[24px]" : "text-[13px] sm:text-[15px]",
+        strong
+          ? "font-bold text-[var(--receipt-paper-fg-strong)]"
+          : "font-medium text-[var(--receipt-paper-fg)]",
+      )}
+    >
+      <span className="min-w-0 flex-1 truncate uppercase">{label}</span>
+      <span className="max-w-[min(14rem,calc(100%-6rem))] shrink-0 truncate text-right uppercase">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function ReceiptBarcode({
+  value,
+  size,
+  ariaLabel,
+}: {
+  value: string;
+  size: keyof typeof sizePresets;
+  ariaLabel: string;
+}) {
+  const bars = Array.from(value).flatMap((char, index) => {
+    const code = char.charCodeAt(0) + index * 17;
+    return [1 + (code % 3), 1, 2 + (code % 2), 1];
   });
+
+  return (
+    <div
+      role="img"
+      aria-label={ariaLabel}
+      className={cn(
+        "flex w-full justify-center overflow-hidden text-[var(--receipt-paper-fg-strong)]",
+        size === "export" ? "h-[62px] gap-1" : "h-9 gap-0.5 sm:h-10",
+      )}
+    >
+      {bars.slice(0, 96).map((width, index) => (
+        // react-doctor-disable-next-line react-doctor/no-array-index-as-key -- bars are deterministically derived from value, order never changes
+        <span
+          key={`bar-${index}`}
+          className="h-full bg-current"
+          style={{ width }}
+        />
+      ))}
+    </div>
+  );
+}
+
+const MAX_RECEIPT_MODEL_ROWS = 14;
+
+function ReceiptTemplate({
+  data,
+  privacy,
+  locale,
+  size,
+  className,
+  t,
+}: {
+  data: UsageShareCardData;
+  privacy: UsageShareCardPrivacy;
+  locale: string;
+  size: keyof typeof sizePresets;
+  className?: string;
+  t: TranslationFn;
+}) {
+  const displayUser = getDisplayUser(data, privacy, t);
+  const cost = formatUsdAmount(data.estimatedCostUsd, locale, {
+    compact: true,
+  });
+  const receiptClassName =
+    size === "export"
+      ? "w-[620px] px-14 py-12"
+      : "w-full max-w-[360px] px-5 py-5 sm:max-w-[390px] sm:px-6 sm:py-6";
+
+  const profileBarcodeUrl = privacy.hideUsername
+    ? null
+    : buildProfileAbsoluteUrl(locale, data.username);
+
+  const rows = [
+    {
+      label: t("receipt.fields.user"),
+      value: displayUser,
+    },
+    {
+      label: t("receipt.fields.activeTime"),
+      value: formatDuration(data.activeSeconds, { compact: true }),
+    },
+    {
+      label: t("receipt.fields.sessions"),
+      value: String(data.sessions),
+    },
+    {
+      label: t("receipt.fields.messages"),
+      value: String(data.messages),
+    },
+  ];
+
+  const modelUsage = data.modelUsage ?? [];
+  const modelReceiptLines =
+    modelUsage.length === 0
+      ? [
+          {
+            label: t("receipt.fields.modelsTag"),
+            value: t("card.notAvailable"),
+          },
+        ]
+      : modelUsage.length <= MAX_RECEIPT_MODEL_ROWS
+        ? modelUsage.map((row) => ({
+            label: row.label,
+            value: formatTokenCount(row.totalTokens, locale),
+          }))
+        : [
+            ...modelUsage.slice(0, MAX_RECEIPT_MODEL_ROWS - 1).map((row) => ({
+              label: row.label,
+              value: formatTokenCount(row.totalTokens, locale),
+            })),
+            {
+              label: t("receipt.fields.otherModels"),
+              value: formatTokenCount(
+                modelUsage
+                  .slice(MAX_RECEIPT_MODEL_ROWS - 1)
+                  .reduce((sum, row) => sum + row.totalTokens, 0),
+                locale,
+              ),
+            },
+          ];
+
+  const tornClipPath =
+    size === "export"
+      ? buildThermalReceiptClipPath(58, 0.88)
+      : buildThermalReceiptClipPath(46, 0.95);
+
+  return (
+    <div
+      className={cn(
+        "relative flex items-center justify-center text-[var(--receipt-paper-fg-strong)]",
+        size === "preview"
+          ? "w-full min-h-0 max-w-[760px]"
+          : "flex w-[1200px] shrink-0 justify-center overflow-visible py-16",
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          "relative bg-[var(--receipt-paper-bg)]",
+          receiptClassName,
+        )}
+        style={{
+          clipPath: tornClipPath,
+          WebkitClipPath: tornClipPath,
+        }}
+      >
+        <div className="relative">
+          <div className="flex items-center justify-between gap-3 font-mono sm:gap-4">
+            <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+              {size === "export" ? (
+                <Image
+                  src="/logo_dark.svg"
+                  alt=""
+                  width={56}
+                  height={56}
+                  draggable={false}
+                  unoptimized
+                  className="size-14 shrink-0 select-none"
+                />
+              ) : (
+                <>
+                  <Image
+                    src="/logo_dark.svg"
+                    alt=""
+                    width={36}
+                    height={36}
+                    draggable={false}
+                    unoptimized
+                    className="block size-9 shrink-0 select-none sm:size-10 dark:hidden"
+                  />
+                  <Image
+                    src="/logo_white.svg"
+                    alt=""
+                    width={36}
+                    height={36}
+                    draggable={false}
+                    unoptimized
+                    className="hidden size-9 shrink-0 select-none sm:size-10 dark:block"
+                  />
+                </>
+              )}
+              <div className="min-w-0 flex-1">
+                <div
+                  className={cn(
+                    "font-black tracking-tight text-[var(--receipt-paper-fg-strong)] uppercase",
+                    size === "export" ? "text-[30px]" : "text-base",
+                  )}
+                >
+                  Token Arena
+                </div>
+                <div
+                  className={cn(
+                    "mt-2 font-semibold text-[var(--receipt-paper-fg-soft)] uppercase tracking-wide",
+                    size === "export"
+                      ? "text-[13px] leading-snug"
+                      : "text-[9px] leading-snug sm:text-[10px]",
+                  )}
+                >
+                  {RECEIPT_THERMAL_MICROCOPY.datePrefix}{" "}
+                  {formatThermalReceiptDateRange(data)}
+                </div>
+              </div>
+            </div>
+            <div className="shrink-0" title={TOKEN_ARENA_SITE_URL}>
+              <QRCode
+                value={TOKEN_ARENA_SITE_URL}
+                size={size === "export" ? 72 : 44}
+                fgColor="currentColor"
+                bgColor="transparent"
+                className="text-[var(--receipt-paper-fg-strong)]"
+                style={{ display: "block" }}
+              />
+            </div>
+          </div>
+
+          <div className="my-5 border-[var(--receipt-paper-border)] border-t" />
+
+          <div className="space-y-2.5">
+            {rows.map((row) => (
+              <ReceiptLine
+                key={row.label}
+                label={row.label}
+                value={row.value}
+                size={size}
+              />
+            ))}
+          </div>
+
+          <div className="my-5 border-[var(--receipt-paper-border)] border-t" />
+
+          <div className="space-y-2.5">
+            {modelReceiptLines.map((row, _index) => (
+              <ReceiptLine
+                key={`model-row-${row.label}`}
+                label={row.label}
+                value={row.value}
+                size={size}
+              />
+            ))}
+          </div>
+
+          <div className="my-5 border-[var(--receipt-paper-border)] border-t" />
+
+          <div className="space-y-2.5">
+            <ReceiptLine
+              label={t("receipt.fields.totalTokens")}
+              value={formatTokenCount(data.totalTokens, locale)}
+              strong
+              size={size}
+            />
+            {!privacy.hideCost && data.estimatedCostUsd > 0 ? (
+              <ReceiptLine
+                label={t("receipt.fields.cost")}
+                value={cost}
+                strong
+                size={size}
+              />
+            ) : null}
+          </div>
+
+          {profileBarcodeUrl ? (
+            <div className="mt-6">
+              <ReceiptBarcode
+                value={profileBarcodeUrl}
+                size={size}
+                ariaLabel={`@${data.username}`}
+              />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function UsageShareCardPreview({
@@ -792,6 +1169,19 @@ export function UsageShareCardPreview({
   const t = useTranslations("usage.share");
   const tone = paletteMap[data.persona];
   const displayUser = getDisplayUser(data, privacy, t);
+
+  if (template === "receipt") {
+    return (
+      <ReceiptTemplate
+        data={data}
+        privacy={privacy}
+        locale={locale}
+        size={size}
+        className={className}
+        t={t}
+      />
+    );
+  }
 
   return (
     <div

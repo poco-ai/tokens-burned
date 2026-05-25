@@ -55,18 +55,18 @@ function ProviderIcon({
   providerId: "credential" | LoginProvider["id"];
 }): ReactNode {
   if (providerId === "credential") {
-    return <Mail className="h-5 w-5" aria-hidden />;
+    return <Mail className="size-5" aria-hidden />;
   }
 
   switch (providerId) {
     case "discord":
-      return <SiDiscord className="h-5 w-5 shrink-0" aria-hidden />;
+      return <SiDiscord className="size-5 shrink-0" aria-hidden />;
     case "github":
-      return <SiGithub className="h-5 w-5 shrink-0" aria-hidden />;
+      return <SiGithub className="size-5 shrink-0" aria-hidden />;
     case "gitlab":
-      return <SiGitlab className="h-5 w-5 shrink-0" aria-hidden />;
+      return <SiGitlab className="size-5 shrink-0" aria-hidden />;
     case "google":
-      return <SiGoogle className="h-5 w-5 shrink-0" aria-hidden />;
+      return <SiGoogle className="size-5 shrink-0" aria-hidden />;
     case "linuxdo":
       return (
         <Image
@@ -88,15 +88,18 @@ function ProviderIcon({
         />
       );
     default:
-      return <Mail className="h-5 w-5" aria-hidden />;
+      return <Mail className="size-5" aria-hidden />;
   }
 }
 
+const EMPTY_ACCOUNTS: ConnectedAccountRecord[] = [];
+const EMPTY_PROVIDERS: LoginProvider[] = [];
+
 export function ConnectedAccountsCard({
-  accounts = [],
-  availableProviders = [],
+  accounts = EMPTY_ACCOUNTS,
+  availableProviders = EMPTY_PROVIDERS,
 }: ConnectedAccountsCardProps) {
-  const router = useRouter();
+  const { refresh } = useRouter();
   const t = useTranslations("usage.settings.connectedAccounts");
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -169,7 +172,7 @@ export function ConnectedAccountsCard({
         throw payload;
       }
 
-      router.refresh();
+      refresh();
     } catch (requestError) {
       setError(getAuthErrorMessage(requestError, t("errors.disconnect")));
     } finally {
@@ -204,8 +207,8 @@ export function ConnectedAccountsCard({
         {rows.map((row) => {
           if (row.kind === "credential") {
             return (
-              <div key={row.key} className="flex items-center gap-4 px-4 py-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center text-foreground">
+              <div key={row.key} className="flex items-center gap-4 p-4">
+                <div className="flex size-10 shrink-0 items-center justify-center text-foreground">
                   <ProviderIcon providerId="credential" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -227,8 +230,8 @@ export function ConnectedAccountsCard({
 
           if (account) {
             return (
-              <div key={row.key} className="flex items-center gap-4 px-4 py-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center text-foreground">
+              <div key={row.key} className="flex items-center gap-4 p-4">
+                <div className="flex size-10 shrink-0 items-center justify-center text-foreground">
                   <ProviderIcon providerId={provider.id} />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -256,8 +259,8 @@ export function ConnectedAccountsCard({
           }
 
           return (
-            <div key={row.key} className="flex items-center gap-4 px-4 py-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center text-foreground">
+            <div key={row.key} className="flex items-center gap-4 p-4">
+              <div className="flex size-10 shrink-0 items-center justify-center text-foreground">
                 <ProviderIcon providerId={provider.id} />
               </div>
               <div className="min-w-0 flex-1">

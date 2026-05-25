@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,14 +35,16 @@ export function KeyDialog({
   const t = useTranslations("usage.keys.dialog");
   const [name, setName] = useState(initialName ?? "");
 
-  useEffect(() => {
-    if (open) {
-      setName(initialName ?? "");
-    }
-  }, [initialName, open]);
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) {
+          setName(initialName ?? "");
+        }
+        onOpenChange(nextOpen);
+      }}
+    >
       <DialogContent className="border border-border/70 bg-card shadow-2xl">
         <DialogHeader>
           <DialogTitle>
@@ -57,8 +59,7 @@ export function KeyDialog({
 
         <form
           className="space-y-4"
-          onSubmit={async (event) => {
-            event.preventDefault();
+          action={async () => {
             await onSubmit(name);
           }}
         >

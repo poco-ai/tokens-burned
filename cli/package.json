@@ -1,6 +1,6 @@
 {
   "name": "@poco-ai/tokenarena",
-  "version": "0.2.11",
+  "version": "0.4.3",
   "type": "module",
   "description": "Collect and sync local AI coding CLI usage data",
   "license": "MIT",
@@ -23,19 +23,23 @@
     "build": "tsup",
     "prepack": "pnpm run build",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage --coverage.reporter=text --coverage.reporter=json-summary --coverage.reporter=lcov",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "format:check": "biome format"
   },
   "dependencies": {
-    "@inquirer/prompts": "^8.3.2",
-    "commander": "^12.0.0"
+    "@inquirer/prompts": "^8.4.3",
+    "commander": "^14.0.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.2.0",
-    "@types/node": "^20.0.0",
+    "@biomejs/biome": "2.4.15",
+    "@types/node": "^25.7.0",
+    "@vitest/coverage-v8": "^4.1.6",
     "tsup": "^8.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^3.2.4"
+    "tsx": "^4.22.0",
+    "typescript": "^6.0.3",
+    "vite": "^7.3.3",
+    "vitest": "^4.1.6"
   }
 }

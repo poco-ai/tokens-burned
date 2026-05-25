@@ -1,10 +1,11 @@
-import {
-  type Choice,
-  confirm,
-  input,
-  password,
-  select,
-} from "@inquirer/prompts";
+import { confirm, input, password, select } from "@inquirer/prompts";
+
+type Choice<T> = {
+  value: T;
+  name?: string;
+  description?: string;
+  disabled?: boolean;
+};
 
 export function isInteractiveTerminal(): boolean {
   return Boolean(process.stdin.isTTY && process.stdout.isTTY);

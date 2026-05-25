@@ -19,9 +19,10 @@ export function pickLinkedAccount(
   accessToken?: string | null;
 } | null {
   const order: LinkedProfileProviderId[] = ["github", "linuxdo", "watcha"];
+  const accountMap = new Map(accounts.map((a) => [a.providerId, a] as const));
 
   for (const providerId of order) {
-    const found = accounts.find((a) => a.providerId === providerId);
+    const found = accountMap.get(providerId);
     if (found?.accountId?.trim()) {
       return {
         providerId,

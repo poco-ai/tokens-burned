@@ -3,7 +3,7 @@
 import { Copy, Pencil, Plus, Power, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useReducer, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,60 @@ type UsageKeyRecord = {
 
 export type { UsageKeyRecord };
 
+type DialogState = {
+  isCreateOpen: boolean;
+  renameTarget: UsageKeyRecord | null;
+  deleteTarget: UsageKeyRecord | null;
+  deleteError: string | null;
+  pendingKeyId: string | null;
+  isDialogPending: boolean;
+};
+
+type DialogAction =
+  | { type: "OPEN_CREATE" }
+  | { type: "CLOSE_CREATE" }
+  | { type: "SET_RENAME_TARGET"; target: UsageKeyRecord | null }
+  | { type: "OPEN_DELETE"; target: UsageKeyRecord }
+  | { type: "CLOSE_DELETE" }
+  | { type: "START_DIALOG" }
+  | { type: "FINISH_DIALOG" }
+  | { type: "SET_PENDING_KEY"; keyId: string | null }
+  | { type: "SET_DELETE_ERROR"; error: string | null };
+
+const initialDialogState: DialogState = {
+  isCreateOpen: false,
+  renameTarget: null,
+  deleteTarget: null,
+  deleteError: null,
+  pendingKeyId: null,
+  isDialogPending: false,
+};
+
+function dialogReducer(state: DialogState, action: DialogAction): DialogState {
+  switch (action.type) {
+    case "OPEN_CREATE":
+      return { ...state, isCreateOpen: true };
+    case "CLOSE_CREATE":
+      return { ...state, isCreateOpen: false };
+    case "SET_RENAME_TARGET":
+      return { ...state, renameTarget: action.target };
+    case "OPEN_DELETE":
+      return { ...state, deleteTarget: action.target, deleteError: null };
+    case "CLOSE_DELETE":
+      return { ...state, deleteTarget: null, deleteError: null };
+    case "START_DIALOG":
+      return { ...state, isDialogPending: true };
+    case "FINISH_DIALOG":
+      return { ...state, isDialogPending: false };
+    case "SET_PENDING_KEY":
+      return { ...state, pendingKeyId: action.keyId };
+    case "SET_DELETE_ERROR":
+      return { ...state, deleteError: action.error };
+    default:
+      return state;
+  }
+}
+
 type KeyManagerProps = {
   initialKeys: UsageKeyRecord[];
   variant?: "page" | "dialog";
@@ -67,20 +121,42 @@ export function KeyManager({
   omitCardTitle = false,
   sectionHeading,
 }: KeyManagerProps) {
+  return (
+    <Suspense fallback={null}>
+      <KeyManagerInner
+        initialKeys={initialKeys}
+        variant={variant}
+        omitCardTitle={omitCardTitle}
+        sectionHeading={sectionHeading}
+      />
+    </Suspense>
+  );
+}
+
+function KeyManagerInner({
+  initialKeys,
+  variant = "page",
+  omitCardTitle = false,
+  sectionHeading,
+}: KeyManagerProps) {
   const t = useTranslations("usage.keys");
   const locale = useLocale();
-  const router = useRouter();
+  const { replace } = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- CRUD operations manage keys, initial value from prop
   const [keys, setKeys] = useState(initialKeys);
   const [error, setError] = useState<string | null>(null);
   const [rawKey, setRawKey] = useState<string | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [renameTarget, setRenameTarget] = useState<UsageKeyRecord | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<UsageKeyRecord | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [pendingKeyId, setPendingKeyId] = useState<string | null>(null);
-  const [isDialogPending, setIsDialogPending] = useState(false);
+  const [dialog, dispatch] = useReducer(dialogReducer, initialDialogState);
+  const {
+    isCreateOpen,
+    renameTarget,
+    deleteTarget,
+    deleteError,
+    pendingKeyId,
+    isDialogPending,
+  } = dialog;
   const isDialog = variant === "dialog";
   const isDeletePending =
     deleteTarget != null && pendingKeyId === deleteTarget.id;
@@ -93,12 +169,12 @@ export function KeyManager({
       return;
     }
 
-    setIsCreateOpen(true);
+    dispatch({ type: "OPEN_CREATE" });
     const next = new URLSearchParams(searchParams.toString());
     next.delete(SETTINGS_CLI_KEY_CREATE_QUERY.name);
     const query = next.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
-  }, [searchParams, pathname, router]);
+    replace(query ? `${pathname}?${query}` : pathname);
+  }, [searchParams, pathname, replace]);
 
   const request = async <T,>(
     input: RequestInfo,
@@ -134,7 +210,7 @@ export function KeyManager({
   };
 
   const toggleStatus = async (key: UsageKeyRecord) => {
-    setPendingKeyId(key.id);
+    dispatch({ type: "SET_PENDING_KEY", keyId: key.id });
     setError(null);
 
     try {
@@ -158,7 +234,7 @@ export function KeyManager({
           : t("updateFailed"),
       );
     } finally {
-      setPendingKeyId(null);
+      dispatch({ type: "SET_PENDING_KEY", keyId: null });
     }
   };
 
@@ -168,9 +244,9 @@ export function KeyManager({
     }
 
     const key = deleteTarget;
-    setPendingKeyId(key.id);
+    dispatch({ type: "SET_PENDING_KEY", keyId: key.id });
+    dispatch({ type: "SET_DELETE_ERROR", error: null });
     setError(null);
-    setDeleteError(null);
 
     try {
       await request<{ success: true }>(`/api/usage/keys/${key.id}`, {
@@ -178,21 +254,21 @@ export function KeyManager({
       });
 
       setKeys((current) => current.filter((item) => item.id !== key.id));
-      setDeleteTarget(null);
+      dispatch({ type: "CLOSE_DELETE" });
     } catch (requestError) {
       const message =
         requestError instanceof Error
           ? requestError.message
           : t("deleteFailed");
       setError(message);
-      setDeleteError(message);
+      dispatch({ type: "SET_DELETE_ERROR", error: message });
     } finally {
-      setPendingKeyId(null);
+      dispatch({ type: "SET_PENDING_KEY", keyId: null });
     }
   };
 
   const createKey = async (name: string) => {
-    setIsDialogPending(true);
+    dispatch({ type: "START_DIALOG" });
     setError(null);
 
     try {
@@ -206,7 +282,7 @@ export function KeyManager({
 
       setKeys((current) => [response.key, ...current]);
       setRawKey(response.rawKey);
-      setIsCreateOpen(false);
+      dispatch({ type: "CLOSE_CREATE" });
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -214,7 +290,7 @@ export function KeyManager({
           : t("createFailed"),
       );
     } finally {
-      setIsDialogPending(false);
+      dispatch({ type: "FINISH_DIALOG" });
     }
   };
 
@@ -223,7 +299,7 @@ export function KeyManager({
       return;
     }
 
-    setIsDialogPending(true);
+    dispatch({ type: "START_DIALOG" });
     setError(null);
 
     try {
@@ -240,7 +316,7 @@ export function KeyManager({
           item.id === renameTarget.id ? response.key : item,
         ),
       );
-      setRenameTarget(null);
+      dispatch({ type: "SET_RENAME_TARGET", target: null });
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -248,7 +324,7 @@ export function KeyManager({
           : t("renameFailed"),
       );
     } finally {
-      setIsDialogPending(false);
+      dispatch({ type: "FINISH_DIALOG" });
     }
   };
 
@@ -261,7 +337,7 @@ export function KeyManager({
       variant="outline"
       size={isDialog ? "sm" : "default"}
       className={cn("shrink-0", mutedControlClassName)}
-      onClick={() => setIsCreateOpen(true)}
+      onClick={() => dispatch({ type: "OPEN_CREATE" })}
     >
       <Plus />
       {t("createKey")}
@@ -395,7 +471,12 @@ export function KeyManager({
                           className="text-muted-foreground hover:bg-muted hover:text-foreground"
                           title={t("actions.rename")}
                           aria-label={t("actions.rename")}
-                          onClick={() => setRenameTarget(key)}
+                          onClick={() =>
+                            dispatch({
+                              type: "SET_RENAME_TARGET",
+                              target: key,
+                            })
+                          }
                           disabled={pendingKeyId === key.id}
                         >
                           <Pencil />
@@ -434,8 +515,7 @@ export function KeyManager({
                           aria-label={t("actions.delete")}
                           className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => {
-                            setDeleteTarget(key);
-                            setDeleteError(null);
+                            dispatch({ type: "OPEN_DELETE", target: key });
                             setError(null);
                           }}
                           disabled={pendingKeyId === key.id}
@@ -456,7 +536,9 @@ export function KeyManager({
       <KeyDialog
         mode="create"
         open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
+        onOpenChange={(open) =>
+          dispatch(open ? { type: "OPEN_CREATE" } : { type: "CLOSE_CREATE" })
+        }
         pending={isDialogPending}
         onSubmit={createKey}
       />
@@ -465,7 +547,7 @@ export function KeyManager({
         open={Boolean(renameTarget)}
         onOpenChange={(open) => {
           if (!open) {
-            setRenameTarget(null);
+            dispatch({ type: "SET_RENAME_TARGET", target: null });
           }
         }}
         initialName={renameTarget?.name}
@@ -480,8 +562,7 @@ export function KeyManager({
           }
 
           if (!open) {
-            setDeleteTarget(null);
-            setDeleteError(null);
+            dispatch({ type: "CLOSE_DELETE" });
           }
         }}
       >
@@ -510,8 +591,7 @@ export function KeyManager({
               variant="outline"
               className={mutedControlClassName}
               onClick={() => {
-                setDeleteTarget(null);
-                setDeleteError(null);
+                dispatch({ type: "CLOSE_DELETE" });
               }}
               disabled={isDeletePending}
             >

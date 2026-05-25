@@ -4,7 +4,7 @@ import type {
   UsageFilters,
 } from "@/lib/usage/types";
 
-export type ActiveFilterChip = {
+type ActiveFilterChip = {
   key: keyof UsageFilters;
   label: string;
   value: string;

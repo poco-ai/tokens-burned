@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import type { ReactNode } from "react";
 import { useState } from "react";
 import { SiDiscord, SiGithub, SiGitlab, SiGoogle } from "react-icons/si";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -16,16 +15,16 @@ type SocialLoginFormProps = {
   providers: LoginProvider[];
 };
 
-function renderProviderIcon(providerId: LoginProvider["id"]): ReactNode {
+function ProviderIcon({ providerId }: { providerId: LoginProvider["id"] }) {
   switch (providerId) {
     case "discord":
-      return <SiDiscord className="h-4 w-4 shrink-0" />;
+      return <SiDiscord className="size-4 shrink-0" />;
     case "github":
-      return <SiGithub className="h-4 w-4 shrink-0" />;
+      return <SiGithub className="size-4 shrink-0" />;
     case "gitlab":
-      return <SiGitlab className="h-4 w-4 shrink-0" />;
+      return <SiGitlab className="size-4 shrink-0" />;
     case "google":
-      return <SiGoogle className="h-4 w-4 shrink-0" />;
+      return <SiGoogle className="size-4 shrink-0" />;
     case "linuxdo":
       return (
         <Image
@@ -116,7 +115,7 @@ export function SocialLoginForm({
               disabled={isSubmitting}
             >
               <span className="flex min-w-0 flex-[3] items-center justify-center">
-                {renderProviderIcon(provider.id)}
+                <ProviderIcon providerId={provider.id} />
               </span>
               <span className="flex min-w-0 flex-[7] items-center justify-start text-left">
                 {provider.label}

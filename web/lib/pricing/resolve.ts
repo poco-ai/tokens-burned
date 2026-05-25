@@ -99,7 +99,7 @@ export type CostEstimate = {
   cacheUsd: number;
 };
 
-function unique(values: string[]) {
+function _unique(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
@@ -118,27 +118,30 @@ export function buildModelLookupCandidates(rawModel: string) {
     candidates.push(lastSegment);
   }
 
-  for (const value of [normalized, lastSegment]) {
-    if (!value || !value.includes(MODEL_VARIANT_SEPARATOR)) {
-      continue;
-    }
+  const seen = new Set<string>(candidates.filter(Boolean));
 
-    candidates.push(value.split(MODEL_VARIANT_SEPARATOR)[0] ?? "");
+  const values = [normalized, lastSegment].filter((v) =>
+    v?.includes(MODEL_VARIANT_SEPARATOR),
+  );
+
+  for (const value of values) {
+    const variant = value.split(MODEL_VARIANT_SEPARATOR)[0] ?? "";
+    if (variant) {
+      seen.add(variant);
+    }
   }
 
-  return unique(candidates);
+  return Array.from(seen);
 }
 
 export function resolveOfficialPricingProviderId(rawModel: string) {
   const candidates = buildModelLookupCandidates(rawModel);
 
-  for (const candidate of candidates) {
-    const matchedRule = OFFICIAL_PRICING_PROVIDER_RULES.find((rule) =>
-      rule.matches(candidate),
-    );
-
-    if (matchedRule) {
-      return matchedRule.providerId;
+  for (const rule of OFFICIAL_PRICING_PROVIDER_RULES) {
+    for (const candidate of candidates) {
+      if (rule.matches(candidate)) {
+        return rule.providerId;
+      }
     }
   }
 

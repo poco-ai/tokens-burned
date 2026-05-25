@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { PricingCatalog } from "./catalog";
 import {
+  buildModelLookupCandidates,
   estimateCostUsd,
   resolveOfficialPricingMatch,
   resolveOfficialPricingProvider,
@@ -148,5 +149,76 @@ describe("estimateCostUsd", () => {
     expect(result?.reasoningUsd).toBeCloseTo(0.1);
     expect(result?.cacheUsd).toBeCloseTo(0);
     expect(result?.totalUsd).toBeCloseTo(0.2);
+  });
+
+  it("returns null when cost is null from estimateCostUsd", () => {
+    expect(
+      estimateCostUsd(
+        {
+          inputTokens: 100,
+          outputTokens: 50,
+          reasoningTokens: 25,
+          cachedTokens: 10,
+        },
+        null,
+      ),
+    ).toBeNull();
+  });
+
+  it("returns zero cost from estimateCostUsd when all token counts are zero", () => {
+    const result = estimateCostUsd(
+      {
+        inputTokens: 0,
+        outputTokens: 0,
+        reasoningTokens: 0,
+        cachedTokens: 0,
+      },
+      { input: 1, output: 2 },
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.totalUsd).toBe(0);
+    expect(result?.inputUsd).toBe(0);
+    expect(result?.outputUsd).toBe(0);
+    expect(result?.reasoningUsd).toBe(0);
+    expect(result?.cacheUsd).toBe(0);
+  });
+});
+
+describe("buildModelLookupCandidates", () => {
+  it("returns an empty array for an empty string", () => {
+    expect(buildModelLookupCandidates("")).toEqual([]);
+  });
+
+  it("extracts both segments when model name contains / separator", () => {
+    const candidates = buildModelLookupCandidates("anthropic/claude-sonnet-4");
+    expect(candidates).toContain("anthropic/claude-sonnet-4");
+    expect(candidates).toContain("claude-sonnet-4");
+  });
+
+  it("strips the variant suffix when model name contains : separator", () => {
+    const candidates = buildModelLookupCandidates("claude-sonnet-4:latest");
+    expect(candidates).toContain("claude-sonnet-4");
+    expect(candidates).toContain("claude-sonnet-4:latest");
+  });
+});
+
+describe("resolveOfficialPricingMatch edge cases", () => {
+  it("returns null when catalog is null", () => {
+    expect(resolveOfficialPricingMatch(null, "claude-sonnet-4")).toBeNull();
+  });
+
+  it("returns null when the model is not found in the catalog", () => {
+    expect(
+      resolveOfficialPricingMatch(catalog, "minimax/unknown-model-xyz"),
+    ).toBeNull();
+  });
+});
+
+describe("resolveOfficialPricingProviderId edge cases", () => {
+  it("returns null for an unknown model that matches no provider rule", () => {
+    expect(
+      resolveOfficialPricingProviderId("totally-unknown-model"),
+    ).toBeNull();
   });
 });

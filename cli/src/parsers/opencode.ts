@@ -327,7 +327,9 @@ export class OpenCodeParser implements IParser {
           continue;
         }
 
-        const timestamp = new Date(data.time?.created || data.created);
+        const created = data.time?.created ?? data.created;
+        if (!created) continue;
+        const timestamp = new Date(created);
         if (Number.isNaN(timestamp.getTime())) continue;
 
         const rootPath = data.path?.root;

@@ -9,10 +9,14 @@
 - `pnpm install` — install all workspace dependencies; use Node 20+.
 - `pnpm dev:cli` — run the CLI via `tsx`; for explicit args, use `pnpm --filter ./cli dev -- --help`.
 - `pnpm dev:web` — start the Next.js dev server.
-- `pnpm build` — build both workspaces.
+- `pnpm build` — build both workspaces; use `pnpm build:cli` or `pnpm build:web` for one workspace.
 - `pnpm lint:cli` / `pnpm lint:web` — run Biome checks.
 - `pnpm format:cli` / `pnpm format:web` — apply Biome formatting.
+- `pnpm format:check:cli` / `pnpm format:check:web` — verify Biome formatting without writing changes.
 - `pnpm check` — run the same lint + format steps enforced by the Husky pre-commit hook.
+- `pnpm test:cli` / `pnpm test:web` — run Vitest coverage for the CLI or Web workspace.
+- `pnpm migrate` — deploy Prisma migrations for the Web workspace.
+- `pnpm db:seed` — seed the Web database with development data.
 
 ## Coding Style & Naming Conventions
 
@@ -20,7 +24,7 @@ Use TypeScript + ESM throughout. Biome enforces 2-space indentation, double quot
 
 ## Testing Guidelines
 
-There is no committed test runner yet. Until one is added, treat `pnpm check` and `pnpm build` as required gates. For CLI changes, include a manual smoke test such as `pnpm --filter ./cli dev -- status` or `pnpm --filter ./cli dev -- --help`. When adding automated tests, place `*.test.ts` or `*.test.tsx` beside the code they cover and add the matching workspace script in the same PR.
+Vitest is available in both workspaces. Treat `pnpm check`, `pnpm build`, and the relevant `pnpm test:cli` or `pnpm test:web` command as required gates. For CLI changes, include a manual smoke test such as `pnpm --filter ./cli dev -- status` or `pnpm --filter ./cli dev -- --help`. Place `*.test.ts` or `*.test.tsx` beside the code they cover.
 
 If there are any new imported environment variables, add them to the `.env.example`, `docker-compose.yml` and `README.md` files.
 

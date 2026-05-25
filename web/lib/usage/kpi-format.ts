@@ -6,8 +6,6 @@ import {
 
 export type KpiMetricKind = "tokens" | "duration" | "count" | "currency";
 
-export const KPI_COUNT_UP_DURATION = 0.5;
-
 function normalizeKpiDisplayValue(value: number, kind: KpiMetricKind): number {
   if (kind === "currency") {
     return Math.round(value * 100) / 100;

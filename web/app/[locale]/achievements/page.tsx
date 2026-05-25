@@ -14,8 +14,10 @@ export async function generateMetadata({
   params,
 }: AchievementsPageProps): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "achievements.page" });
-  const tNav = await getTranslations({ locale, namespace: "social.nav" });
+  const [t, tNav] = await Promise.all([
+    getTranslations({ locale, namespace: "achievements.page" }),
+    getTranslations({ locale, namespace: "social.nav" }),
+  ]);
 
   return {
     title: `${tNav("achievements")} | Token Arena`,
@@ -29,15 +31,17 @@ export default async function AchievementsPage({
   const { locale } = await params;
   const session = await getSessionOrRedirect(locale);
   redirectIfUsernameSetupNeeded(locale, session.user);
-  const data = await getAchievementsPageData(session.user.id);
-  const tSection = await getTranslations({
-    locale,
-    namespace: "achievements.sections",
-  });
-  const tItems = await getTranslations({
-    locale,
-    namespace: "achievements.items",
-  });
+  const [data, tSection, tItems] = await Promise.all([
+    getAchievementsPageData(session.user.id),
+    getTranslations({
+      locale,
+      namespace: "achievements.sections",
+    }),
+    getTranslations({
+      locale,
+      namespace: "achievements.items",
+    }),
+  ]);
 
   return (
     <AppShell

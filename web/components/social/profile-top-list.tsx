@@ -1,19 +1,22 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  LabelList,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
-import { formatPercentage, formatTokenCount } from "@/lib/usage/format";
+import { formatTokenCount } from "@/lib/usage/format";
+
+const ProfileTopListChartInner = dynamic(
+  () =>
+    import("./profile-top-list-chart-inner").then(
+      (mod) => mod.ProfileTopListChartInner,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[220px] w-full animate-pulse rounded-xl bg-muted/50" />
+    ),
+  },
+);
 
 type ProfileTopListProps = {
   locale: string;
@@ -33,18 +36,6 @@ type ChartDatum = {
   share: number;
 };
 
-type ProfileTopTooltipContentProps = {
-  active?: boolean;
-  payload?: ReadonlyArray<{
-    payload?: ChartDatum;
-  }>;
-  locale: string;
-  shareLabel: string;
-  tokenLabel: string;
-};
-
-const PROFILE_TOP_LIST_INITIAL_WIDTH = 720;
-
 function truncateLabel(value: string, maxLength = 14) {
   if (value.length <= maxLength) {
     return value;
@@ -63,42 +54,6 @@ function toChartData(items: ProfileTopListProps["items"]): ChartDatum[] {
   }));
 }
 
-function ProfileTopTooltipContent({
-  active,
-  payload,
-  locale,
-  shareLabel,
-  tokenLabel,
-}: ProfileTopTooltipContentProps) {
-  const point = payload?.[0]?.payload;
-
-  if (!active || !point) {
-    return null;
-  }
-
-  return (
-    <div className="min-w-44 rounded-lg border bg-card p-3 shadow-md">
-      <div className="mb-3 text-sm font-medium text-foreground">
-        {point.name}
-      </div>
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between gap-6 text-sm">
-          <span className="text-muted-foreground">{tokenLabel}</span>
-          <span className="font-medium text-foreground">
-            {point.valueLabel}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-6 text-sm">
-          <span className="text-muted-foreground">{shareLabel}</span>
-          <span className="font-medium text-foreground">
-            {formatPercentage(point.share, locale)}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function ProfileTopList({
   locale,
   emptyLabel,
@@ -115,77 +70,12 @@ export function ProfileTopList({
   const chartHeight = Math.max(chartData.length * 44 + 24, 220);
 
   return (
-    <div
-      className="h-[220px] w-full min-w-0"
-      style={{ height: `${chartHeight}px` }}
-    >
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-        initialDimension={{
-          width: PROFILE_TOP_LIST_INITIAL_WIDTH,
-          height: chartHeight,
-        }}
-      >
-        <BarChart
-          data={chartData}
-          layout="vertical"
-          margin={{ left: 8, right: 24, top: 4, bottom: 4 }}
-          barCategoryGap="20%"
-        >
-          <CartesianGrid
-            horizontal={false}
-            strokeDasharray="3 3"
-            className="stroke-muted"
-          />
-          <XAxis
-            type="number"
-            tick={{ fontSize: 12 }}
-            tickFormatter={(value) => formatTokenCount(Number(value))}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            type="category"
-            dataKey="shortName"
-            width={104}
-            tick={{ fontSize: 12 }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip
-            cursor={{ fill: "var(--muted)", opacity: 0.45 }}
-            content={(tooltipProps) => (
-              <ProfileTopTooltipContent
-                {...tooltipProps}
-                locale={locale}
-                shareLabel={tTable("share")}
-                tokenLabel={tProfile("totalTokens")}
-              />
-            )}
-          />
-          <Bar
-            dataKey="value"
-            radius={[0, 6, 6, 0]}
-            background={{ fill: "var(--muted)" }}
-          >
-            {chartData.map((entry, index) => (
-              <Cell
-                key={entry.name}
-                fill="var(--chart-1)"
-                fillOpacity={Math.max(1 - index * 0.14, 0.35)}
-              />
-            ))}
-            <LabelList
-              dataKey="valueLabel"
-              position="right"
-              offset={10}
-              fill="var(--foreground)"
-              fontSize={12}
-            />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <ProfileTopListChartInner
+      chartData={chartData}
+      chartHeight={chartHeight}
+      locale={locale}
+      shareLabel={tTable("share")}
+      tokenLabel={tProfile("totalTokens")}
+    />
   );
 }

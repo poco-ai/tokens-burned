@@ -3,7 +3,7 @@
 import { Check, Languages } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -34,7 +34,7 @@ type LanguageSwitcherProps = {
   footerIcon?: boolean;
 };
 
-export function LanguageSwitcher({
+function LanguageSwitcherInner({
   authenticated = false,
   variant = "default",
   footerIcon = false,
@@ -42,7 +42,7 @@ export function LanguageSwitcher({
   const t = useTranslations("common");
   const locale = useLocale() as AppLocale;
   const pathname = usePathname();
-  const router = useRouter();
+  const { replace } = useRouter();
   const searchParams = useSearchParams();
   const compact = variant === "compact";
 
@@ -63,7 +63,7 @@ export function LanguageSwitcher({
     const query = Object.fromEntries(searchParams.entries());
     const href = Object.keys(query).length > 0 ? { pathname, query } : pathname;
 
-    router.replace(href, { locale: nextLocale });
+    replace(href, { locale: nextLocale });
     setOpen(false);
   };
 
@@ -153,5 +153,13 @@ export function LanguageSwitcher({
         <SelectItem value="zh">{t("languages.zh")}</SelectItem>
       </SelectContent>
     </Select>
+  );
+}
+
+export function LanguageSwitcher(props: LanguageSwitcherProps) {
+  return (
+    <Suspense fallback={null}>
+      <LanguageSwitcherInner {...props} />
+    </Suspense>
   );
 }

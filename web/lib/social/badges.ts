@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { tokenCountToNumber } from "@/lib/token-counts";
 import { formatDateInput } from "@/lib/usage/format";
 
-export const publicBadgeMetrics = [
+const publicBadgeMetrics = [
   "streak",
   "tokens",
   "active_time",
@@ -18,7 +18,7 @@ export const publicBadgeMetrics = [
 ] as const;
 
 export type PublicBadgeMetric = (typeof publicBadgeMetrics)[number];
-export type PublicBadgeTheme = "light" | "dark";
+type PublicBadgeTheme = "light" | "dark";
 export type PublicBadgeStyle =
   | "flat"
   | "flat-square"
@@ -198,18 +198,20 @@ function formatShortNumber(value: number) {
   })}B`;
 }
 
+const compactUsdFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
 function formatShortUsd(value: number) {
   if (value <= 0) {
     return "$0";
   }
 
   if (value >= 1_000) {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      notation: "compact",
-      maximumFractionDigits: 1,
-    }).format(value);
+    return compactUsdFormatter.format(value);
   }
 
   if (value >= 1) {
@@ -354,24 +356,33 @@ export async function getPublicBadgeData(input: {
   let estimatedCostUsd = 0;
   const activeDayKeys = new Set<string>();
 
-  for (const bucket of buckets) {
-    const normalized = {
-      totalTokens: tokenCountToNumber(bucket.totalTokens),
-      inputTokens: tokenCountToNumber(bucket.inputTokens),
-      outputTokens: tokenCountToNumber(bucket.outputTokens),
-      reasoningTokens: tokenCountToNumber(bucket.reasoningTokens),
-      cachedTokens: tokenCountToNumber(bucket.cachedTokens),
-    };
+  const costs = await Promise.all(
+    buckets.map(async (bucket) => {
+      const normalized = {
+        totalTokens: tokenCountToNumber(bucket.totalTokens),
+        inputTokens: tokenCountToNumber(bucket.inputTokens),
+        outputTokens: tokenCountToNumber(bucket.outputTokens),
+        reasoningTokens: tokenCountToNumber(bucket.reasoningTokens),
+        cachedTokens: tokenCountToNumber(bucket.cachedTokens),
+      };
 
+      activeDayKeys.add(formatDateInput(bucket.bucketStart, timezone));
+      return {
+        normalized,
+        cost: await estimateBucketCostUsd({
+          model: bucket.model,
+          inputTokens: normalized.inputTokens,
+          outputTokens: normalized.outputTokens,
+          reasoningTokens: normalized.reasoningTokens,
+          cachedTokens: normalized.cachedTokens,
+        })(catalog),
+      };
+    }),
+  );
+
+  for (const { normalized, cost } of costs) {
     totalTokens += normalized.totalTokens;
-    estimatedCostUsd += await estimateBucketCostUsd({
-      model: bucket.model,
-      inputTokens: normalized.inputTokens,
-      outputTokens: normalized.outputTokens,
-      reasoningTokens: normalized.reasoningTokens,
-      cachedTokens: normalized.cachedTokens,
-    })(catalog);
-    activeDayKeys.add(formatDateInput(bucket.bucketStart, timezone));
+    estimatedCostUsd += cost;
   }
 
   for (const session of sessionDays) {

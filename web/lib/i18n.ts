@@ -31,9 +31,10 @@ export function getPreferredLocale(input: {
 
   const acceptedLanguages = (input.acceptLanguage ?? "")
     .split(",")
-    .map((part) => part.trim())
-    .map((part) => part.split(";")[0]?.trim())
-    .filter(Boolean);
+    .flatMap((part) => {
+      const code = part.trim().split(";")[0]?.trim();
+      return code ? [code] : [];
+    });
 
   for (const language of acceptedLanguages) {
     const locale = normalizeLocale(language);
@@ -46,7 +47,7 @@ export function getPreferredLocale(input: {
   return defaultLocale;
 }
 
-export function extractLocaleFromPathname(pathname: string) {
+function extractLocaleFromPathname(pathname: string) {
   const segments = pathname.split("/").filter(Boolean);
   const candidate = segments[0];
 

@@ -12,3 +12,5 @@ build
 *.tsbuildinfo
 .env
 !.env.example
+.agents/
+.claude/

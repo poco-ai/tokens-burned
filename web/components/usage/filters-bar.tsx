@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Children, type ReactNode, useMemo, useState } from "react";
+import { Children, type ReactNode, Suspense, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -127,7 +127,7 @@ function getPresetLabel(
   return value === "custom" ? t("custom") : value.toUpperCase();
 }
 
-export function FiltersBar({
+function FiltersBarInner({
   preset,
   range,
   filters,
@@ -136,14 +136,14 @@ export function FiltersBar({
   badgesSlot,
 }: FiltersBarProps) {
   const t = useTranslations("usage.filters");
-  const router = useRouter();
+  const { replace } = useRouter();
   const searchParams = useSearchParams();
   const [isCustomOpen, setIsCustomOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [customFrom, setCustomFrom] = useState(
+  const [customFrom, setCustomFrom] = useState(() =>
     buildDateValue(range.from, range.timezone),
   );
-  const [customTo, setCustomTo] = useState(
+  const [customTo, setCustomTo] = useState(() =>
     buildDateValue(range.to, range.timezone),
   );
 
@@ -153,7 +153,7 @@ export function FiltersBar({
   );
   const badgesSlotChildren = Children.toArray(badgesSlot);
   const updateParams = (updates: Record<string, string | null>) => {
-    router.replace(buildUsageHref(searchParams.toString(), updates));
+    replace(buildUsageHref(searchParams.toString(), updates));
   };
 
   const setPreset = (nextPreset: DashboardPreset) => {
@@ -409,5 +409,13 @@ export function FiltersBar({
         ) : null}
       </div>
     </div>
+  );
+}
+
+export function FiltersBar(props: FiltersBarProps) {
+  return (
+    <Suspense fallback={null}>
+      <FiltersBarInner {...props} />
+    </Suspense>
   );
 }

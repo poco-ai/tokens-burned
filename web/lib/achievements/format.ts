@@ -3,9 +3,33 @@ import {
   formatPercentage,
   formatTokenCount,
 } from "@/lib/usage/format";
-import type { AchievementProgressUnit, AchievementTier } from "./types";
+import type { AchievementProgressUnit } from "./types";
 
-export function formatAchievementMetric(input: {
+const currencyFormatterCache = new Map<
+  string,
+  Map<string, Intl.NumberFormat>
+>();
+
+function getCurrencyFormatter(locale: string, maximumFractionDigits: number) {
+  let byDigits = currencyFormatterCache.get(locale);
+  if (!byDigits) {
+    byDigits = new Map();
+    currencyFormatterCache.set(locale, byDigits);
+  }
+  const cacheKey = String(maximumFractionDigits);
+  let formatter = byDigits.get(cacheKey);
+  if (!formatter) {
+    formatter = Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits,
+    });
+    byDigits.set(cacheKey, formatter);
+  }
+  return formatter;
+}
+
+function formatAchievementMetric(input: {
   value: number;
   unit: AchievementProgressUnit;
   locale: string;
@@ -18,11 +42,10 @@ export function formatAchievementMetric(input: {
     case "percent":
       return formatPercentage(input.value, input.locale);
     case "usd":
-      return new Intl.NumberFormat(input.locale, {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: input.value >= 1000 ? 0 : 2,
-      }).format(input.value);
+      return getCurrencyFormatter(
+        input.locale,
+        input.value >= 1000 ? 0 : 2,
+      ).format(input.value);
     default:
       return Math.floor(input.value).toLocaleString(input.locale);
   }
@@ -43,30 +66,4 @@ export function formatAchievementProgress(input: {
     unit: input.unit,
     locale: input.locale,
   })}`;
-}
-
-export function formatAchievementDate(input: {
-  value: string;
-  locale: string;
-  timezone: string;
-}) {
-  return new Intl.DateTimeFormat(input.locale, {
-    timeZone: input.timezone,
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(input.value));
-}
-
-export function getTierTone(tier: AchievementTier) {
-  switch (tier) {
-    case "special":
-      return "bg-violet-500/12 text-violet-700 dark:text-violet-300";
-    case "gold":
-      return "bg-amber-500/12 text-amber-700 dark:text-amber-300";
-    case "silver":
-      return "bg-slate-500/12 text-slate-700 dark:text-slate-300";
-    default:
-      return "bg-orange-500/12 text-orange-700 dark:text-orange-300";
-  }
 }

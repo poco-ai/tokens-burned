@@ -4,7 +4,7 @@ import type {
   WechatShareTicketPayload,
 } from "./share-server";
 
-export type WechatOpenSdkResult = {
+type WechatOpenSdkResult = {
   errcode: number;
   errmsg: string;
   actionId?: string;
@@ -52,7 +52,7 @@ export function getWechatShareSupport(input: {
   } as const;
 }
 
-export async function waitForWechatOpenSdk(timeoutMs = 5000) {
+async function waitForWechatOpenSdk(timeoutMs = 5000) {
   if (typeof window === "undefined") {
     throw new Error("unsupported");
   }

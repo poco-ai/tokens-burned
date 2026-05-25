@@ -8,11 +8,11 @@ import {
   usageApiKeyStatuses,
 } from "./types";
 
-export const projectModeSchema = z.enum(projectModes);
-export const usageApiKeyStatusSchema = z.enum(usageApiKeyStatuses);
-export const dashboardPresetSchema = z.enum(dashboardPresets);
-export const localeSchema = z.enum(supportedLocales);
-export const themeModeSchema = z.enum(themeModes);
+const projectModeSchema = z.enum(projectModes);
+const usageApiKeyStatusSchema = z.enum(usageApiKeyStatuses);
+const dashboardPresetSchema = z.enum(dashboardPresets);
+const localeSchema = z.enum(supportedLocales);
+const themeModeSchema = z.enum(themeModes);
 
 export function isValidTimezone(timezone: string): boolean {
   try {
@@ -56,7 +56,7 @@ export const usageDeleteQuerySchema = z.object({
   deviceId: z.string().trim().min(8),
 });
 
-export const ingestBucketSchema = z.object({
+const ingestBucketSchema = z.object({
   source: z.string(),
   model: z.string(),
   projectKey: z.string(),
@@ -69,7 +69,7 @@ export const ingestBucketSchema = z.object({
   totalTokens: z.number().int().nonnegative(),
 });
 
-export const ingestSessionSchema = z.object({
+const ingestSessionSchema = z.object({
   source: z.string(),
   projectKey: z.string(),
   projectLabel: z.string(),

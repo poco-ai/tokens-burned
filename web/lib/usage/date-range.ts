@@ -27,7 +27,7 @@ function getZonedFormatter(timezone: string) {
     return cached;
   }
 
-  const formatter = new Intl.DateTimeFormat("en-CA", {
+  const formatter = Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
     hourCycle: "h23",
     year: "numeric",
@@ -46,9 +46,12 @@ function getZonedFormatter(timezone: string) {
 export function toZonedParts(date: Date, timezone: string): ZonedDateParts {
   const parts = getZonedFormatter(timezone).formatToParts(date);
   const values = Object.fromEntries(
-    parts
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, Number.parseInt(part.value, 10)]),
+    parts.reduce<[string, number][]>((acc, part) => {
+      if (part.type !== "literal") {
+        acc.push([part.type, Number.parseInt(part.value, 10)]);
+      }
+      return acc;
+    }, []),
   );
 
   return {

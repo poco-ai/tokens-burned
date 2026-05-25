@@ -768,9 +768,9 @@ export function buildAchievementsPageDataFromStatuses(input: {
       totalActiveDays: metrics.activeDayKeys.length,
       currentPersona: metrics.currentPersona,
     },
-    featured: [...unlocked].sort(compareUnlocked).slice(0, 3),
-    recentUnlocks: [...unlocked].sort(compareUnlocked).slice(0, 5),
-    nextTargets: [...locked].sort(compareTargets).slice(0, 3),
+    featured: unlocked.toSorted(compareUnlocked).slice(0, 3),
+    recentUnlocks: unlocked.toSorted(compareUnlocked).slice(0, 5),
+    nextTargets: locked.toSorted(compareTargets).slice(0, 3),
     sections,
   };
 }

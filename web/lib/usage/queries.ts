@@ -1,3 +1,5 @@
+import "server-only";
+
 import { getPricingCatalog } from "@/lib/pricing/catalog";
 import {
   estimateCostUsd,
@@ -876,9 +878,15 @@ export async function getLastSyncedAt(userId: string) {
     }),
   ]);
 
-  return (
-    [bucket?.updatedAt, session?.updatedAt, device?.lastSeenAt]
-      .filter((value): value is Date => Boolean(value))
-      .sort((left, right) => right.getTime() - left.getTime())[0] ?? null
-  );
+  const timestamps = [
+    bucket?.updatedAt,
+    session?.updatedAt,
+    device?.lastSeenAt,
+  ].reduce<number[]>((acc, d) => {
+    if (d != null) {
+      acc.push(d.getTime());
+    }
+    return acc;
+  }, []);
+  return timestamps.length > 0 ? new Date(Math.max(...timestamps)) : null;
 }

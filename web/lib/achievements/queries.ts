@@ -1,3 +1,5 @@
+import "server-only";
+
 import { finalizePendingLeaderboardPeriods } from "@/lib/leaderboard/finalize";
 import { getUserGlobalLeaderboardRanksByTotalTokens } from "@/lib/leaderboard/rank";
 import type { PricingCatalog } from "@/lib/pricing/catalog";
@@ -32,10 +34,15 @@ import type {
 } from "./types";
 
 function latestIso(values: Array<string | null | undefined>) {
-  const timestamps = values
-    .filter((value): value is string => Boolean(value))
-    .map((value) => Date.parse(value))
-    .filter((value) => !Number.isNaN(value));
+  const timestamps: number[] = [];
+
+  for (const value of values) {
+    if (!value) continue;
+    const parsed = Date.parse(value);
+    if (!Number.isNaN(parsed)) {
+      timestamps.push(parsed);
+    }
+  }
 
   if (timestamps.length === 0) {
     return null;
@@ -44,8 +51,26 @@ function latestIso(values: Array<string | null | undefined>) {
   return new Date(Math.max(...timestamps)).toISOString();
 }
 
+function earliestIso(values: Array<string | null | undefined>) {
+  const timestamps: number[] = [];
+
+  for (const value of values) {
+    if (!value) continue;
+    const parsed = Date.parse(value);
+    if (!Number.isNaN(parsed)) {
+      timestamps.push(parsed);
+    }
+  }
+
+  if (timestamps.length === 0) {
+    return null;
+  }
+
+  return new Date(Math.min(...timestamps)).toISOString();
+}
+
 function sortIsoAsc<T extends { at: string }>(values: T[]) {
-  return [...values].sort(
+  return values.toSorted(
     (left, right) => Date.parse(left.at) - Date.parse(right.at),
   );
 }
@@ -121,12 +146,12 @@ function buildDistinctTimeline(
   rows: Array<{ at: string; key: string | null | undefined }>,
 ): AchievementDistinctTimelinePoint[] {
   return sortIsoAsc(
-    rows
-      .filter((row) => Boolean(row.key))
-      .map((row) => ({
-        at: row.at,
-        key: row.key ?? "",
-      })),
+    rows.reduce<AchievementDistinctTimelinePoint[]>((acc, row) => {
+      if (row.key) {
+        acc.push({ at: row.at, key: row.key });
+      }
+      return acc;
+    }, []),
   );
 }
 
@@ -271,18 +296,19 @@ function buildAllTimeMetrics(input: {
     ),
   );
   const mutualEffectiveDates = input.followers
-    .map((record) => {
+    .reduce<string[]>((acc, record) => {
       const followingAt = followingMap.get(record.followerId);
 
-      if (!followingAt) {
-        return null;
+      if (followingAt) {
+        acc.push(
+          new Date(
+            Math.max(followingAt.getTime(), record.createdAt.getTime()),
+          ).toISOString(),
+        );
       }
 
-      return new Date(
-        Math.max(followingAt.getTime(), record.createdAt.getTime()),
-      ).toISOString();
-    })
-    .filter((value): value is string => Boolean(value))
+      return acc;
+    }, [])
     .sort((left, right) => Date.parse(left) - Date.parse(right));
 
   const recentRange = resolveDashboardRange({
@@ -352,10 +378,7 @@ function buildAllTimeMetrics(input: {
       tokenTimeline[0]?.at ?? null,
       sessionTimeline[0]?.at ?? null,
     ])
-      ? ([tokenTimeline[0]?.at, sessionTimeline[0]?.at]
-          .filter((value): value is string => Boolean(value))
-          .sort((left, right) => Date.parse(left) - Date.parse(right))[0] ??
-        null)
+      ? earliestIso([tokenTimeline[0]?.at, sessionTimeline[0]?.at])
       : null,
     publicProfileEnabled: input.publicProfileEnabled,
     publicProfileUpdatedAt: input.publicProfileUpdatedAt?.toISOString() ?? null,
@@ -428,9 +451,9 @@ function normalizeStoredAchievementRecord(row: {
 }
 
 async function loadAchievementMetrics(userId: string) {
-  const preference = await getUsagePreference(userId);
-  const [user, buckets, sessions, following, followers, catalog] =
+  const [preference, user, buckets, sessions, following, followers, catalog] =
     await Promise.all([
+      getUsagePreference(userId),
       prisma.user.findUniqueOrThrow({
         where: { id: userId },
         select: {
@@ -527,9 +550,14 @@ async function synchronizeUserAchievements(input: {
       userId: input.userId,
     },
   });
-  const existingRecords = existingRows
-    .map(normalizeStoredAchievementRecord)
-    .filter((record): record is StoredAchievementRecord => Boolean(record));
+  const existingRecords = existingRows.reduce<StoredAchievementRecord[]>(
+    (acc, row) => {
+      const record = normalizeStoredAchievementRecord(row);
+      if (record) acc.push(record);
+      return acc;
+    },
+    [],
+  );
   const plan = buildAchievementAwardPlan({
     userId: input.userId,
     evaluatedAt: new Date().toISOString(),
@@ -558,42 +586,44 @@ async function synchronizeUserAchievements(input: {
         });
       }
 
-      for (const record of plan.records.values()) {
-        if (record.awardCount === 0 && !existingCodes.has(record.code)) {
-          continue;
-        }
+      await Promise.all(
+        Array.from(plan.records.values()).map(async (record) => {
+          if (record.awardCount === 0 && !existingCodes.has(record.code)) {
+            return;
+          }
 
-        await tx.userAchievement.upsert({
-          where: {
-            userId_code: {
+          await tx.userAchievement.upsert({
+            where: {
+              userId_code: {
+                userId: input.userId,
+                code: record.code,
+              },
+            },
+            update: {
+              awardCount: record.awardCount,
+              firstAwardedAt: record.firstAwardedAt
+                ? new Date(record.firstAwardedAt)
+                : null,
+              lastAwardedAt: record.lastAwardedAt
+                ? new Date(record.lastAwardedAt)
+                : null,
+              ...(record.state ? { state: record.state } : {}),
+            },
+            create: {
               userId: input.userId,
               code: record.code,
+              awardCount: record.awardCount,
+              firstAwardedAt: record.firstAwardedAt
+                ? new Date(record.firstAwardedAt)
+                : null,
+              lastAwardedAt: record.lastAwardedAt
+                ? new Date(record.lastAwardedAt)
+                : null,
+              ...(record.state ? { state: record.state } : {}),
             },
-          },
-          update: {
-            awardCount: record.awardCount,
-            firstAwardedAt: record.firstAwardedAt
-              ? new Date(record.firstAwardedAt)
-              : null,
-            lastAwardedAt: record.lastAwardedAt
-              ? new Date(record.lastAwardedAt)
-              : null,
-            ...(record.state ? { state: record.state } : {}),
-          },
-          create: {
-            userId: input.userId,
-            code: record.code,
-            awardCount: record.awardCount,
-            firstAwardedAt: record.firstAwardedAt
-              ? new Date(record.firstAwardedAt)
-              : null,
-            lastAwardedAt: record.lastAwardedAt
-              ? new Date(record.lastAwardedAt)
-              : null,
-            ...(record.state ? { state: record.state } : {}),
-          },
-        });
-      }
+          });
+        }),
+      );
     });
   }
 

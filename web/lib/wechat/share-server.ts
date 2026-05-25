@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { AppLocale } from "@/lib/i18n";
 import {
   buildAbsoluteUrl,
   getAppOrigin,
@@ -22,7 +21,7 @@ const wechatTicketResponseSchema = z.object({
   errmsg: z.string().optional(),
 });
 
-export const wechatShareSourceSchema = z.enum(["chat", "timeline"]);
+const wechatShareSourceSchema = z.enum(["chat", "timeline"]);
 
 export type WechatShareSource = z.infer<typeof wechatShareSourceSchema>;
 
@@ -185,9 +184,7 @@ async function requestWechatAccessToken(fetchImpl: FetchLike) {
   } satisfies WechatAccessTokenResult;
 }
 
-export async function createWechatPcOpenSdkTicket(
-  fetchImpl: FetchLike = fetch,
-) {
+async function createWechatPcOpenSdkTicket(fetchImpl: FetchLike = fetch) {
   const accessToken = await getWechatAccessToken(fetchImpl);
   const response = await fetchImpl(
     `https://api.weixin.qq.com/cgi-bin/pcopensdk/ticket?access_token=${encodeURIComponent(accessToken)}`,
@@ -245,5 +242,3 @@ export function isWechatShareConfigured() {
       getAppOrigin(),
   );
 }
-
-export type { AppLocale };

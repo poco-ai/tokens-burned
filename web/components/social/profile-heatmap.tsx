@@ -46,11 +46,18 @@ function buildWeeks(days: ProfileHeatmapDay[]) {
   return chunk(padded, 7);
 }
 
+const monthLabelFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
 function formatMonthLabel(value: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, {
-    month: "short",
-    timeZone: "UTC",
-  }).format(parseDateKey(value));
+  let formatter = monthLabelFormatterCache.get(locale);
+  if (!formatter) {
+    formatter = Intl.DateTimeFormat(locale, {
+      month: "short",
+      timeZone: "UTC",
+    });
+    monthLabelFormatterCache.set(locale, formatter);
+  }
+  return formatter.format(parseDateKey(value));
 }
 
 function buildMonthLabels(weeks: HeatmapCell[][], locale: string) {

@@ -23,7 +23,7 @@ export function ThemeScript({ initialThemeMode }: ThemeScriptProps) {
 `;
 
   return (
-    <Script id="tokenarena-theme-init" strategy="beforeInteractive">
+    <Script id="tokenarena-theme-init" suppressHydrationWarning>
       {script}
     </Script>
   );

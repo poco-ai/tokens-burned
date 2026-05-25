@@ -8,12 +8,16 @@ import type {
 const MANIFEST_VERSION = 1 as const;
 const SNAPSHOT_PROTOCOL_VERSION = 1 as const;
 
-function shortHash(value: string): string {
+// codeql[cs/insufficient-password-hash] - Used for API key fingerprinting and content change detection, not password storage.
+// API keys are high-entropy tokens; SHA-256 is appropriate for identifier comparison.
+function fingerprint(value: string): string {
   return createHash("sha256").update(value).digest("hex").slice(0, 16);
 }
 
 function normalizeApiUrl(apiUrl: string): string {
-  return apiUrl.replace(/\/+$/, "");
+  let end = apiUrl.length;
+  while (end > 0 && apiUrl[end - 1] === "/") end--;
+  return apiUrl.slice(0, end) || "/";
 }
 
 export interface UploadManifestScope {
@@ -57,10 +61,10 @@ export function buildUploadManifestScope(input: {
   settings: ApiSettings;
 }): UploadManifestScope {
   return {
-    apiKeyHash: shortHash(input.apiKey),
+    apiKeyHash: fingerprint(input.apiKey),
     apiUrl: normalizeApiUrl(input.apiUrl),
     deviceId: input.deviceId,
-    projectHashSaltHash: shortHash(input.settings.projectHashSalt),
+    projectHashSaltHash: fingerprint(input.settings.projectHashSalt),
     projectMode: input.settings.projectMode,
     snapshotProtocolVersion: SNAPSHOT_PROTOCOL_VERSION,
   };
@@ -114,7 +118,7 @@ export function getUploadSessionManifestKey(
 }
 
 function getUploadBucketContentHash(bucket: UploadTokenBucket): string {
-  return shortHash(
+  return fingerprint(
     JSON.stringify({
       cachedTokens: bucket.cachedTokens,
       hostname: bucket.hostname,
@@ -128,7 +132,7 @@ function getUploadBucketContentHash(bucket: UploadTokenBucket): string {
 }
 
 function getUploadSessionContentHash(session: UploadSessionMetadata): string {
-  return shortHash(
+  return fingerprint(
     JSON.stringify({
       activeSeconds: session.activeSeconds,
       cachedTokens: session.cachedTokens,

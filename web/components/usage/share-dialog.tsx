@@ -1,24 +1,20 @@
 "use client";
 
-import { toPng } from "html-to-image";
-import {
-  Copy,
-  DollarSign,
-  Download,
-  FolderLock,
-  Share2,
-  Sparkles,
-  UserRoundX,
-} from "lucide-react";
+import { AlertCircle, Check, Copy, Download, Share2 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -29,83 +25,43 @@ import type {
   UsageShareCardTemplate,
 } from "@/lib/usage/share-card";
 import { cn } from "@/lib/utils";
-import {
-  buildUsageShareCardCaption,
-  UsageShareCardPreview,
-  type UsageShareCardPrivacy,
-} from "./share-card-preview";
+import type { UsageShareCardPrivacy } from "./share-card-preview";
 
 type UsageShareDialogProps = {
   data: UsageShareCardData;
+  defaultTemplate?: UsageShareCardTemplate;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: ReactNode | null;
 };
 
-type ShareStatus = "copiedText" | "copiedImage" | "downloaded" | "failed";
+type ShareStatus = "copiedImage" | "downloaded" | "failed";
 
-const templateOptions: UsageShareCardTemplate[] = ["summary", "persona"];
+type ShareFooterAction = "copy" | "download";
+type ShareActionState = "idle" | "success" | "error";
 
-function TemplateButton({
-  active,
-  title,
-  description,
-  onClick,
-}: {
-  active: boolean;
-  title: string;
-  description: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "w-full rounded-2xl border p-4 text-left transition-colors",
-        active
-          ? "border-foreground/60 bg-foreground/[0.06] shadow-sm"
-          : "border-border bg-background hover:border-foreground/30 hover:bg-muted/40",
-      )}
-    >
-      <div className="font-medium">{title}</div>
-      <div className="mt-1 text-sm text-muted-foreground">{description}</div>
-    </button>
-  );
-}
+const defaultPrivacy: UsageShareCardPrivacy = {
+  hideProjectNames: true,
+  hideCost: false,
+  hideUsername: false,
+};
 
-function PrivacyToggle({
-  active,
-  title,
-  description,
-  icon,
-  onClick,
-}: {
-  active: boolean;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition-colors",
-        active
-          ? "border-foreground/60 bg-foreground/[0.06] shadow-sm"
-          : "border-border bg-background hover:border-foreground/30 hover:bg-muted/40",
-      )}
-    >
-      <div className="mt-0.5 text-muted-foreground">{icon}</div>
-      <div>
-        <div className="font-medium">{title}</div>
-        <div className="mt-1 text-sm text-muted-foreground">{description}</div>
-      </div>
-    </button>
-  );
-}
+const UsageShareCardPreviewLoader = dynamic(
+  () =>
+    import("./share-card-preview-loader").then(
+      (mod) => mod.UsageShareCardPreviewLoader,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="aspect-[4/3] w-full max-w-[760px] animate-pulse rounded-[2rem] bg-muted" />
+    ),
+  },
+);
 
 async function renderShareCard(node: HTMLElement) {
+  const { toPng } = await import("html-to-image");
+
   if ("fonts" in document) {
     await document.fonts.ready;
   }
@@ -114,53 +70,112 @@ async function renderShareCard(node: HTMLElement) {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
   });
 
+  const rect = node.getBoundingClientRect();
+  const width = Math.max(1, Math.ceil(Math.max(node.scrollWidth, rect.width)));
+  const height = Math.max(
+    1,
+    Math.ceil(Math.max(node.scrollHeight, rect.height)),
+  );
+  const pixelRatio =
+    typeof window !== "undefined" && window.devicePixelRatio
+      ? Math.min(window.devicePixelRatio, 3)
+      : 2;
+
   return toPng(node, {
     cacheBust: true,
-    pixelRatio: 1,
-    width: 1200,
-    height: 900,
-    canvasWidth: 1200,
-    canvasHeight: 900,
+    pixelRatio,
+    width,
+    height,
+    canvasWidth: Math.ceil(width * pixelRatio),
+    canvasHeight: Math.ceil(height * pixelRatio),
     backgroundColor: "#09090b",
   });
 }
 
-export function UsageShareDialog({ data }: UsageShareDialogProps) {
+function ShareActionButton({
+  actionState,
+  disabled,
+  icon,
+  label,
+  onClick,
+  title,
+  variant,
+}: {
+  actionState: ShareActionState;
+  disabled?: boolean;
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+  title?: string;
+  variant?: "default" | "outline";
+}) {
+  const stateIcon =
+    actionState === "success" ? (
+      <Check className="size-4 shrink-0 text-foreground" aria-hidden />
+    ) : actionState === "error" ? (
+      <AlertCircle className="size-4 shrink-0" aria-hidden />
+    ) : (
+      icon
+    );
+
+  return (
+    <Button
+      type="button"
+      variant={variant}
+      className={cn(
+        "flex h-8 max-w-full min-w-0 justify-center gap-1.5 overflow-hidden whitespace-normal sm:min-h-8",
+        actionState === "success" &&
+          "border-border bg-muted text-foreground dark:border-border dark:bg-muted dark:text-foreground",
+        actionState === "error" &&
+          "border-destructive/50 bg-destructive/10 text-destructive dark:border-destructive/45 dark:bg-destructive/15 dark:text-destructive",
+      )}
+      disabled={disabled}
+      title={title}
+      aria-label={label}
+      onClick={onClick}
+    >
+      {stateIcon}
+      {actionState === "idle" ? (
+        <span className="min-w-0 truncate">{label}</span>
+      ) : null}
+    </Button>
+  );
+}
+
+export function UsageShareDialog({
+  data,
+  defaultTemplate = "receipt",
+  open,
+  onOpenChange,
+  trigger,
+}: UsageShareDialogProps) {
   const locale = useLocale();
   const t = useTranslations("usage.share");
   const exportRef = useRef<HTMLDivElement>(null);
-  const [template, setTemplate] = useState<UsageShareCardTemplate>("summary");
-  const [privacy, setPrivacy] = useState<UsageShareCardPrivacy>({
-    hideProjectNames: true,
-    hideCost: true,
-    hideUsername: false,
-  });
+  const template = defaultTemplate;
   const [status, setStatus] = useState<ShareStatus | null>(null);
+  const [lastAction, setLastAction] = useState<ShareFooterAction | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isPreviewReady, setIsPreviewReady] = useState(false);
+
+  const handlePreviewReady = useCallback(() => {
+    setIsPreviewReady(true);
+  }, []);
 
   const canCopyImage =
     typeof navigator !== "undefined" &&
     typeof ClipboardItem !== "undefined" &&
     typeof navigator.clipboard?.write === "function";
 
-  const caption = useMemo(
-    () =>
-      buildUsageShareCardCaption({
-        data,
-        template,
-        privacy,
-        locale,
-        t,
-      }),
-    [data, locale, privacy, t, template],
-  );
-
   useEffect(() => {
     if (!status) {
       return;
     }
 
-    const timeoutId = window.setTimeout(() => setStatus(null), 2400);
+    const timeoutId = window.setTimeout(() => {
+      setStatus(null);
+      setLastAction(null);
+    }, 2400);
 
     return () => window.clearTimeout(timeoutId);
   }, [status]);
@@ -173,23 +188,8 @@ export function UsageShareDialog({ data }: UsageShareDialogProps) {
     return renderShareCard(exportRef.current);
   };
 
-  const setPrivacyValue = (key: keyof UsageShareCardPrivacy) => {
-    setPrivacy((current) => ({
-      ...current,
-      [key]: !current[key],
-    }));
-  };
-
-  const handleCopyText = async () => {
-    try {
-      await navigator.clipboard.writeText(caption);
-      setStatus("copiedText");
-    } catch {
-      setStatus("failed");
-    }
-  };
-
   const handleDownload = async () => {
+    setLastAction("download");
     try {
       setIsExporting(true);
       const dataUrl = await exportImage();
@@ -212,6 +212,7 @@ export function UsageShareDialog({ data }: UsageShareDialogProps) {
       return;
     }
 
+    setLastAction("copy");
     try {
       setIsExporting(true);
       const dataUrl = await exportImage();
@@ -230,140 +231,110 @@ export function UsageShareDialog({ data }: UsageShareDialogProps) {
     }
   };
 
+  const copyState: ShareActionState =
+    lastAction !== "copy"
+      ? "idle"
+      : status === "copiedImage"
+        ? "success"
+        : status === "failed"
+          ? "error"
+          : "idle";
+  const downloadState: ShareActionState =
+    lastAction !== "download"
+      ? "idle"
+      : status === "downloaded"
+        ? "success"
+        : status === "failed"
+          ? "error"
+          : "idle";
+
+  const resetState = () => {
+    setStatus(null);
+    setLastAction(null);
+    setIsPreviewReady(false);
+  };
+
   return (
-    <>
-      <Dialog>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          resetState();
+        }
+        onOpenChange?.(nextOpen);
+      }}
+    >
+      {trigger === undefined ? (
         <DialogTrigger asChild>
           <Button type="button" variant="outline" size="sm">
             <Share2 />
             {t("button")}
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-h-[92vh] max-w-[calc(100vw-1.5rem)] gap-0 overflow-hidden border border-border/70 bg-card p-0 shadow-2xl sm:max-w-6xl">
-          <DialogHeader className="border-b border-border/60 py-5 ps-6">
-            <DialogTitle>{t("title")}</DialogTitle>
-            <DialogDescription>{t("description")}</DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-6 overflow-y-auto p-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <div className="text-sm font-medium">{t("templates")}</div>
-                <div className="grid gap-3">
-                  {templateOptions.map((value) => (
-                    <TemplateButton
-                      key={value}
-                      active={template === value}
-                      title={t(`templateOptions.${value}.label`)}
-                      description={t(`templateOptions.${value}.description`)}
-                      onClick={() => setTemplate(value)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="text-sm font-medium">{t("privacy")}</div>
-                <div className="grid gap-3">
-                  <PrivacyToggle
-                    active={privacy.hideProjectNames}
-                    title={t("privacyOptions.hideProject.title")}
-                    description={t("privacyOptions.hideProject.description")}
-                    icon={<FolderLock className="size-4" />}
-                    onClick={() => setPrivacyValue("hideProjectNames")}
-                  />
-                  <PrivacyToggle
-                    active={privacy.hideCost}
-                    title={t("privacyOptions.hideCost.title")}
-                    description={t("privacyOptions.hideCost.description")}
-                    icon={<DollarSign className="size-4" />}
-                    onClick={() => setPrivacyValue("hideCost")}
-                  />
-                  <PrivacyToggle
-                    active={privacy.hideUsername}
-                    title={t("privacyOptions.hideUsername.title")}
-                    description={t("privacyOptions.hideUsername.description")}
-                    icon={<UserRoundX className="size-4" />}
-                    onClick={() => setPrivacyValue("hideUsername")}
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-dashed border-border/70 bg-muted/30 p-4">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <Sparkles className="size-4 text-muted-foreground" />
-                  {t("sourceTitle")}
-                </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {t("sourceDescription")}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-medium">{t("preview")}</div>
-                <Badge variant="outline" className="rounded-full">
-                  4:3 · 1200×900
-                </Badge>
-              </div>
-              <div className="overflow-hidden rounded-[28px] border border-border/60 bg-muted/20 p-4 shadow-sm">
-                <UsageShareCardPreview
-                  data={data}
-                  template={template}
-                  privacy={privacy}
-                  locale={locale}
-                  size="preview"
-                  className="mx-auto"
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="items-center gap-2 border-t border-border/60 bg-card p-4 sm:flex-row sm:justify-end">
-            <p className="mr-auto text-sm text-muted-foreground">
-              {status ? t(`status.${status}`) : t("footerHint")}
-            </p>
-            <Button type="button" variant="outline" onClick={handleCopyText}>
-              <Copy />
-              {t("actions.copyText")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={!canCopyImage || isExporting}
-              title={!canCopyImage ? t("copyImageUnsupported") : undefined}
-              onClick={handleCopyImage}
-            >
-              <Copy />
-              {t("actions.copyImage")}
-            </Button>
-            <Button
-              type="button"
-              disabled={isExporting}
-              onClick={handleDownload}
-            >
-              <Download />
-              {t("actions.download")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <div
-        className="pointer-events-none fixed top-0 left-[-10000px] opacity-0"
-        aria-hidden="true"
+      ) : trigger ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : null}
+      <DialogContent
+        aria-describedby={undefined}
+        className={cn(
+          "!flex min-h-0 w-[min(96vw,56rem)] max-w-none flex-col gap-0 overflow-hidden border border-border/70 bg-card p-0 shadow-2xl",
+          "h-[min(46rem,90svh)] !max-h-[min(46rem,90svh)]",
+        )}
       >
-        <div ref={exportRef}>
-          <UsageShareCardPreview
-            data={data}
-            template={template}
-            privacy={privacy}
-            locale={locale}
-            size="export"
-          />
+        <DialogHeader className="shrink-0 border-b border-border/60 px-5 py-4 sm:px-6">
+          <DialogTitle>{t("title")}</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden p-4 sm:p-5">
+          <div className="min-h-0 min-w-0 flex-1 basis-0 overflow-y-auto overscroll-contain p-2 sm:p-3 [scrollbar-width:none] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden">
+            <UsageShareCardPreviewLoader
+              data={data}
+              template={template}
+              privacy={defaultPrivacy}
+              locale={locale}
+              size="preview"
+              className="mx-auto w-full !max-w-[min(34rem,76svh)]"
+              onReady={handlePreviewReady}
+            />
+          </div>
         </div>
-      </div>
-    </>
+
+        <DialogFooter className="mx-0 mb-0 flex w-full max-w-full min-w-0 shrink-0 flex-col gap-2 overflow-x-hidden border-t border-border/60 bg-card p-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-end sm:gap-2 sm:p-4">
+          <div className="grid min-w-0 w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:gap-2">
+            <ShareActionButton
+              variant="outline"
+              actionState={copyState}
+              disabled={!canCopyImage || isExporting || !isPreviewReady}
+              title={!canCopyImage ? t("copyImageUnsupported") : undefined}
+              icon={<Copy className="size-4 shrink-0" aria-hidden />}
+              label={t("actions.copyImage")}
+              onClick={handleCopyImage}
+            />
+            <ShareActionButton
+              actionState={downloadState}
+              disabled={isExporting || !isPreviewReady}
+              icon={<Download className="size-4 shrink-0" aria-hidden />}
+              label={t("actions.download")}
+              onClick={handleDownload}
+            />
+          </div>
+        </DialogFooter>
+
+        <div
+          className="pointer-events-none fixed top-0 left-0 h-px w-px overflow-hidden opacity-0"
+          aria-hidden="true"
+        >
+          <div ref={exportRef} className="receipt-export-surface inline-block">
+            <UsageShareCardPreviewLoader
+              data={data}
+              template={template}
+              privacy={defaultPrivacy}
+              locale={locale}
+              size="export"
+            />
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

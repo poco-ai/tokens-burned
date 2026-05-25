@@ -7,7 +7,7 @@ export const defaultThemeMode: ThemeMode = "system";
 export const themeCookieName = "tb-theme";
 export const themeStorageKey = "tb-theme";
 
-export function isThemeMode(value: string): value is ThemeMode {
+function isThemeMode(value: string): value is ThemeMode {
   return themeModes.includes(value as ThemeMode);
 }
 

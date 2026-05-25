@@ -1,7 +1,13 @@
 "use client";
 
 import { useInView, useMotionValue, useSpring } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from "react";
 
 export type CountUpProps = {
   to: number;
@@ -45,6 +51,18 @@ export default function CountUp({
   const ref = useRef<HTMLSpanElement>(null);
   const motionValue = useMotionValue(direction === "down" ? to : from);
 
+  const onEndStable = useEffectEvent(() => {
+    if (typeof onEnd === "function") {
+      onEnd();
+    }
+  });
+
+  const onStartStable = useEffectEvent(() => {
+    if (typeof onStart === "function") {
+      onStart();
+    }
+  });
+
   const damping = 20 + 40 * (1 / duration);
   const stiffness = 100 * (1 / duration);
 
@@ -82,18 +100,14 @@ export default function CountUp({
     [formatProp, maxDecimals, separator],
   );
 
-  const initialText = formatValue(direction === "down" ? to : from);
-  const [display, setDisplay] = useState(initialText);
+  const formatValueStable = useEffectEvent(formatValue);
 
-  useEffect(() => {
-    setDisplay(formatValue(direction === "down" ? to : from));
-  }, [from, to, direction, formatValue]);
+  const initialText = formatValue(direction === "down" ? to : from);
+  const [display, setDisplay] = useState(() => initialText);
 
   useEffect(() => {
     if (isInView && startWhen) {
-      if (typeof onStart === "function") {
-        onStart();
-      }
+      onStartStable();
 
       const timeoutId = setTimeout(() => {
         motionValue.set(direction === "down" ? from : to);
@@ -101,9 +115,7 @@ export default function CountUp({
 
       const durationTimeoutId = setTimeout(
         () => {
-          if (typeof onEnd === "function") {
-            onEnd();
-          }
+          onEndStable();
         },
         delay * 1000 + duration * 1000,
       );
@@ -113,26 +125,15 @@ export default function CountUp({
         clearTimeout(durationTimeoutId);
       };
     }
-  }, [
-    isInView,
-    startWhen,
-    motionValue,
-    direction,
-    from,
-    to,
-    delay,
-    onStart,
-    onEnd,
-    duration,
-  ]);
+  }, [isInView, startWhen, motionValue, direction, from, to, delay, duration]);
 
   useEffect(() => {
     const unsubscribe = springValue.on("change", (latest: number) => {
-      setDisplay(formatValue(latest));
+      setDisplay(formatValueStable(latest));
     });
 
     return () => unsubscribe();
-  }, [springValue, formatValue]);
+  }, [springValue]);
 
   return (
     <span className={className} ref={ref}>

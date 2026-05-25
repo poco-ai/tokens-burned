@@ -1,6 +1,6 @@
 {
   "name": "token-arena",
-  "version": "0.2.10",
+  "version": "0.4.3",
   "private": true,
   "packageManager": "pnpm@10.32.1",
   "engines": {
@@ -16,11 +16,26 @@
     "lint:web": "pnpm --filter ./web lint",
     "format:cli": "pnpm --filter ./cli format",
     "format:web": "pnpm --filter ./web format",
-    "check": "pnpm run lint:cli && pnpm run lint:web && pnpm run format:cli && pnpm run format:web",
+    "format:check:cli": "pnpm --filter ./cli format:check",
+    "format:check:web": "pnpm --filter ./web format:check",
+    "check": "pnpm run lint:cli && pnpm run lint:web && pnpm run format:check:cli && pnpm run format:check:web",
+    "test:cli": "pnpm run test:cli:coverage",
+    "test:web": "pnpm run test:web:coverage",
+    "test:cli:coverage": "pnpm --filter ./cli test:coverage",
+    "test:web:coverage": "pnpm --filter ./web test:coverage",
     "prepare": "husky",
     "publish": "pnpm --filter ./cli publish --access public",
     "migrate": "pnpm --filter ./web exec prisma migrate deploy",
-    "db:seed": "pnpm --filter ./web run db:seed"
+    "db:seed": "pnpm --filter ./web run db:seed",
+    "react-doctor": "pnpm --filter ./web react-doctor",
+    "react-doctor:badge": "node scripts/update-react-doctor-badge.mjs",
+    "react-doctor:badge:staged": "node scripts/update-react-doctor-badge.mjs --staged"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": ">=8.5.10",
+      "@hono/node-server": ">=1.19.13"
+    }
   },
   "devDependencies": {
     "husky": "^9.1.7"

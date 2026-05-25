@@ -1,3 +1,5 @@
+import "server-only";
+
 import { getPricingCatalog } from "@/lib/pricing/catalog";
 import {
   estimateCostUsd,
@@ -517,20 +519,27 @@ async function rebuildGlobalSnapshot(period: LeaderboardPeriod, now: Date) {
     take: LEADERBOARD_SNAPSHOT_LIMIT,
   });
 
-  const summaries = rows
-    .map((row, index) => ({
-      rank: index + 1,
-      userId: row.userId,
-      inputTokens: tokenCountToNumber(row._sum.inputTokens),
-      outputTokens: tokenCountToNumber(row._sum.outputTokens),
-      reasoningTokens: tokenCountToNumber(row._sum.reasoningTokens),
-      cachedTokens: tokenCountToNumber(row._sum.cachedTokens),
-      totalTokens: tokenCountToNumber(row._sum.totalTokens),
-      estimatedCostUsd: 0,
-      activeSeconds: coerceInt(row._sum.activeSeconds),
-      sessions: coerceInt(row._sum.sessions),
-    }))
-    .filter((row) => row.totalTokens > 0);
+  const summaries = rows.reduce<LeaderboardEntrySummary[]>(
+    (acc, row, index) => {
+      const totalTokens = tokenCountToNumber(row._sum.totalTokens);
+      if (totalTokens > 0) {
+        acc.push({
+          rank: index + 1,
+          userId: row.userId,
+          inputTokens: tokenCountToNumber(row._sum.inputTokens),
+          outputTokens: tokenCountToNumber(row._sum.outputTokens),
+          reasoningTokens: tokenCountToNumber(row._sum.reasoningTokens),
+          cachedTokens: tokenCountToNumber(row._sum.cachedTokens),
+          totalTokens,
+          estimatedCostUsd: 0,
+          activeSeconds: coerceInt(row._sum.activeSeconds),
+          sessions: coerceInt(row._sum.sessions),
+        });
+      }
+      return acc;
+    },
+    [],
+  );
 
   const snapshot = await prisma.$transaction(async (tx) => {
     const nextSnapshot = await tx.leaderboardSnapshot.upsert({
@@ -817,7 +826,7 @@ async function getGlobalViewerRankSummary(input: {
   return summary ? { summary, window } : null;
 }
 
-export async function getGlobalLeaderboard(input: {
+async function getGlobalLeaderboard(input: {
   period: LeaderboardPeriod;
   metric: LeaderboardMetric;
   viewerUserId?: string | null;
@@ -854,7 +863,7 @@ export async function getGlobalLeaderboard(input: {
   });
 }
 
-export async function getFollowingLeaderboard(input: {
+async function getFollowingLeaderboard(input: {
   period: LeaderboardPeriod;
   metric: LeaderboardMetric;
   viewerUserId: string;
@@ -940,20 +949,27 @@ export async function getFollowingLeaderboard(input: {
     take: LEADERBOARD_PAGE_LIMIT,
   });
 
-  const summaries = rows
-    .map((row, index) => ({
-      rank: index + 1,
-      userId: row.userId,
-      inputTokens: tokenCountToNumber(row._sum.inputTokens),
-      outputTokens: tokenCountToNumber(row._sum.outputTokens),
-      reasoningTokens: tokenCountToNumber(row._sum.reasoningTokens),
-      cachedTokens: tokenCountToNumber(row._sum.cachedTokens),
-      totalTokens: tokenCountToNumber(row._sum.totalTokens),
-      estimatedCostUsd: 0,
-      activeSeconds: coerceInt(row._sum.activeSeconds),
-      sessions: coerceInt(row._sum.sessions),
-    }))
-    .filter((row) => row.totalTokens > 0);
+  const summaries = rows.reduce<LeaderboardEntrySummary[]>(
+    (acc, row, index) => {
+      const totalTokens = tokenCountToNumber(row._sum.totalTokens);
+      if (totalTokens > 0) {
+        acc.push({
+          rank: index + 1,
+          userId: row.userId,
+          inputTokens: tokenCountToNumber(row._sum.inputTokens),
+          outputTokens: tokenCountToNumber(row._sum.outputTokens),
+          reasoningTokens: tokenCountToNumber(row._sum.reasoningTokens),
+          cachedTokens: tokenCountToNumber(row._sum.cachedTokens),
+          totalTokens,
+          estimatedCostUsd: 0,
+          activeSeconds: coerceInt(row._sum.activeSeconds),
+          sessions: coerceInt(row._sum.sessions),
+        });
+      }
+      return acc;
+    },
+    [],
+  );
   const entries = await hydrateEntries(summaries, window, input.viewerUserId);
 
   return toDataset({

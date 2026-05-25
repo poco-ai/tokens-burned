@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -7,7 +7,14 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!node_modules", "!.next", "!dist", "!build"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!.next",
+      "!dist",
+      "!build",
+      "!coverage"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -19,7 +26,8 @@
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noUnknownAtRules": "off"
+        "noUnknownAtRules": "off",
+        "noArrayIndexKey": "off"
       }
     },
     "domains": {
@@ -51,6 +59,11 @@
     },
     {
       "includes": ["**/app/globals.css"],
+      "css": {
+        "parser": {
+          "tailwindDirectives": true
+        }
+      },
       "linter": {
         "rules": {
           "suspicious": {

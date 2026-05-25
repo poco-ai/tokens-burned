@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { type ComponentProps, type ReactNode, useState } from "react";
+import { type ComponentProps, type ReactNode, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -23,20 +23,19 @@ export function LogoutButton({
   className,
   ...rest
 }: LogoutButtonProps) {
-  const router = useRouter();
+  const { push, refresh } = useRouter();
   const t = useTranslations("common");
-  const [isPending, setIsPending] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
-  const handleClick = async () => {
-    setIsPending(true);
-
-    try {
-      await authClient.signOut();
-    } finally {
-      router.push("/login");
-      router.refresh();
-      setIsPending(false);
-    }
+  const handleLogout = () => {
+    startTransition(async () => {
+      try {
+        await authClient.signOut();
+      } finally {
+        push("/login");
+        refresh();
+      }
+    });
   };
 
   return (
@@ -45,7 +44,7 @@ export function LogoutButton({
       variant={variant}
       size={size}
       className={cn(className)}
-      onClick={handleClick}
+      onClick={handleLogout}
       disabled={isPending}
       {...rest}
     >

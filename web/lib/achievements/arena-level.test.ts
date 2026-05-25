@@ -68,4 +68,42 @@ describe("getArenaLevelProgressFromScore", () => {
     expect(result.remainingToNext).toBe(0);
     expect(result.isMaxLevel).toBe(true);
   });
+
+  it("caps ratio at 1 for scores above max threshold", () => {
+    const result = getArenaLevelProgressFromScore(50000);
+
+    expect(result.level).toBe(10);
+    expect(result.nextLevel).toBe(10);
+    expect(result.ratio).toBe(1);
+    expect(result.remainingToNext).toBe(0);
+    expect(result.isMaxLevel).toBe(true);
+    expect(result.bandStart).toBe(40000);
+    expect(result.nextThreshold).toBe(40000);
+  });
+
+  it("computes mid-level progress for level 4", () => {
+    // Level 4: bandStart = 700, nextThreshold = 1500, span = 800
+    // score = 1100 => ratio = (1100 - 700) / 800 = 400/800 = 0.5
+    const result = getArenaLevelProgressFromScore(1100);
+
+    expect(result.level).toBe(4);
+    expect(result.nextLevel).toBe(5);
+    expect(result.bandStart).toBe(700);
+    expect(result.nextThreshold).toBe(1500);
+    expect(result.ratio).toBeCloseTo(0.5);
+    expect(result.remainingToNext).toBe(400);
+    expect(result.isMaxLevel).toBe(false);
+  });
+
+  it("returns correct properties for score 0", () => {
+    const result = getArenaLevelProgressFromScore(0);
+
+    expect(result.level).toBe(1);
+    expect(result.nextLevel).toBe(2);
+    expect(result.bandStart).toBe(0);
+    expect(result.nextThreshold).toBe(100);
+    expect(result.ratio).toBe(0);
+    expect(result.remainingToNext).toBe(100);
+    expect(result.isMaxLevel).toBe(false);
+  });
 });

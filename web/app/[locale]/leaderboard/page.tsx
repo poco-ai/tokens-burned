@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import { LeaderboardMetricSelect } from "@/components/social/leaderboard-metric-select";
 import { LeaderboardPublicProfileButton } from "@/components/social/leaderboard-private-notice";
 import { LeaderboardTable } from "@/components/social/leaderboard-table";
@@ -146,20 +147,24 @@ export default async function LeaderboardPage({
   params,
   searchParams,
 }: LeaderboardPageProps) {
-  const { locale } = await params;
-  const viewer = await getOptionalSession();
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const [{ locale }, viewer, resolvedSearchParams] = await Promise.all([
+    params,
+    getOptionalSession(),
+    searchParams ?? Promise.resolve(undefined),
+  ]);
   const period = resolvePeriod(firstValue(resolvedSearchParams?.period));
   const metric = resolveMetric(firstValue(resolvedSearchParams?.metric));
-  const data = await getLeaderboardPageData({
-    period,
-    metric,
-    viewerUserId: viewer?.user.id ?? null,
-    followTag: "all",
-  });
-  const t = await getTranslations({ locale, namespace: "social.leaderboard" });
-  const tCard = await getTranslations({ locale, namespace: "social.card" });
-  const tNav = await getTranslations({ locale, namespace: "social.nav" });
+  const [data, t, tCard, tNav] = await Promise.all([
+    getLeaderboardPageData({
+      period,
+      metric,
+      viewerUserId: viewer?.user.id ?? null,
+      followTag: "all",
+    }),
+    getTranslations({ locale, namespace: "social.leaderboard" }),
+    getTranslations({ locale, namespace: "social.card" }),
+    getTranslations({ locale, namespace: "social.nav" }),
+  ]);
 
   const periodItems: Array<{ value: LeaderboardPeriod; label: string }> = [
     { value: "day", label: t("periods.day") },
@@ -223,12 +228,14 @@ export default async function LeaderboardPage({
             ))}
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <LeaderboardMetricSelect
-              value={metric}
-              defaultValue={defaultLeaderboardMetric}
-              ariaLabel={t("metricSelectLabel")}
-              options={metricItems}
-            />
+            <Suspense fallback={null}>
+              <LeaderboardMetricSelect
+                value={metric}
+                defaultValue={defaultLeaderboardMetric}
+                ariaLabel={t("metricSelectLabel")}
+                options={metricItems}
+              />
+            </Suspense>
           </div>
         </div>
         <LeaderboardTable

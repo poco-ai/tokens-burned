@@ -8,6 +8,20 @@ describe("getBrowserLaunchCommand", () => {
       args: ["/d", "/s", "/c", "start", "", "https://example.com"],
     });
   });
+
+  it("uses open on macOS", () => {
+    expect(getBrowserLaunchCommand("https://example.com", "darwin")).toEqual({
+      command: "open",
+      args: ["https://example.com"],
+    });
+  });
+
+  it("uses xdg-open on Linux", () => {
+    expect(getBrowserLaunchCommand("https://example.com", "linux")).toEqual({
+      command: "xdg-open",
+      args: ["https://example.com"],
+    });
+  });
 });
 
 describe("resolveShellAliasSetup", () => {
@@ -47,5 +61,62 @@ describe("resolveShellAliasSetup", () => {
 
     expect(setup?.configFile).toBe("C:\\Users\\tester\\.bashrc");
     expect(setup?.shellLabel).toBe("bash");
+  });
+
+  it("returns zsh setup on macOS with zsh", () => {
+    const setup = resolveShellAliasSetup({
+      currentPlatform: "darwin",
+      env: { SHELL: "/bin/zsh" },
+      homeDir: "/Users/tester",
+    });
+
+    expect(setup?.shellLabel).toBe("zsh");
+    expect(setup?.configFile).toBe("/Users/tester/.zshrc");
+    expect(setup?.aliasLine).toContain("alias ta=");
+  });
+
+  it("returns bash setup with .bashrc on Linux", () => {
+    const setup = resolveShellAliasSetup({
+      currentPlatform: "linux",
+      env: { SHELL: "/bin/bash" },
+      homeDir: "/home/tester",
+      exists: () => false,
+    });
+
+    expect(setup?.shellLabel).toBe("bash");
+    expect(setup?.configFile).toBe("/home/tester/.bashrc");
+  });
+
+  it("returns bash setup with .bash_profile on macOS when it exists", () => {
+    const setup = resolveShellAliasSetup({
+      currentPlatform: "darwin",
+      env: { SHELL: "/bin/bash" },
+      homeDir: "/Users/tester",
+      exists: (path: string) => path.endsWith(".bash_profile"),
+    });
+
+    expect(setup?.shellLabel).toBe("bash");
+    expect(setup?.configFile).toBe("/Users/tester/.bash_profile");
+  });
+
+  it("returns fish setup", () => {
+    const setup = resolveShellAliasSetup({
+      currentPlatform: "linux",
+      env: { SHELL: "/usr/bin/fish" },
+      homeDir: "/home/tester",
+    });
+
+    expect(setup?.shellLabel).toBe("fish");
+    expect(setup?.configFile).toContain("fish/config.fish");
+  });
+
+  it("returns null for unknown shell", () => {
+    const setup = resolveShellAliasSetup({
+      currentPlatform: "linux",
+      env: { SHELL: "/usr/bin/nushell" },
+      homeDir: "/home/tester",
+    });
+
+    expect(setup).toBeNull();
   });
 });

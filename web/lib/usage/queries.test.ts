@@ -2,25 +2,34 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   usageBucketFindMany: vi.fn(),
+  usageBucketFindFirst: vi.fn(),
   usageSessionFindMany: vi.fn(),
+  usageSessionFindFirst: vi.fn(),
   deviceFindMany: vi.fn(),
+  deviceFindFirst: vi.fn(),
   usageApiKeyFindMany: vi.fn(),
   getPricingCatalog: vi.fn(),
   resolveOfficialPricingMatch: vi.fn(),
   resolveOfficialPricingProvider: vi.fn(),
   estimateCostUsd: vi.fn(),
+  tokenCountToNumber: vi.fn((v: number | bigint | null | undefined) =>
+    typeof v === "number" ? v : 0,
+  ),
 }));
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     usageBucket: {
       findMany: mocks.usageBucketFindMany,
+      findFirst: mocks.usageBucketFindFirst,
     },
     usageSession: {
       findMany: mocks.usageSessionFindMany,
+      findFirst: mocks.usageSessionFindFirst,
     },
     device: {
       findMany: mocks.deviceFindMany,
+      findFirst: mocks.deviceFindFirst,
     },
     usageApiKey: {
       findMany: mocks.usageApiKeyFindMany,
@@ -38,10 +47,18 @@ vi.mock("@/lib/pricing/resolve", () => ({
   estimateCostUsd: mocks.estimateCostUsd,
 }));
 
+vi.mock("@/lib/token-counts", () => ({
+  tokenCountToNumber: mocks.tokenCountToNumber,
+}));
+
 import {
+  getActivityTrend,
   getBreakdowns,
   getFilterOptions,
   getHourlyActivityHeatmap,
+  getLastSyncedAt,
+  getOverviewMetrics,
+  getPricingSummaryAndRows,
   getSessionRows,
   getTokenTrend,
 } from "./queries";
@@ -361,5 +378,266 @@ describe("getHourlyActivityHeatmap", () => {
         sessions: 1,
       },
     );
+  });
+});
+
+describe("getOverviewMetrics", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.usageBucketFindMany.mockResolvedValue([]);
+    mocks.usageSessionFindMany.mockResolvedValue([]);
+    mocks.deviceFindMany.mockResolvedValue([]);
+    mocks.usageApiKeyFindMany.mockResolvedValue([]);
+    mocks.getPricingCatalog.mockResolvedValue(null);
+    mocks.resolveOfficialPricingMatch.mockReturnValue(null);
+    mocks.estimateCostUsd.mockReturnValue(null);
+    mocks.tokenCountToNumber.mockImplementation(
+      (v: number | bigint | null | undefined) =>
+        typeof v === "number" ? v : 0,
+    );
+  });
+
+  it("returns overview metrics with current and previous deltas", async () => {
+    // Current period: 1 bucket + 1 session
+    mocks.usageBucketFindMany
+      .mockResolvedValueOnce([
+        {
+          bucketStart: new Date("2026-03-25T00:00:00.000Z"),
+          totalTokens: 500,
+          inputTokens: 200,
+          outputTokens: 200,
+          reasoningTokens: 50,
+          cachedTokens: 50,
+        },
+      ])
+      // Previous period: empty
+      .mockResolvedValueOnce([])
+      // For getOverviewMetrics, loadBuckets is called 2x (current + previous)
+      // But getTokenTrend etc. not used here
+      .mockResolvedValueOnce([]);
+
+    mocks.usageSessionFindMany
+      .mockResolvedValueOnce([
+        {
+          activeSeconds: 600,
+          durationSeconds: 1200,
+          messageCount: 12,
+          userMessageCount: 5,
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const result = await getOverviewMetrics({
+      userId: "user_123",
+      range,
+      filters: {},
+    });
+
+    // current totalTokens=500, previous=0, delta=500
+    expect(result.totalTokens).toEqual({
+      current: 500,
+      previous: 0,
+      delta: 500,
+    });
+    // current sessions=1, previous=0
+    expect(result.sessions).toEqual({
+      current: 1,
+      previous: 0,
+      delta: 1,
+    });
+    expect(result.messages).toEqual({
+      current: 12,
+      previous: 0,
+      delta: 12,
+    });
+  });
+});
+
+describe("getActivityTrend", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.usageBucketFindMany.mockResolvedValue([]);
+    mocks.usageSessionFindMany.mockResolvedValue([]);
+    mocks.deviceFindMany.mockResolvedValue([]);
+    mocks.usageApiKeyFindMany.mockResolvedValue([]);
+    mocks.getPricingCatalog.mockResolvedValue(null);
+    mocks.resolveOfficialPricingMatch.mockReturnValue(null);
+    mocks.estimateCostUsd.mockReturnValue(null);
+    mocks.tokenCountToNumber.mockImplementation(
+      (v: number | bigint | null | undefined) =>
+        typeof v === "number" ? v : 0,
+    );
+  });
+
+  it("returns activity trend points aggregated by session data", async () => {
+    mocks.usageSessionFindMany.mockResolvedValue([
+      {
+        firstMessageAt: new Date("2026-03-25T12:00:00.000Z"),
+        activeSeconds: 300,
+        durationSeconds: 900,
+        messageCount: 8,
+        userMessageCount: 3,
+      },
+    ]);
+
+    const points = await getActivityTrend({
+      userId: "user_123",
+      range,
+      filters: {},
+    });
+
+    // 7 days range => 7 points
+    expect(points).toHaveLength(7);
+    const lastPoint = points.at(-1);
+    expect(lastPoint).toMatchObject({
+      label: "2026-03-25",
+      activeSeconds: 300,
+      totalSeconds: 900,
+      sessions: 1,
+      messages: 8,
+      userMessages: 3,
+    });
+  });
+});
+
+describe("getPricingSummaryAndRows", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.usageBucketFindMany.mockResolvedValue([]);
+    mocks.usageSessionFindMany.mockResolvedValue([]);
+    mocks.deviceFindMany.mockResolvedValue([]);
+    mocks.usageApiKeyFindMany.mockResolvedValue([]);
+    mocks.getPricingCatalog.mockResolvedValue(new Map());
+    mocks.resolveOfficialPricingMatch.mockReturnValue(null);
+    mocks.resolveOfficialPricingProvider.mockReturnValue(null);
+    mocks.estimateCostUsd.mockReturnValue(null);
+    mocks.tokenCountToNumber.mockImplementation(
+      (v: number | bigint | null | undefined) =>
+        typeof v === "number" ? v : 0,
+    );
+  });
+
+  it("returns empty pricing summary when no buckets exist", async () => {
+    const result = await getPricingSummaryAndRows({
+      userId: "user_123",
+      range,
+      filters: {},
+    });
+
+    expect(result.modelPricingRows).toHaveLength(0);
+    expect(result.summary.currentUsd).toBe(0);
+    expect(result.summary.previousUsd).toBe(0);
+    expect(result.summary.deltaUsd).toBe(0);
+    expect(result.summary.coverage).toBe(0);
+    expect(result.summary.pricedModels).toBe(0);
+    expect(result.summary.totalModels).toBe(0);
+  });
+
+  it("returns pricing summary with model rows when data exists", async () => {
+    mocks.resolveOfficialPricingMatch.mockReturnValue({
+      providerId: "openai",
+      providerName: "OpenAI",
+      modelId: "gpt-5",
+      modelName: "GPT-5",
+      cost: { input: 2, output: 8 },
+    });
+    mocks.resolveOfficialPricingProvider.mockReturnValue({
+      providerId: "openai",
+      providerName: "OpenAI",
+    });
+    mocks.estimateCostUsd.mockReturnValue({
+      totalUsd: 0.5,
+      inputUsd: 0.1,
+      outputUsd: 0.3,
+      reasoningUsd: 0.05,
+      cacheUsd: 0.05,
+    });
+
+    // Use mockImplementationOnce to control the order:
+    // First call = current buckets, second call = previous buckets
+    mocks.usageBucketFindMany
+      .mockImplementationOnce(() =>
+        Promise.resolve([
+          {
+            model: "gpt-5",
+            totalTokens: 1000,
+            inputTokens: 500,
+            outputTokens: 400,
+            reasoningTokens: 50,
+            cachedTokens: 50,
+            bucketStart: new Date("2026-03-25T00:00:00.000Z"),
+            userId: "user_123",
+            deviceId: "device-1",
+            source: "codex",
+            projectKey: "proj-1",
+            projectLabel: "Project 1",
+          },
+        ]),
+      )
+      .mockImplementationOnce(() => Promise.resolve([]));
+
+    const result = await getPricingSummaryAndRows({
+      userId: "user_123",
+      range,
+      filters: {},
+    });
+
+    expect(result.modelPricingRows).toHaveLength(1);
+    expect(result.modelPricingRows[0].rawModel).toBe("gpt-5");
+    expect(result.modelPricingRows[0].estimatedCostUsd).toBe(0.5);
+    expect(result.summary.currentUsd).toBe(0.5);
+    expect(result.summary.previousUsd).toBe(0);
+    expect(result.summary.deltaUsd).toBe(0.5);
+    expect(result.summary.coverage).toBe(1);
+    expect(result.summary.pricedModels).toBe(1);
+    expect(result.summary.totalModels).toBe(1);
+  });
+});
+
+describe("getLastSyncedAt", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.usageBucketFindMany.mockResolvedValue([]);
+    mocks.usageSessionFindMany.mockResolvedValue([]);
+    mocks.deviceFindMany.mockResolvedValue([]);
+    mocks.usageApiKeyFindMany.mockResolvedValue([]);
+    mocks.getPricingCatalog.mockResolvedValue(null);
+    mocks.resolveOfficialPricingMatch.mockReturnValue(null);
+    mocks.estimateCostUsd.mockReturnValue(null);
+    mocks.tokenCountToNumber.mockImplementation(
+      (v: number | bigint | null | undefined) =>
+        typeof v === "number" ? v : 0,
+    );
+  });
+
+  it("returns the most recent updatedAt timestamp across sources", async () => {
+    const bucketDate = new Date("2026-03-24T10:00:00.000Z");
+    const sessionDate = new Date("2026-03-25T15:00:00.000Z");
+    const deviceDate = new Date("2026-03-23T08:00:00.000Z");
+
+    mocks.usageBucketFindFirst.mockResolvedValue({
+      updatedAt: bucketDate,
+    });
+    mocks.usageSessionFindFirst.mockResolvedValue({
+      updatedAt: sessionDate,
+    });
+    mocks.deviceFindFirst.mockResolvedValue({
+      lastSeenAt: deviceDate,
+    });
+
+    const result = await getLastSyncedAt("user_123");
+
+    // sessionDate is the latest
+    expect(result).toEqual(sessionDate);
+  });
+
+  it("returns null when all sources have no records", async () => {
+    mocks.usageBucketFindFirst.mockResolvedValue(null);
+    mocks.usageSessionFindFirst.mockResolvedValue(null);
+    mocks.deviceFindFirst.mockResolvedValue(null);
+
+    const result = await getLastSyncedAt("user_123");
+
+    expect(result).toBeNull();
   });
 });

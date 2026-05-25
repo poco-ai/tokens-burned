@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { ProfileAchievementWallItem } from "@/lib/achievements/profile-wall";
 import { getProfileAchievementWall } from "@/lib/achievements/profile-wall";
 import { getAchievementArenaSummary } from "@/lib/achievements/queries";
@@ -441,7 +443,7 @@ export async function getPublicProfileActivityShareData(input: {
     select: profileUserSelect,
   });
 
-  if (!user || !user.usagePreference?.publicProfileEnabled) {
+  if (!user?.usagePreference?.publicProfileEnabled) {
     return null;
   }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,67 @@ type AccountIdentityCardProps = {
   };
 };
 
+type FormStatus = {
+  nameError: string | null;
+  usernameError: string | null;
+  formError: string | null;
+  successMessage: string | null;
+  isSubmitting: boolean;
+  justSaved: boolean;
+};
+
+type FormStatusAction =
+  | { type: "RESET_ALL" }
+  | { type: "SET_NAME_ERROR"; error: string }
+  | { type: "SET_USERNAME_ERROR"; error: string }
+  | { type: "SET_FORM_ERROR"; error: string }
+  | { type: "SET_SUCCESS"; message: string }
+  | { type: "SET_SUBMITTING"; value: boolean }
+  | { type: "SET_JUST_SAVED"; value: boolean }
+  | { type: "CLEAR_JUST_SAVED" };
+
+const initialFormStatus: FormStatus = {
+  nameError: null,
+  usernameError: null,
+  formError: null,
+  successMessage: null,
+  isSubmitting: false,
+  justSaved: false,
+};
+
+function formStatusReducer(
+  state: FormStatus,
+  action: FormStatusAction,
+): FormStatus {
+  switch (action.type) {
+    case "RESET_ALL":
+      return {
+        ...state,
+        nameError: null,
+        usernameError: null,
+        formError: null,
+        successMessage: null,
+        justSaved: false,
+      };
+    case "SET_NAME_ERROR":
+      return { ...state, nameError: action.error };
+    case "SET_USERNAME_ERROR":
+      return { ...state, usernameError: action.error };
+    case "SET_FORM_ERROR":
+      return { ...state, formError: action.error };
+    case "SET_SUCCESS":
+      return { ...state, successMessage: action.message };
+    case "SET_SUBMITTING":
+      return { ...state, isSubmitting: action.value };
+    case "SET_JUST_SAVED":
+      return { ...state, justSaved: action.value };
+    case "CLEAR_JUST_SAVED":
+      return { ...state, justSaved: false };
+    default:
+      return state;
+  }
+}
+
 export function AccountIdentityCard({
   initialName = "",
   initialUsername = "",
@@ -38,44 +99,41 @@ export function AccountIdentityCard({
   initialBio,
   preferenceSnapshot,
 }: AccountIdentityCardProps) {
-  const router = useRouter();
+  const { push, refresh } = useRouter();
   const t = useTranslations("usage.settings");
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- form input, initial value from prop
   const [name, setName] = useState(initialName);
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- form input, initial value from prop
   const [username, setUsername] = useState(initialUsername);
-  const [savedName, setSavedName] = useState(initialName);
-  const [savedUsername, setSavedUsername] = useState(initialUsername);
+  const savedName = useRef(initialName);
+  const savedUsername = useRef(initialUsername);
   const [bio, setBio] = useState(initialBio ?? "");
-  const [savedBio, setSavedBio] = useState(initialBio ?? "");
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [usernameError, setUsernameError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [justSaved, setJustSaved] = useState(false);
+  const savedBio = useRef(initialBio ?? "");
+  const [status, dispatch] = useReducer(formStatusReducer, initialFormStatus);
 
   useEffect(() => {
     setName(initialName);
     setUsername(initialUsername);
-    setSavedName(initialName);
-    setSavedUsername(initialUsername);
+    savedName.current = initialName;
+    savedUsername.current = initialUsername;
   }, [initialName, initialUsername]);
 
   useEffect(() => {
     setBio(initialBio ?? "");
-    setSavedBio(initialBio ?? "");
+    savedBio.current = initialBio ?? "";
   }, [initialBio]);
 
   useEffect(() => {
-    if (!justSaved) {
+    if (!status.justSaved) {
       return;
     }
 
     const timeout = window.setTimeout(() => {
-      setJustSaved(false);
+      dispatch({ type: "CLEAR_JUST_SAVED" });
     }, 2500);
 
     return () => window.clearTimeout(timeout);
-  }, [justSaved]);
+  }, [status.justSaved]);
 
   const normalizedUsername = useMemo(
     () => normalizeUsername(username),
@@ -83,9 +141,10 @@ export function AccountIdentityCard({
   );
 
   const hasIdentityChanges =
-    name.trim() !== savedName.trim() || normalizedUsername !== savedUsername;
+    name.trim() !== savedName.current.trim() ||
+    normalizedUsername !== savedUsername.current;
 
-  const hasBioChanges = bio.trim() !== savedBio.trim();
+  const hasBioChanges = bio.trim() !== savedBio.current.trim();
 
   const hasChanges = hasIdentityChanges || hasBioChanges;
 
@@ -105,7 +164,7 @@ export function AccountIdentityCard({
       throw new Error(payload.error ?? t("saveFailed"));
     }
 
-    setSavedBio(payload.bio ?? "");
+    savedBio.current = payload.bio ?? "";
     emitPreferenceSavedNotice({
       timezone: preferenceSnapshot.timezone,
       projectMode: preferenceSnapshot.projectMode,
@@ -119,33 +178,47 @@ export function AccountIdentityCard({
 
     const trimmedName = name.trim();
 
-    setNameError(null);
-    setUsernameError(null);
-    setFormError(null);
-    setSuccessMessage(null);
-    setJustSaved(false);
+    dispatch({ type: "RESET_ALL" });
 
     let hasError = false;
 
     if (!trimmedName) {
-      setNameError(t("identity.errors.nameRequired"));
+      dispatch({
+        type: "SET_NAME_ERROR",
+        error: t("identity.errors.nameRequired"),
+      });
       hasError = true;
     } else if (trimmedName.length > 50) {
-      setNameError(t("identity.errors.nameTooLong"));
+      dispatch({
+        type: "SET_NAME_ERROR",
+        error: t("identity.errors.nameTooLong"),
+      });
       hasError = true;
     }
 
     if (!normalizedUsername) {
-      setUsernameError(t("identity.errors.usernameRequired"));
+      dispatch({
+        type: "SET_USERNAME_ERROR",
+        error: t("identity.errors.usernameRequired"),
+      });
       hasError = true;
     } else if (normalizedUsername.length < USERNAME_MIN_LENGTH) {
-      setUsernameError(t("identity.errors.usernameTooShort"));
+      dispatch({
+        type: "SET_USERNAME_ERROR",
+        error: t("identity.errors.usernameTooShort"),
+      });
       hasError = true;
     } else if (normalizedUsername.length > USERNAME_MAX_LENGTH) {
-      setUsernameError(t("identity.errors.usernameTooLong"));
+      dispatch({
+        type: "SET_USERNAME_ERROR",
+        error: t("identity.errors.usernameTooLong"),
+      });
       hasError = true;
     } else if (!isValidUsername(normalizedUsername)) {
-      setUsernameError(t("identity.errors.usernameInvalid"));
+      dispatch({
+        type: "SET_USERNAME_ERROR",
+        error: t("identity.errors.usernameInvalid"),
+      });
       hasError = true;
     }
 
@@ -157,7 +230,7 @@ export function AccountIdentityCard({
       return;
     }
 
-    setIsSubmitting(true);
+    dispatch({ type: "SET_SUBMITTING", value: true });
 
     try {
       if (hasIdentityChanges || requireUsernameSetup) {
@@ -172,38 +245,40 @@ export function AccountIdentityCard({
             t("identity.errors.default"),
           );
 
-          setFormError(
-            errorMessage === USERNAME_TAKEN_ERROR_MESSAGE
-              ? t("identity.errors.usernameTaken")
-              : errorMessage,
-          );
+          dispatch({
+            type: "SET_FORM_ERROR",
+            error:
+              errorMessage === USERNAME_TAKEN_ERROR_MESSAGE
+                ? t("identity.errors.usernameTaken")
+                : errorMessage,
+          });
           return;
         }
 
-        setSavedName(trimmedName);
-        setSavedUsername(normalizedUsername);
-        setSuccessMessage(t("identity.saved"));
-        setJustSaved(true);
+        savedName.current = trimmedName;
+        savedUsername.current = normalizedUsername;
+        dispatch({ type: "SET_SUCCESS", message: t("identity.saved") });
+        dispatch({ type: "SET_JUST_SAVED", value: true });
 
         if (requireUsernameSetup) {
           if (hasBioChanges) {
             await saveBio(bio);
           }
-          router.refresh();
-          router.push("/usage");
+          refresh();
+          push("/usage");
           return;
         }
 
-        router.refresh();
+        refresh();
       }
 
       if (hasBioChanges) {
         await saveBio(bio);
         if (!hasIdentityChanges && !requireUsernameSetup) {
-          setSuccessMessage(t("saved"));
-          setJustSaved(true);
+          dispatch({ type: "SET_SUCCESS", message: t("saved") });
+          dispatch({ type: "SET_JUST_SAVED", value: true });
         }
-        router.refresh();
+        refresh();
       }
     } catch (error) {
       const errorMessage = getAuthErrorMessage(
@@ -211,13 +286,15 @@ export function AccountIdentityCard({
         t("identity.errors.default"),
       );
 
-      setFormError(
-        errorMessage === USERNAME_TAKEN_ERROR_MESSAGE
-          ? t("identity.errors.usernameTaken")
-          : errorMessage,
-      );
+      dispatch({
+        type: "SET_FORM_ERROR",
+        error:
+          errorMessage === USERNAME_TAKEN_ERROR_MESSAGE
+            ? t("identity.errors.usernameTaken")
+            : errorMessage,
+      });
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: "SET_SUBMITTING", value: false });
     }
   };
 
@@ -229,15 +306,15 @@ export function AccountIdentityCard({
         </Alert>
       ) : null}
 
-      {formError ? (
+      {status.formError ? (
         <Alert variant="destructive">
-          <AlertDescription>{formError}</AlertDescription>
+          <AlertDescription>{status.formError}</AlertDescription>
         </Alert>
       ) : null}
 
-      {successMessage && !requireUsernameSetup ? (
+      {status.successMessage && !requireUsernameSetup ? (
         <Alert>
-          <AlertDescription>{successMessage}</AlertDescription>
+          <AlertDescription>{status.successMessage}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -250,16 +327,16 @@ export function AccountIdentityCard({
             autoComplete="name"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            aria-invalid={Boolean(nameError)}
+            aria-invalid={Boolean(status.nameError)}
           />
           <p
             className={
-              nameError
+              status.nameError
                 ? "text-sm text-destructive"
                 : "text-xs text-muted-foreground"
             }
           >
-            {nameError ?? t("identity.nameHint")}
+            {status.nameError ?? t("identity.nameHint")}
           </p>
         </div>
 
@@ -271,17 +348,17 @@ export function AccountIdentityCard({
             autoComplete="username"
             value={username}
             onChange={(event) => setUsername(event.target.value)}
-            aria-invalid={Boolean(usernameError)}
+            aria-invalid={Boolean(status.usernameError)}
           />
           <div
             className={
-              usernameError
+              status.usernameError
                 ? "text-sm text-destructive"
                 : "space-y-1 text-xs text-muted-foreground"
             }
           >
-            {usernameError ? (
-              <p>{usernameError}</p>
+            {status.usernameError ? (
+              <p>{status.usernameError}</p>
             ) : (
               <>
                 <p>{t("identity.usernameHint")}</p>
@@ -312,11 +389,13 @@ export function AccountIdentityCard({
         <div className="flex justify-end">
           <Button
             type="submit"
-            disabled={isSubmitting || (!hasChanges && !requireUsernameSetup)}
+            disabled={
+              status.isSubmitting || (!hasChanges && !requireUsernameSetup)
+            }
           >
-            {isSubmitting
+            {status.isSubmitting
               ? t("identity.saving")
-              : justSaved && !hasChanges
+              : status.justSaved && !hasChanges
                 ? t("saved")
                 : t("identity.save")}
           </Button>

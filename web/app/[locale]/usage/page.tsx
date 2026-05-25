@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
 import { AppShell } from "@/components/app/app-shell";
 import { ProfileHeatmap } from "@/components/social/profile-heatmap";
@@ -22,24 +23,14 @@ import { getAppOrigin } from "@/lib/site-url";
 import { buildActivitySvgUrl } from "@/lib/social/heatmap-svg";
 import { getActivityHeatmap365 } from "@/lib/social/queries";
 import { dashboardQuerySchema } from "@/lib/usage/contracts";
-import { resolveDashboardRange } from "@/lib/usage/date-range";
+import { getUsageDashboardData } from "@/lib/usage/dashboard.server";
 import { formatDateTime } from "@/lib/usage/format";
-import { getUsagePreference } from "@/lib/usage/preferences";
-import {
-  getBreakdowns,
-  getFilterOptions,
-  getHourlyActivityHeatmap,
-  getLastSyncedAt,
-  getOverviewMetrics,
-  getPricingSummaryAndRows,
-  getSessionRows,
-  getTokenTrend,
-} from "@/lib/usage/queries";
+import { getFilterOptions } from "@/lib/usage/queries";
 import {
   SETTINGS_CLI_KEYS_HREF,
   settingsCliKeysHrefWithCreateDialog,
 } from "@/lib/usage/settings-routes";
-import type { UsageFilters } from "@/lib/usage/types";
+import { buildUsageShareCardData } from "@/lib/usage/share-card";
 
 type UsagePageProps = {
   params: Promise<{ locale: string }>;
@@ -92,58 +83,52 @@ export default async function UsagePage({
   const { locale } = await params;
   const session = await getSessionOrRedirect(locale);
   redirectIfUsernameSetupNeeded(locale, session.user);
-  const t = await getTranslations({ locale, namespace: "usage" });
-  const tProfile = await getTranslations({
-    locale,
-    namespace: "social.profile",
-  });
-  const resolvedSearchParams = (searchParams ? await searchParams : {}) ?? {};
-  const query = resolveQueryParams(resolvedSearchParams, locale);
-  const preference = await getUsagePreference(session.user.id);
-  const range = resolveDashboardRange({
-    preset: query.preset,
-    from: query.from,
-    to: query.to,
-    timezone: preference.timezone,
-  });
-  const filters: UsageFilters = {
-    apiKeyId: query.apiKeyId,
-    deviceId: query.deviceId,
-    source: query.source,
-    model: query.model,
-    projectKey: query.projectKey,
-  };
-
-  const [
-    overview,
-    tokenTrend,
-    hourlyActivityHeatmap,
-    breakdowns,
-    pricing,
-    sessions,
-    filterOptions,
-    lastSyncedAt,
-    activityHeatmap,
-  ] = await Promise.all([
-    getOverviewMetrics({ userId: session.user.id, range, filters }),
-    getTokenTrend({ userId: session.user.id, range, filters }),
-    getHourlyActivityHeatmap({ userId: session.user.id, range, filters }),
-    getBreakdowns({ userId: session.user.id, range, filters }),
-    getPricingSummaryAndRows({ userId: session.user.id, range, filters }),
-    getSessionRows({ userId: session.user.id, range, filters }),
-    getFilterOptions(session.user.id),
-    getLastSyncedAt(session.user.id),
-    getActivityHeatmap365({
-      userId: session.user.id,
-      timezone: preference.timezone,
+  const [t, tProfile] = await Promise.all([
+    getTranslations({ locale, namespace: "usage" }),
+    getTranslations({
+      locale,
+      namespace: "social.profile",
     }),
   ]);
+  const resolvedSearchParams = (searchParams ? await searchParams : {}) ?? {};
+  const query = resolveQueryParams(resolvedSearchParams, locale);
+  const dashboardDataPromise = getUsageDashboardData({
+    userId: session.user.id,
+    query,
+  });
+  const [{ dashboard, preference }, filterOptions, activityHeatmap] =
+    await Promise.all([
+      dashboardDataPromise,
+      getFilterOptions(session.user.id),
+      dashboardDataPromise.then(({ preference: usagePreference }) =>
+        getActivityHeatmap365({
+          userId: session.user.id,
+          timezone: usagePreference.timezone,
+        }),
+      ),
+    ]);
 
   const hasData =
-    overview.totalTokens.current > 0 || overview.sessions.current > 0;
-  const lastSyncedText = lastSyncedAt
+    dashboard.overview.totalTokens.current > 0 ||
+    dashboard.overview.sessions.current > 0;
+  const usageReportShareData = hasData
+    ? buildUsageShareCardData({
+        username: session.user.username ?? "Anonymous Builder",
+        range: dashboard.range,
+        filters: dashboard.filters,
+        overview: dashboard.overview,
+        pricingSummary: dashboard.pricingSummary,
+        breakdowns: dashboard.breakdowns,
+        tokenTrend: dashboard.tokenTrend,
+      })
+    : null;
+  const lastSyncedText = dashboard.lastSyncedAt
     ? t("lastSynced", {
-        value: formatDateTime(lastSyncedAt, preference.timezone, locale),
+        value: formatDateTime(
+          dashboard.lastSyncedAt,
+          preference.timezone,
+          locale,
+        ),
       })
     : t("noSyncYet");
   const hasKeys = filterOptions.apiKeys.length > 0;
@@ -159,7 +144,6 @@ export default async function UsagePage({
   const heatmapMarkdown = compactSvgUrl
     ? `![TokenArena Activity](${compactSvgUrl})`
     : null;
-
   return (
     <AppShell
       locale={locale}
@@ -171,6 +155,7 @@ export default async function UsagePage({
         username: session.user.username,
         usernameAutoAdjusted: session.user.usernameAutoAdjusted,
       }}
+      usageReportShareData={usageReportShareData}
     >
       <UsagePageShell>
         <div className="space-y-4">
@@ -195,39 +180,41 @@ export default async function UsagePage({
             </CardContent>
           </Card>
 
-          <FiltersBar
-            preset={range.preset}
-            range={{
-              from: range.from.toISOString(),
-              to: range.to.toISOString(),
-              timezone: range.timezone,
-            }}
-            filters={filters}
-            options={filterOptions}
-            lastSyncedText={lastSyncedText}
-            badgesSlot={
-              <ShareBadgesDialog
-                username={session.user.username}
-                publicProfileEnabled={preference.publicProfileEnabled}
-                appUrl={appUrl}
-              />
-            }
-          />
+          <Suspense fallback={null}>
+            <FiltersBar
+              preset={dashboard.range.preset}
+              range={{
+                from: dashboard.range.from.toISOString(),
+                to: dashboard.range.to.toISOString(),
+                timezone: dashboard.range.timezone,
+              }}
+              filters={dashboard.filters}
+              options={filterOptions}
+              lastSyncedText={lastSyncedText}
+              badgesSlot={
+                <ShareBadgesDialog
+                  username={session.user.username}
+                  publicProfileEnabled={preference.publicProfileEnabled}
+                  appUrl={appUrl}
+                />
+              }
+            />
+          </Suspense>
 
           {hasData ? (
             <>
               <UsageVisualizationCard
-                trendData={tokenTrend}
-                heatmapData={hourlyActivityHeatmap}
+                trendData={dashboard.tokenTrend}
+                heatmapData={dashboard.hourlyActivityHeatmap}
               />
               <KpiGrid
-                overview={overview}
-                pricingSummary={pricing.summary}
-                modelPricingRows={pricing.modelPricingRows}
+                overview={dashboard.overview}
+                pricingSummary={dashboard.pricingSummary}
+                modelPricingRows={dashboard.modelPricingRows}
               />
-              <BreakdownGrid breakdowns={breakdowns} />
+              <BreakdownGrid breakdowns={dashboard.breakdowns} />
               <SessionsSection
-                sessions={sessions}
+                sessions={dashboard.sessions}
                 timezone={preference.timezone}
               />
             </>

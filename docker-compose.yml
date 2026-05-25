@@ -5,7 +5,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/tokens_burned}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@db:5432/token_arena}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
       - AUTH_MODE=${AUTH_MODE:-self-hosted}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useReducer, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,29 +23,77 @@ if (!authConfig.isSelfHosted) {
   throw new Error("Registration is not available in production mode");
 }
 
+type FormStatus = {
+  nameError: string | null;
+  usernameError: string | null;
+  emailError: string | null;
+  passwordError: string | null;
+  formError: string | null;
+  isSubmitting: boolean;
+};
+
+type FormStatusAction =
+  | { type: "RESET_ERRORS" }
+  | { type: "SET_NAME_ERROR"; error: string }
+  | { type: "SET_USERNAME_ERROR"; error: string }
+  | { type: "SET_EMAIL_ERROR"; error: string }
+  | { type: "SET_PASSWORD_ERROR"; error: string }
+  | { type: "SET_FORM_ERROR"; error: string }
+  | { type: "SET_SUBMITTING"; value: boolean };
+
+const initialFormStatus: FormStatus = {
+  nameError: null,
+  usernameError: null,
+  emailError: null,
+  passwordError: null,
+  formError: null,
+  isSubmitting: false,
+};
+
+function formStatusReducer(
+  state: FormStatus,
+  action: FormStatusAction,
+): FormStatus {
+  switch (action.type) {
+    case "RESET_ERRORS":
+      return {
+        ...state,
+        nameError: null,
+        usernameError: null,
+        emailError: null,
+        passwordError: null,
+        formError: null,
+      };
+    case "SET_NAME_ERROR":
+      return { ...state, nameError: action.error };
+    case "SET_USERNAME_ERROR":
+      return { ...state, usernameError: action.error };
+    case "SET_EMAIL_ERROR":
+      return { ...state, emailError: action.error };
+    case "SET_PASSWORD_ERROR":
+      return { ...state, passwordError: action.error };
+    case "SET_FORM_ERROR":
+      return { ...state, formError: action.error };
+    case "SET_SUBMITTING":
+      return { ...state, isSubmitting: action.value };
+    default:
+      return state;
+  }
+}
+
 export function RegisterForm() {
-  const router = useRouter();
+  const { push, refresh } = useRouter();
   const t = useTranslations("auth");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [usernameError, setUsernameError] = useState<string | null>(null);
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, dispatch] = useReducer(formStatusReducer, initialFormStatus);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    setFormError(null);
-    setNameError(null);
-    setUsernameError(null);
-    setEmailError(null);
-    setPasswordError(null);
+    dispatch({ type: "RESET_ERRORS" });
 
     const trimmedName = name.trim();
     const normalizedUsername = normalizeUsername(username);
@@ -53,43 +101,76 @@ export function RegisterForm() {
     let hasError = false;
 
     if (trimmedName.length < 2) {
-      setNameError(t("register.errors.nameTooShort"));
+      dispatch({
+        type: "SET_NAME_ERROR",
+        error: t("register.errors.nameTooShort"),
+      });
       hasError = true;
     } else if (trimmedName.length > 50) {
-      setNameError(t("register.errors.nameTooLong"));
+      dispatch({
+        type: "SET_NAME_ERROR",
+        error: t("register.errors.nameTooLong"),
+      });
       hasError = true;
     }
 
     if (!normalizedUsername) {
-      setUsernameError(t("register.errors.usernameRequired"));
+      dispatch({
+        type: "SET_USERNAME_ERROR",
+        error: t("register.errors.usernameRequired"),
+      });
       hasError = true;
     } else if (normalizedUsername.length < USERNAME_MIN_LENGTH) {
-      setUsernameError(t("register.errors.usernameTooShort"));
+      dispatch({
+        type: "SET_USERNAME_ERROR",
+        error: t("register.errors.usernameTooShort"),
+      });
       hasError = true;
     } else if (normalizedUsername.length > USERNAME_MAX_LENGTH) {
-      setUsernameError(t("register.errors.usernameTooLong"));
+      dispatch({
+        type: "SET_USERNAME_ERROR",
+        error: t("register.errors.usernameTooLong"),
+      });
       hasError = true;
     } else if (!isValidUsername(normalizedUsername)) {
-      setUsernameError(t("register.errors.usernameInvalid"));
+      dispatch({
+        type: "SET_USERNAME_ERROR",
+        error: t("register.errors.usernameInvalid"),
+      });
       hasError = true;
     }
 
     if (!trimmedEmail) {
-      setEmailError(t("register.errors.emailRequired"));
+      dispatch({
+        type: "SET_EMAIL_ERROR",
+        error: t("register.errors.emailRequired"),
+      });
       hasError = true;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      setEmailError(t("register.errors.emailInvalid"));
+      dispatch({
+        type: "SET_EMAIL_ERROR",
+        error: t("register.errors.emailInvalid"),
+      });
       hasError = true;
     }
 
     if (!password) {
-      setPasswordError(t("register.errors.passwordRequired"));
+      dispatch({
+        type: "SET_PASSWORD_ERROR",
+        error: t("register.errors.passwordRequired"),
+      });
       hasError = true;
     } else if (password.length > 128) {
-      setPasswordError(t("register.errors.passwordTooLong"));
+      dispatch({
+        type: "SET_PASSWORD_ERROR",
+        error: t("register.errors.passwordTooLong"),
+      });
       hasError = true;
     } else if (password.length < 8) {
-      setPasswordError(t("register.errors.passwordTooShort"));
+      dispatch({
+        type: "SET_PASSWORD_ERROR",
+        error: t("register.errors.passwordTooShort"),
+      });
       hasError = true;
     }
 
@@ -97,7 +178,7 @@ export function RegisterForm() {
       return;
     }
 
-    setIsSubmitting(true);
+    dispatch({ type: "SET_SUBMITTING", value: true });
 
     try {
       const result = await authClient.signUp.email({
@@ -113,37 +194,41 @@ export function RegisterForm() {
           t("register.errors.default"),
         );
 
-        setFormError(
-          errorMessage === USERNAME_TAKEN_ERROR_MESSAGE
-            ? t("register.errors.usernameTaken")
-            : errorMessage,
-        );
+        dispatch({
+          type: "SET_FORM_ERROR",
+          error:
+            errorMessage === USERNAME_TAKEN_ERROR_MESSAGE
+              ? t("register.errors.usernameTaken")
+              : errorMessage,
+        });
         return;
       }
 
-      router.push("/usage");
-      router.refresh();
+      push("/usage");
+      refresh();
     } catch (error) {
       const errorMessage = getAuthErrorMessage(
         error,
         t("register.errors.default"),
       );
 
-      setFormError(
-        errorMessage === USERNAME_TAKEN_ERROR_MESSAGE
-          ? t("register.errors.usernameTaken")
-          : errorMessage,
-      );
+      dispatch({
+        type: "SET_FORM_ERROR",
+        error:
+          errorMessage === USERNAME_TAKEN_ERROR_MESSAGE
+            ? t("register.errors.usernameTaken")
+            : errorMessage,
+      });
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: "SET_SUBMITTING", value: false });
     }
   };
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
-      {formError ? (
+      {status.formError ? (
         <Alert variant="destructive">
-          <AlertDescription>{formError}</AlertDescription>
+          <AlertDescription>{status.formError}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -155,10 +240,10 @@ export function RegisterForm() {
           autoComplete="name"
           value={name}
           onChange={(event) => setName(event.target.value)}
-          aria-invalid={Boolean(nameError)}
+          aria-invalid={Boolean(status.nameError)}
         />
-        {nameError ? (
-          <p className="text-sm text-destructive">{nameError}</p>
+        {status.nameError ? (
+          <p className="text-sm text-destructive">{status.nameError}</p>
         ) : (
           <p className="text-xs text-muted-foreground">
             {t("register.nameHint")}
@@ -174,10 +259,10 @@ export function RegisterForm() {
           autoComplete="username"
           value={username}
           onChange={(event) => setUsername(event.target.value)}
-          aria-invalid={Boolean(usernameError)}
+          aria-invalid={Boolean(status.usernameError)}
         />
-        {usernameError ? (
-          <p className="text-sm text-destructive">{usernameError}</p>
+        {status.usernameError ? (
+          <p className="text-sm text-destructive">{status.usernameError}</p>
         ) : (
           <p className="text-xs text-muted-foreground">
             {t("register.usernameHint")}
@@ -193,10 +278,10 @@ export function RegisterForm() {
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          aria-invalid={Boolean(emailError)}
+          aria-invalid={Boolean(status.emailError)}
         />
-        {emailError ? (
-          <p className="text-sm text-destructive">{emailError}</p>
+        {status.emailError ? (
+          <p className="text-sm text-destructive">{status.emailError}</p>
         ) : null}
       </div>
 
@@ -208,15 +293,15 @@ export function RegisterForm() {
           autoComplete="new-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          aria-invalid={Boolean(passwordError)}
+          aria-invalid={Boolean(status.passwordError)}
         />
-        {passwordError ? (
-          <p className="text-sm text-destructive">{passwordError}</p>
+        {status.passwordError ? (
+          <p className="text-sm text-destructive">{status.passwordError}</p>
         ) : null}
       </div>
 
-      <Button className="w-full" type="submit" disabled={isSubmitting}>
-        {isSubmitting ? t("register.submitting") : t("register.submit")}
+      <Button className="w-full" type="submit" disabled={status.isSubmitting}>
+        {status.isSubmitting ? t("register.submitting") : t("register.submit")}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">

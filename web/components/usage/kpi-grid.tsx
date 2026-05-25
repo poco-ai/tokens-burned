@@ -196,10 +196,12 @@ function DeltaBadge({
   );
 }
 
+const EMPTY_MODEL_PRICING_ROWS: ModelPricingRow[] = [];
+
 export async function KpiGrid({
   overview,
   pricingSummary,
-  modelPricingRows = [],
+  modelPricingRows = EMPTY_MODEL_PRICING_ROWS,
 }: KpiGridProps) {
   const t = await getTranslations("usage.kpis");
 

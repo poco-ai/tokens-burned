@@ -51,7 +51,7 @@ export async function ensureUsagePreferenceWithDb(
   }
 }
 
-export async function ensureUsagePreference(userId: string) {
+async function ensureUsagePreference(userId: string) {
   return ensureUsagePreferenceWithDb(prisma, userId);
 }
 
@@ -71,18 +71,20 @@ export async function updateUsagePreference(
   },
 ) {
   return prisma.$transaction(async (tx) => {
-    const existing = await ensureUsagePreferenceWithDb(tx, userId);
-    const preference = await tx.usagePreference.update({
-      where: { userId },
-      data: {
-        locale: input.locale,
-        theme: input.theme,
-        timezone: input.timezone,
-        projectMode: input.projectMode,
-        publicProfileEnabled: input.publicProfileEnabled,
-        bio: input.bio,
-      },
-    });
+    const [existing, preference] = await Promise.all([
+      ensureUsagePreferenceWithDb(tx, userId),
+      tx.usagePreference.update({
+        where: { userId },
+        data: {
+          locale: input.locale,
+          theme: input.theme,
+          timezone: input.timezone,
+          projectMode: input.projectMode,
+          publicProfileEnabled: input.publicProfileEnabled,
+          bio: input.bio,
+        },
+      }),
+    ]);
 
     if (
       input.publicProfileEnabled !== undefined &&

@@ -15,8 +15,10 @@ export async function GET(
   const { locale, username } = await context.params;
   const { searchParams } = new URL(request.url);
   const theme = resolveActivityHeatmapSvgTheme(searchParams.get("theme"));
-  const t = await getTranslations({ locale, namespace: "social.profile" });
-  const profile = await getPublicProfileActivityShareData({ username });
+  const [t, profile] = await Promise.all([
+    getTranslations({ locale, namespace: "social.profile" }),
+    getPublicProfileActivityShareData({ username }),
+  ]);
 
   if (!profile) {
     notFound();

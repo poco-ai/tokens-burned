@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import {
@@ -60,40 +60,31 @@ export function SettingsPreferences({
   initialPublicProfileEnabled,
 }: SettingsPreferencesProps) {
   const t = useTranslations("usage.settings");
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- controlled select, initial value from prop
   const [timezone, setTimezone] = useState(initialTimezone);
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- controlled select, initial value from prop
   const [projectMode, setProjectMode] =
     useState<ProjectMode>(initialProjectMode);
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- controlled select, initial value from prop
   const [publicProfileEnabled, setPublicProfileEnabled] = useState(
     initialPublicProfileEnabled,
   );
-  const [savedTimezone, setSavedTimezone] = useState(initialTimezone);
-  const [savedProjectMode, setSavedProjectMode] =
-    useState<ProjectMode>(initialProjectMode);
-  const [savedPublicProfileEnabled, setSavedPublicProfileEnabled] = useState(
-    initialPublicProfileEnabled,
-  );
+  const savedTimezone = useRef(initialTimezone);
+  const savedProjectMode = useRef<ProjectMode>(initialProjectMode);
+  const savedPublicProfileEnabled = useRef(initialPublicProfileEnabled);
   const [error, setError] = useState<string | null>(null);
   const hasChanges = hasPreferenceChanges(
     {
-      timezone: savedTimezone,
-      projectMode: savedProjectMode,
-      publicProfileEnabled: savedPublicProfileEnabled,
+      timezone: savedTimezone.current,
+      projectMode: savedProjectMode.current,
+      publicProfileEnabled: savedPublicProfileEnabled.current,
       bio: "",
     },
     { timezone, projectMode, publicProfileEnabled, bio: "" },
   );
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    setTimezone(initialTimezone);
-    setSavedTimezone(initialTimezone);
-    setProjectMode(initialProjectMode);
-    setSavedProjectMode(initialProjectMode);
-    setPublicProfileEnabled(initialPublicProfileEnabled);
-    setSavedPublicProfileEnabled(initialPublicProfileEnabled);
-  }, [initialTimezone, initialProjectMode, initialPublicProfileEnabled]);
-
-  const savePreferences = useCallback(
+  const savePreferencesStable = useEffectEvent(
     async (
       nextTimezone: string,
       nextProjectMode: ProjectMode,
@@ -119,9 +110,9 @@ export function SettingsPreferences({
           throw new Error(payload.error ?? "Unable to save preferences.");
         }
 
-        setSavedTimezone(payload.timezone);
-        setSavedProjectMode(payload.projectMode);
-        setSavedPublicProfileEnabled(payload.publicProfileEnabled);
+        savedTimezone.current = payload.timezone;
+        savedProjectMode.current = payload.projectMode;
+        savedPublicProfileEnabled.current = payload.publicProfileEnabled;
         emitPreferenceSavedNotice({
           timezone: payload.timezone,
           projectMode: payload.projectMode,
@@ -136,7 +127,6 @@ export function SettingsPreferences({
         );
       }
     },
-    [t],
   );
 
   useEffect(() => {
@@ -156,7 +146,7 @@ export function SettingsPreferences({
     }
 
     saveTimeoutRef.current = setTimeout(() => {
-      void savePreferences(timezone, projectMode, publicProfileEnabled);
+      void savePreferencesStable(timezone, projectMode, publicProfileEnabled);
       saveTimeoutRef.current = null;
     }, 500);
 
@@ -166,13 +156,7 @@ export function SettingsPreferences({
         saveTimeoutRef.current = null;
       }
     };
-  }, [
-    hasChanges,
-    projectMode,
-    publicProfileEnabled,
-    savePreferences,
-    timezone,
-  ]);
+  }, [hasChanges, projectMode, publicProfileEnabled, timezone]);
 
   useEffect(() => {
     return () => {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isValidUsername, normalizeUsername } from "@/lib/auth-username";
 import {
   getPublicBadgeData,
   parsePublicBadgeMetric,
@@ -18,7 +19,13 @@ export async function GET(
     return NextResponse.json({ error: "INVALID_METRIC" }, { status: 400 });
   }
 
-  const { username } = await context.params;
+  const { username: raw } = await context.params;
+  const username = normalizeUsername(raw);
+
+  if (!isValidUsername(username)) {
+    return NextResponse.json({ error: "INVALID_USERNAME" }, { status: 400 });
+  }
+
   const state = await getPublicBadgeData({ username });
   const svg = renderBadgeSvg(state, {
     metric,

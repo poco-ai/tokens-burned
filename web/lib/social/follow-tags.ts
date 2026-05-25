@@ -7,11 +7,10 @@ export const followTags = [
 
 export type FollowTag = (typeof followTags)[number];
 
-export const followTagFilterValues = ["all", ...followTags] as const;
+const followTagFilterValues = ["all", ...followTags] as const;
 export type FollowTagFilter = (typeof followTagFilterValues)[number];
 
-export const followTagSelectValues = ["none", ...followTags] as const;
-export type FollowTagSelectValue = (typeof followTagSelectValues)[number];
+export type FollowTagSelectValue = "none" | FollowTag;
 
 export function toFollowTagSelectValue(
   tag: FollowTag | null | undefined,

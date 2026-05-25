@@ -1,0 +1,81 @@
+name: CLI Windows
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/cli-windows.yml"
+      - "cli/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+    paths:
+      - ".github/workflows/cli-windows.yml"
+      - "cli/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  cli:
+    name: Node ${{ matrix.node-version }}
+    runs-on: windows-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ matrix.node-version }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 20
+          - 22
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install ${{ github.actor == 'dependabot[bot]' && '--no-frozen-lockfile' || '--frozen-lockfile' }}
+
+      - name: Test CLI
+        run: pnpm --filter ./cli test
+
+      - name: Build CLI
+        run: pnpm --filter ./cli build
+
+      - name: Smoke test dist entry
+        run: |
+          pnpm --filter ./cli exec node dist/index.js --help
+          pnpm --filter ./cli exec node dist/index.js status
+
+      - name: Smoke test packed CLI
+        shell: pwsh
+        run: |
+          $packDir = Join-Path $env:RUNNER_TEMP "tokenarena-pack"
+          $smokeDir = Join-Path $env:RUNNER_TEMP "tokenarena-smoke"
+          $env:npm_config_cache = Join-Path $smokeDir ".npm-cache"
+          New-Item -ItemType Directory -Force -Path $packDir, $smokeDir | Out-Null
+
+          pnpm --filter ./cli pack --pack-destination $packDir
+          $packageFile = Get-ChildItem -Path $packDir -Filter "*.tgz" | Select-Object -First 1
+          if (-not $packageFile) { throw "No package archive was created" }
+
+          Push-Location $smokeDir
+          npm init -y
+          npm install --no-audit --no-fund $packageFile.FullName
+          .\node_modules\.bin\tokenarena.cmd --help
+          .\node_modules\.bin\tokenarena.cmd status
+          Pop-Location

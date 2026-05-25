@@ -9,4 +9,15 @@ describe("createCli", () => {
     expect(commandNames).toContain("daemon");
     expect(commandNames).toContain("service");
   });
+
+  it("registers the status show option", () => {
+    const program = createCli();
+    const statusCommand = program.commands.find(
+      (command) => command.name() === "status",
+    );
+
+    expect(statusCommand?.options.map((option) => option.long)).toContain(
+      "--show",
+    );
+  });
 });

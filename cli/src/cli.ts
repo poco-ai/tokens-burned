@@ -78,8 +78,9 @@ export function createCli(): Command {
   program
     .command("status")
     .description("Show configuration and detected tools")
-    .action(async () => {
-      await runStatus();
+    .option("--show", "Show interactive local usage dashboard")
+    .action(async (opts) => {
+      await runStatus(opts);
     });
 
   // config command (with subcommands)

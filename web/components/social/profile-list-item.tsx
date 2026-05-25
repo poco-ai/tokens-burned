@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
@@ -38,11 +39,13 @@ export function ProfileListItem({
       <CardContent className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 gap-3">
           {profile.image ? (
-            /* biome-ignore lint/performance/noImgElement: user avatars may come from arbitrary remote URLs */
-            <img
+            <Image
               src={profile.image}
               alt={profile.name}
+              width={40}
+              height={40}
               className="mt-0.5 size-10 shrink-0 rounded-full border border-border/60 object-cover"
+              unoptimized
             />
           ) : (
             <div className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-border/60 bg-muted text-sm font-semibold text-foreground">
